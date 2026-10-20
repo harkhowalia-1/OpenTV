@@ -20,7 +20,7 @@ cp launcher-source/otvlive/build/outputs/apk/release/otvlive-release.apk "$OUT/I
 
 echo "▸ Mac apps"
 DD="$OUT/dd"
-(cd tv-remote-apps && xcodegen -q generate)
+(cd tv-remote-apps && xcodegen -q)
 for scheme in TVRemoteMac OpenTVInstaller; do
   xcodebuild -project tv-remote-apps/TVRemote.xcodeproj -scheme "$scheme" -configuration Release \
     -derivedDataPath "$DD" -destination 'platform=macOS' MARKETING_VERSION="$VERSION" -quiet build
