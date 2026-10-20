@@ -1,0 +1,16 @@
+# Build output
+build/
+.gradle/
+bin/
+obj/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+local.properties
+.DS_Store
+
+# Built APKs (rebuild from source)
+*.apk
+
+# Device dump from the TV (settings, package lists): stays local
+tv-backup/

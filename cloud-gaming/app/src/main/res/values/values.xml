@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Cloud Gaming</string>
+    <!-- The page this app opens. Xbox Cloud Gaming lives here; any other web game service works too. -->
+    <string name="start_url" translatable="false">https://www.xbox.com/play</string>
+
+    <style name="Theme.CloudGaming" parent="android:Theme.DeviceDefault.NoActionBar.Fullscreen">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+</resources>

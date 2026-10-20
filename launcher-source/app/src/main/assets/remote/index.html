@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OpenTV">
+<meta name="theme-color" content="#000000">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<title>OpenTV</title>
+<style>
+  :root {
+    --bg: #000;
+    --surface: #1c1c1e;
+    --surface-2: #2c2c2e;
+    --surface-3: #3a3a3c;
+    --text: #fff;
+    --text-2: rgba(235, 235, 245, .6);
+    --text-3: rgba(235, 235, 245, .3);
+    --accent: #0a84ff;
+    --danger: #ff453a;
+    --hair: rgba(255, 255, 255, .08);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); }
+  body {
+    font: 17px/1.3 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -webkit-user-select: none; user-select: none;
+    touch-action: manipulation;
+    overscroll-behavior: none;
+  }
+  .app {
+    min-height: 100%;
+    max-width: 420px; margin: 0 auto;
+    padding: calc(env(safe-area-inset-top) + 14px) 22px calc(env(safe-area-inset-bottom) + 22px);
+    display: flex; flex-direction: column; gap: 18px;
+  }
+  [hidden] { display: none !important; }
+
+  /* Header */
+  header { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
+  .tv { display: flex; align-items: center; gap: 10px; }
+  .tv svg { width: 22px; height: 22px; opacity: .9; }
+  .tv-name { font-weight: 600; font-size: 17px; letter-spacing: -.2px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #30d158; box-shadow: 0 0 8px #30d158; }
+  .dot.off { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+  .icon-btn {
+    width: 40px; height: 40px; border-radius: 50%; border: 0;
+    background: var(--surface-2); color: var(--text);
+    display: grid; place-items: center; cursor: pointer;
+    transition: transform .12s ease, background .12s ease;
+  }
+  .icon-btn svg { width: 20px; height: 20px; }
+  .icon-btn:active { transform: scale(.9); background: var(--surface-3); }
+
+  /* Now playing */
+  .now {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface); border-radius: 16px; padding: 12px 14px;
+    border: 1px solid var(--hair);
+  }
+  .now .wave { width: 20px; height: 20px; color: var(--text-2); flex: none; }
+  .now .meta { min-width: 0; flex: 1; }
+  .now .t { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .now .a { color: var(--text-2); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Touchpad */
+  .pad {
+    position: relative; width: 100%; aspect-ratio: 1 / 1;
+    border-radius: 38px;
+    background: radial-gradient(120% 90% at 30% 15%, #3a3a3c 0%, #2c2c2e 45%, #1f1f21 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), inset 0 0 0 1px rgba(255,255,255,.04), 0 18px 40px rgba(0,0,0,.6);
+    overflow: hidden; touch-action: none; cursor: grab;
+  }
+  .pad:active { cursor: grabbing; }
+  .pad .hint {
+    position: absolute; inset: auto 0 22px 0; text-align: center;
+    color: var(--text-3); font-size: 13px; letter-spacing: .1px; pointer-events: none;
+    transition: opacity .4s ease;
+  }
+  .pad .chev { position: absolute; width: 18px; height: 18px; color: var(--text-3); pointer-events: none; }
+  .pad .chev.u { top: 18px; left: calc(50% - 9px); }
+  .pad .chev.d { bottom: 48px; left: calc(50% - 9px); transform: rotate(180deg); }
+  .pad .chev.l { left: 18px; top: calc(50% - 9px); transform: rotate(-90deg); }
+  .pad .chev.r { right: 18px; top: calc(50% - 9px); transform: rotate(90deg); }
+  .ripple {
+    position: absolute; width: 90px; height: 90px; margin: -45px 0 0 -45px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,.22), rgba(255,255,255,0) 70%);
+    pointer-events: none; animation: ripple .45s ease-out forwards;
+  }
+  @keyframes ripple { from { transform: scale(.4); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+  .pad.flash-u { box-shadow: inset 0 3px 0 rgba(255,255,255,.35), 0 18px 40px rgba(0,0,0,.6); }
+  .pad.flash-d { box-shadow: inset 0 -3px 0 rgba(255,255,255,.35), 0 18px 40px rgba(0,0,0,.6); }
+  .pad.flash-l { box-shadow: inset 3px 0 0 rgba(255,255,255,.35), 0 18px 40px rgba(0,0,0,.6); }
+  .pad.flash-r { box-shadow: inset -3px 0 0 rgba(255,255,255,.35), 0 18px 40px rgba(0,0,0,.6); }
+
+  /* Buttons */
+  .controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px 0; justify-items: center; }
+  .btn {
+    width: 66px; height: 66px; border-radius: 50%; border: 0;
+    background: var(--surface-2); color: var(--text);
+    display: grid; place-items: center; cursor: pointer;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.07);
+    transition: transform .12s ease, background .12s ease;
+  }
+  .btn svg { width: 26px; height: 26px; }
+  .btn:active, .btn.pressed { transform: scale(.9); background: var(--surface-3); }
+  .btn.power { color: var(--danger); }
+  .vol {
+    width: 66px; height: 66px; border-radius: 33px; background: var(--surface-2);
+    display: flex; flex-direction: column; overflow: hidden;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.07);
+  }
+  .vol.tall { height: 150px; grid-row: span 2; align-self: center; }
+  .vol button {
+    flex: 1; border: 0; background: transparent; color: var(--text); cursor: pointer;
+    display: grid; place-items: center; transition: background .12s ease;
+  }
+  .vol button svg { width: 22px; height: 22px; }
+  .vol button:active, .vol button.pressed { background: var(--surface-3); }
+  .vol .sep { height: 1px; background: var(--hair); margin: 0 14px; }
+  .label { text-align: center; color: var(--text-3); font-size: 11px; margin-top: 6px; letter-spacing: .2px; }
+  .cell { display: flex; flex-direction: column; align-items: center; }
+
+  /* Keyboard sheet */
+  .sheet-bg { position: fixed; inset: 0; background: rgba(0,0,0,.5); opacity: 0; pointer-events: none; transition: opacity .25s ease; }
+  .sheet-bg.open { opacity: 1; pointer-events: auto; }
+  .sheet {
+    position: fixed; left: 0; right: 0; bottom: 0; margin: 0 auto; max-width: 420px;
+    background: var(--surface); border-radius: 22px 22px 0 0;
+    padding: 10px 20px calc(env(safe-area-inset-bottom) + 20px);
+    transform: translateY(105%); transition: transform .32s cubic-bezier(.2,.9,.3,1);
+    border-top: 1px solid var(--hair);
+  }
+  .sheet.open { transform: translateY(0); }
+  .grab { width: 36px; height: 5px; border-radius: 3px; background: var(--surface-3); margin: 0 auto 14px; }
+  .sheet h3 { margin: 0 0 12px; font-size: 17px; font-weight: 600; text-align: center; }
+  .field {
+    width: 100%; height: 48px; border-radius: 12px; border: 0; outline: none;
+    background: var(--surface-2); color: var(--text); font: inherit; padding: 0 14px;
+    -webkit-user-select: text; user-select: text;
+  }
+  .field::placeholder { color: var(--text-3); }
+  .sheet .note { color: var(--text-3); font-size: 12px; text-align: center; margin-top: 10px; }
+
+  /* Pairing */
+  .pair { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 14px; padding-bottom: 60px; }
+  .pair img { width: 84px; height: 84px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,.6); }
+  .pair h1 { font-size: 28px; font-weight: 700; letter-spacing: -.5px; margin: 8px 0 0; }
+  .pair p { color: var(--text-2); margin: 0; max-width: 300px; }
+  .primary {
+    margin-top: 10px; height: 50px; padding: 0 28px; border-radius: 25px; border: 0;
+    background: var(--text); color: #000; font: 600 17px -apple-system, sans-serif; cursor: pointer;
+    transition: transform .12s ease, opacity .12s ease;
+  }
+  .primary:active { transform: scale(.96); opacity: .85; }
+  .digits { display: flex; gap: 12px; margin-top: 8px; }
+  .digits input {
+    width: 56px; height: 68px; border-radius: 14px; border: 0; outline: none; text-align: center;
+    background: var(--surface-2); color: var(--text); font: 600 30px -apple-system, sans-serif;
+    caret-color: var(--accent); -webkit-user-select: text; user-select: text;
+  }
+  .digits input:focus { box-shadow: 0 0 0 2px var(--accent); }
+  .shake { animation: shake .4s ease; }
+  @keyframes shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+  .err { color: var(--danger); font-size: 14px; min-height: 18px; }
+  .kbd-hint { color: var(--text-3); font-size: 12px; text-align: center; }
+  @media (hover: none) { .kbd-hint { display: none; } }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Pairing -->
+  <section class="pair" id="pair" hidden>
+    <img src="icon-180.png" alt="">
+    <h1 id="pairTitle">Connect to TV</h1>
+    <p id="pairText">Show a code on your TV, then type it here. You only do this once.</p>
+    <button class="primary" id="showCode">Show Code on TV</button>
+    <div class="digits" id="digits" hidden>
+      <input inputmode="numeric" maxlength="1" autocomplete="one-time-code">
+      <input inputmode="numeric" maxlength="1">
+      <input inputmode="numeric" maxlength="1">
+      <input inputmode="numeric" maxlength="1">
+    </div>
+    <div class="err" id="pairErr"></div>
+  </section>
+
+  <!-- Remote -->
+  <section id="remote" hidden style="display:flex;flex-direction:column;gap:18px">
+    <header>
+      <div class="tv">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg>
+        <span class="tv-name" id="tvName">TV</span>
+        <span class="dot" id="dot"></span>
+      </div>
+      <button class="icon-btn" id="kbdBtn" aria-label="Keyboard">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 5H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-9 3h2v2h-2V8zm0 3h2v2h-2v-2zM8 8h2v2H8V8zm0 3h2v2H8v-2zm-1 2H5v-2h2v2zm0-3H5V8h2v2zm9 7H8v-2h8v2zm0-4h-2v-2h2v2zm0-3h-2V8h2v2zm3 3h-2v-2h2v2zm0-3h-2V8h2v2z"/></svg>
+      </button>
+    </header>
+
+    <div class="now" id="now" hidden>
+      <svg class="wave" viewBox="0 0 24 24" fill="currentColor"><path d="M3 10h2v4H3zM7 7h2v10H7zM11 4h2v16h-2zM15 7h2v10h-2zM19 10h2v4h-2z"/></svg>
+      <div class="meta"><div class="t" id="nowT"></div><div class="a" id="nowA"></div></div>
+    </div>
+
+    <div class="pad" id="pad">
+      <svg class="chev u" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>
+      <svg class="chev d" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>
+      <svg class="chev l" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>
+      <svg class="chev r" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>
+      <div class="hint" id="padHint">Swipe to move · Tap to select</div>
+    </div>
+
+    <div class="controls">
+      <div class="cell">
+        <button class="btn" data-key="back" aria-label="Back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+        <div class="label">Back</div>
+      </div>
+      <div class="cell">
+        <button class="btn" data-key="home" aria-label="Home">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg>
+        </button>
+        <div class="label">Home</div>
+      </div>
+      <div class="cell">
+        <button class="btn" data-key="control" aria-label="Control Center">
+          <svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd"><path d="M6.5,4h11a3.5,3.5 0 0,1 0,7h-11a3.5,3.5 0 0,1 0,-7z M17.5,5.5a2,2 0 1,0 0,4a2,2 0 1,0 0,-4z M6.5,13h11a3.5,3.5 0 0,1 0,7h-11a3.5,3.5 0 0,1 0,-7z M6.5,14.5a2,2 0 1,0 0,4a2,2 0 1,0 0,-4z"/></svg>
+        </button>
+        <div class="label">Control</div>
+      </div>
+      <div class="cell">
+        <button class="btn" data-key="playpause" aria-label="Play or pause">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 5v14l9-7zM14 5h2.5v14H14zM18.5 5H21v14h-2.5z"/></svg>
+        </button>
+        <div class="label">Play/Pause</div>
+      </div>
+      <div class="cell">
+        <div class="vol">
+          <button data-key="volup" aria-label="Volume up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></button>
+          <div class="sep"></div>
+          <button data-key="voldown" aria-label="Volume down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 12h12"/></svg></button>
+        </div>
+        <div class="label">Volume</div>
+      </div>
+      <div class="cell">
+        <button class="btn power" data-key="power" aria-label="Power">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 3v9M6.3 6.3a8 8 0 1 0 11.4 0"/></svg>
+        </button>
+        <div class="label">Power</div>
+      </div>
+    </div>
+    <div class="kbd-hint">Keyboard: arrows · Return to select · Esc to go back · Space to play/pause · H for Home</div>
+  </section>
+</div>
+
+<!-- Keyboard sheet -->
+<div class="sheet-bg" id="sheetBg"></div>
+<div class="sheet" id="sheet">
+  <div class="grab"></div>
+  <h3>Type on TV</h3>
+  <input class="field" id="typeField" placeholder="Select a search box on the TV first" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <div class="note">Text appears in the selected field as you type.</div>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  let token = localStorage.getItem("tvToken") || "";
+
+  async function api(path, body) {
+    const res = await fetch("/api/" + path, {
+      method: body === undefined ? "GET" : "POST",
+      headers: { "Content-Type": "application/json", "X-Token": token },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      cache: "no-store",
+    });
+    if (res.status === 401) { showPair(); throw new Error("unpaired"); }
+    return res.json().catch(() => ({}));
+  }
+
+  function setOnline(ok) { $("dot").classList.toggle("off", !ok); }
+
+  // ---- pairing ----
+  function showPair() { $("remote").hidden = true; $("pair").hidden = false; }
+  function showRemote() { $("pair").hidden = true; $("remote").hidden = false; }
+
+  const digitInputs = [...$("digits").querySelectorAll("input")];
+  $("showCode").onclick = async () => {
+    $("pairErr").textContent = "";
+    try {
+      await fetch("/api/pair/start", { method: "POST" });
+      $("digits").hidden = false;
+      $("showCode").textContent = "Show a New Code";
+      $("pairText").textContent = "Type the 4-digit code shown on your TV.";
+      digitInputs.forEach((i) => (i.value = ""));
+      digitInputs[0].focus();
+    } catch { $("pairErr").textContent = "Can't reach the TV. Is it on the same Wi-Fi?"; }
+  };
+  digitInputs.forEach((input, idx) => {
+    input.addEventListener("input", () => {
+      input.value = input.value.replace(/\D/g, "").slice(-1);
+      if (input.value && idx < 3) digitInputs[idx + 1].focus();
+      const code = digitInputs.map((i) => i.value).join("");
+      if (code.length === 4) finishPair(code);
+    });
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Backspace" && !input.value && idx > 0) digitInputs[idx - 1].focus();
+    });
+  });
+  async function finishPair(code) {
+    const res = await fetch("/api/pair/finish", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code }),
+    });
+    if (res.ok) {
+      token = (await res.json()).token;
+      localStorage.setItem("tvToken", token);
+      showRemote(); poll();
+    } else {
+      $("digits").classList.remove("shake"); void $("digits").offsetWidth; $("digits").classList.add("shake");
+      $("pairErr").textContent = "That code didn't match. Try again.";
+      digitInputs.forEach((i) => (i.value = "")); digitInputs[0].focus();
+    }
+  }
+
+  // ---- keys ----
+  let lastSend = 0;
+  function send(key) {
+    lastSend = Date.now();
+    api("key/" + key, {}).then(() => setOnline(true)).catch((e) => { if (e.message !== "unpaired") setOnline(false); });
+  }
+  document.querySelectorAll("[data-key]").forEach((b) => {
+    b.addEventListener("click", () => send(b.dataset.key));
+  });
+
+  // ---- touchpad: swipe to move, tap to select ----
+  const pad = $("pad");
+  const STEP = 46;
+  let start = null, ox = 0, oy = 0, moved = false, t0 = 0;
+  function flash(dir) {
+    pad.classList.remove("flash-u", "flash-d", "flash-l", "flash-r");
+    void pad.offsetWidth; pad.classList.add("flash-" + dir);
+    clearTimeout(flash.t); flash.t = setTimeout(() => pad.classList.remove("flash-" + dir), 140);
+  }
+  function ripple(x, y) {
+    const r = document.createElement("div"); r.className = "ripple";
+    const box = pad.getBoundingClientRect();
+    r.style.left = (x - box.left) + "px"; r.style.top = (y - box.top) + "px";
+    pad.appendChild(r); setTimeout(() => r.remove(), 460);
+  }
+  pad.addEventListener("pointerdown", (e) => {
+    pad.setPointerCapture(e.pointerId);
+    start = { x: e.clientX, y: e.clientY }; ox = e.clientX; oy = e.clientY; moved = false; t0 = Date.now();
+    $("padHint").style.opacity = "0";
+  });
+  pad.addEventListener("pointermove", (e) => {
+    if (!start) return;
+    const dx = e.clientX - ox, dy = e.clientY - oy;
+    if (Math.abs(dx) < STEP && Math.abs(dy) < STEP) return;
+    moved = true;
+    if (Math.abs(dx) > Math.abs(dy)) { const d = dx > 0 ? "right" : "left"; send(d); flash(d[0]); }
+    else { const d = dy > 0 ? "down" : "up"; send(d); flash(d[0]); }
+    ox = e.clientX; oy = e.clientY;
+  });
+  pad.addEventListener("pointerup", (e) => {
+    if (start && !moved && Date.now() - t0 < 450
+        && Math.hypot(e.clientX - start.x, e.clientY - start.y) < 12) {
+      send("select"); ripple(e.clientX, e.clientY);
+    }
+    start = null;
+  });
+  pad.addEventListener("pointercancel", () => (start = null));
+
+  // ---- Mac keyboard ----
+  const keymap = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right",
+    Enter: "select", Escape: "back", Backspace: "back", " ": "playpause", h: "home", c: "control",
+    p: "power", "=": "volup", "+": "volup", "-": "voldown", m: "mute" };
+  document.addEventListener("keydown", (e) => {
+    if ($("remote").hidden || document.activeElement === $("typeField")) return;
+    const k = keymap[e.key];
+    if (!k) return;
+    e.preventDefault(); send(k);
+    if (k.length <= 5 && "updownleftright".includes(k)) flash(k[0]);
+  });
+
+  // ---- keyboard sheet ----
+  function openSheet(open) {
+    $("sheet").classList.toggle("open", open); $("sheetBg").classList.toggle("open", open);
+    if (open) { $("typeField").value = ""; setTimeout(() => $("typeField").focus(), 250); }
+    else $("typeField").blur();
+  }
+  $("kbdBtn").onclick = () => openSheet(true);
+  $("sheetBg").onclick = () => openSheet(false);
+  let typeTimer;
+  $("typeField").addEventListener("input", () => {
+    clearTimeout(typeTimer);
+    typeTimer = setTimeout(() => api("text", { text: $("typeField").value }).catch(() => {}), 180);
+  });
+  $("typeField").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { openSheet(false); send("select"); }
+    if (e.key === "Escape") openSheet(false);
+  });
+
+  // ---- now playing ----
+  async function poll() {
+    if (document.hidden || $("remote").hidden) return;
+    try {
+      const s = await api("state");
+      setOnline(true);
+      const has = !!s.title;
+      $("now").hidden = !has;
+      if (has) { $("nowT").textContent = s.title; $("nowA").textContent = s.artist || ""; }
+    } catch (e) { if (e.message !== "unpaired") setOnline(false); }
+  }
+  setInterval(poll, 3000);
+  document.addEventListener("visibilitychange", poll);
+
+  // ---- start ----
+  fetch("/api/hello", { headers: { "X-Token": token }, cache: "no-store" })
+    .then((r) => r.json())
+    .then((h) => {
+      $("tvName").textContent = h.name || "TV";
+      $("pairTitle").textContent = "Connect to " + (h.name || "TV");
+      if (h.paired) { showRemote(); poll(); } else showPair();
+    })
+    .catch(() => { showPair(); $("pairErr").textContent = "Can't reach the TV. Is it on the same Wi-Fi?"; });
+})();
+</script>
+</body>
+</html>

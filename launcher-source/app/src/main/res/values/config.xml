@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Launcher configuration for the Chromecast HD. Edit this file, then rebuild and reinstall.
+  Package names: run `adb shell pm list packages` against the TV.
+-->
+<resources>
+
+    <!-- Apps pinned to the dock row at the bottom, in this order. Missing apps are skipped. -->
+    <string-array name="dock_apps">
+        <item>com.netflix.ninja</item>
+        <item>com.google.android.youtube.tv</item>
+        <item>com.amazon.amazonvideo.livingroom</item>
+        <item>local.cloudgaming</item>
+        <item>com.spotify.tv.android</item>
+        <item>com.android.tv.settings</item>
+    </string-array>
+
+    <!-- Apps never shown as tiles. -->
+    <string-array name="hidden_apps">
+        <item>com.google.android.tvlauncher</item>
+        <item>com.google.android.apps.tv.launcherx</item>
+    </string-array>
+
+    <!-- No tuner or HDMI inputs on a Chromecast, so no Live TV entry and no Inputs button. -->
+    <string name="live_tv_package" translatable="false"></string>
+
+    <!-- Tiles per row in the grid; the dock always has this many slots. -->
+    <integer name="columns">6</integer>
+</resources>

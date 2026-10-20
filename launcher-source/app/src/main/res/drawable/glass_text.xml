@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Text and icons on Liquid Glass: white at rest, near-black on the white focused glass. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true" android:color="#FF1C1C1E" />
+    <item android:color="#F2FFFFFF" />
+</selector>

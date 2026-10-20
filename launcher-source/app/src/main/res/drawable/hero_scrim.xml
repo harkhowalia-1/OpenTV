@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keeps the status pill legible at the top and darkens the Top Shelf art behind the dock and grid. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <gradient android:angle="270" android:startColor="#40000000" android:centerColor="#00000000" android:endColor="#B3000000" />
+</shape>

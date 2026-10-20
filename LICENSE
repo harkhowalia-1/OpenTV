@@ -1,0 +1,10 @@
+Copyright (c) 2026 Harkhowalia. All rights reserved.
+
+This source code is made available for reference. No part of it may be copied, modified, distributed or
+used, in whole or in part, without the prior written permission of the copyright holder, except where a file
+or folder carries its own licence.
+
+Third-party parts keep their own licences:
+- launcher-source/ started from an MIT-licensed launcher; see launcher-source/LICENSE.
+- The Outfit font is under the SIL Open Font License; see launcher-source/FONT-LICENSE-OFL.txt.
+- tv-remote-apps/Resources/scrcpy/scrcpy-server is scrcpy's device server, Apache License 2.0.

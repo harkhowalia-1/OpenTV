@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-feature android:name="android.software.leanback" android:required="false" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!-- Needed on Android 10 to read the Wi-Fi network name; granted over adb at install time. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- Control Center: Do Not Disturb toggle (granted over adb) and the Sleep Timer alarm. -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <!-- Profiles in the status pill: the Google accounts the user picks in Android's account chooser. -->
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <!-- Phone/Mac remote: a small web server on the TV (RemoteServer), and waking the TV from it. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Android 14: lets the remote apps and Apple Home wake the TV (granted over adb with appops). -->
+    <uses-permission android:name="android.permission.TURN_SCREEN_ON" />
+    <!-- App Store page: the Uninstall button. -->
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+
+    <!-- Android 11+ package visibility: let the launcher see every app with a TV launch entry. -->
+    <!-- Every app, for the Mac manager's app list (sideloaded, never on Google Play). -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
+    <!-- Cleartext is allowed for videos a paired Mac or phone serves over the home network (plain HTTP). -->
+    <application
+        android:usesCleartextTraffic="true"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:banner="@drawable/banner"
+        android:theme="@style/Theme.TvHome"
+        android:allowBackup="false">
+
+        <activity
+            android:name=".PlayerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.TvHome" />
+        <activity
+            android:name=".ScreenActivity"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:excludeFromRecents="true"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.TvHome" />
+        <activity
+            android:name=".AppleHomeActivity"
+            android:exported="true"
+            android:theme="@style/Theme.TvHome" />
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:stateNotNeeded="true"
+            android:excludeFromRecents="true"
+            android:clearTaskOnLaunch="true"
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|uiMode"
+            android:screenOrientation="landscape">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- tvOS-style Settings and App Store, opened from their tiles instead of Google's apps. -->
+        <activity
+            android:name=".TvSettingsActivity"
+            android:exported="true"
+            android:excludeFromRecents="true" />
+        <activity
+            android:name=".StoreActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:windowSoftInputMode="adjustNothing" />
+
+        <!-- Control Center: hold Home (HomeKeyService), hold OK on the Settings button, or press Menu. -->
+        <activity
+            android:name=".ControlCenterActivity"
+            android:exported="true"
+            android:theme="@style/Theme.ControlCenter"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:launchMode="singleTask" />
+
+        <service
+            android:name=".HomeKeyService"
+            android:exported="false"
+            android:label="@string/home_key_service"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data android:name="android.accessibilityservice" android:resource="@xml/home_key_service" />
+        </service>
+
+        <!-- Lets Now Playing read media sessions; enabled once with
+             adb shell cmd notification allow_listener com.gathin.tvhome/com.gathin.tvhome.MediaListener -->
+        <service
+            android:name=".MediaListener"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <receiver
+            android:name=".SleepTimerReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".SleepAdmin"
+            android:exported="true"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data android:name="android.app.device_admin" android:resource="@xml/sleep_admin" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Screensaver: pick it in Settings, or `settings put secure screensaver_components
+             com.gathin.tvhome/.ClockDream` over adb. -->
+        <service
+            android:name=".ClockDream"
+            android:label="@string/dream_name"
+            android:exported="true"
+            android:permission="android.permission.BIND_DREAM_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.dreams.DreamService" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
+    </application>
+</manifest>
