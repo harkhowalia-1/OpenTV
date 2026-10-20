@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Everything that talks to the TV, with no Windows dependencies: the TV's HTTP API, the live control
+       channel (8801), the display stream framing (8802), mDNS discovery, the local media file server,
+       the USB (adb) link and the remote's state. Runs (and is tested) on any OS. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>OpenTV.Core</RootNamespace>
+    <AssemblyName>OpenTV.Core</AssemblyName>
+    <IsTrimmable>false</IsTrimmable>
+  </PropertyGroup>
+
+</Project>

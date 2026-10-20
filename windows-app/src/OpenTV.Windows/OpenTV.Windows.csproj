@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- OpenTV for Windows: tray remote, pointer onto the TV, Send to TV and TV as Display (Mirror).
+       Builds anywhere with EnableWindowsTargeting; runs on Windows 10 1809 or later (x64). -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <UseWindowsForms>true</UseWindowsForms>
+    <!-- Only for UI Automation (System.Windows.Automation), which reads browsers' address bars. -->
+    <UseWPF>true</UseWPF>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>OpenTV</AssemblyName>
+    <RootNamespace>OpenTV.Windows</RootNamespace>
+    <AssemblyTitle>OpenTV</AssemblyTitle>
+    <Description>OpenTV for Windows: remote, pointer, Send to TV and TV as Display for OtvOS.</Description>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\OpenTV.ico</ApplicationIcon>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <ApplicationVisualStyles>true</ApplicationVisualStyles>
+    <ForceDesignerDpiUnaware>true</ForceDesignerDpiUnaware>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType>embedded</DebugType>
+    <NoWarn>$(NoWarn);CA1416;WFO1000</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpenTV.Core\OpenTV.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Vortice.Direct3D11" Version="3.8.3" />
+    <PackageReference Include="Vortice.DXGI" Version="3.8.3" />
+    <PackageReference Include="Vortice.MediaFoundation" Version="3.8.3" />
+    <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\OpenTV.ico" LogicalName="OpenTV.ico" />
+  </ItemGroup>
+
+</Project>

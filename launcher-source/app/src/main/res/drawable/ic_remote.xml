@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Siri Remote style: a slim remote with a round touch surface and two buttons. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M9.5,1.5h5c1.66,0 3,1.34 3,3v15c0,1.66 -1.34,3 -3,3h-5c-1.66,0 -3,-1.34 -3,-3v-15c0,-1.66 1.34,-3 3,-3zM12,4.2a3.3,3.3 0,1 0,0.01 0zM10.1,12.6a1.1,1.1 0,1 0,0.01 0zM13.9,12.6a1.1,1.1 0,1 0,0.01 0zM10.1,16.2a1.1,1.1 0,1 0,0.01 0zM13.9,16.2a1.1,1.1 0,1 0,0.01 0z" />
+</vector>

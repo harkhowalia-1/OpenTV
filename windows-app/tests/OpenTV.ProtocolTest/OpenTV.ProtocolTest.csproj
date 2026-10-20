@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Protocol sanity test: offline checks of the shared protocol code, then a read-only conversation with
+       the real TV (discovery, hello, control channel WELCOME and PING/PONG). Runs on macOS, Linux or Windows. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>OpenTV.ProtocolTest</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\OpenTV.Core\OpenTV.Core.csproj" />
+  </ItemGroup>
+
+</Project>

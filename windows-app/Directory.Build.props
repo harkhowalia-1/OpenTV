@@ -1,0 +1,16 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Authors>harkhowalia-1</Authors>
+    <Company>harkhowalia-1</Company>
+    <Product>OpenTV</Product>
+    <Copyright>harkhowalia-1</Copyright>
+    <Version>1.0.0</Version>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Control Center tile: near-black when resting, white when focused (tvOS). -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <shape android:shape="rectangle"><solid android:color="#FFFFFFFF" /><corners android:radius="16dp" /></shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle"><solid android:color="#E6121214" /><corners android:radius="16dp" /></shape>
+    </item>
+</selector>

@@ -1,0 +1,105 @@
+# Chromecast HD (boreal), Google TV 14, build UTTC.250917.004
+# Everything is DISABLED for user 0, not uninstalled. Undo with restore.sh.
+# Kept on purpose: Chromecast casting (com.google.android.apps.mediashell),
+# phone remote (com.google.android.tv.remote.service), Play Store, Play Services, keyboard, remote firmware updates.
+
+# Telemetry and feedback
+com.google.android.feedback
+com.android.tv.feedbackconsent
+com.google.android.tv.remotecontrol.logging
+
+# Promo apps installed silently by Google TV
+android.autoinstalls.config.google.gtvpai
+
+# Ambient mode / backdrop screensaver (replaced by the launcher's Clock screensaver)
+com.google.android.apps.tv.dreamx
+com.google.android.backdrop
+
+# Voice search / Assistant (you chose not to keep it)
+com.google.android.katniss
+
+# Play Games
+com.google.android.play.games
+
+# Accessibility screen reader (re-enable if anyone needs it)
+com.google.android.marvin.talkback
+
+# Disabled so the new launcher can be the home screen (restore.sh re-enables them):
+# com.google.android.apps.tv.launcherx      stock Google TV home screen
+# com.google.android.tungsten.setupwraith   Google setup app; its recovery screen otherwise takes over Home.
+#   Disabling it deleted the Wi-Fi network it had saved during setup; re-adding Wi-Fi in Settings fixed that.
+#   While it's disabled, adding a Google account or resetting from Settings won't work.
+
+# Uninstalled on 2026-10-19 (user apps; reinstall from the Play Store if ever needed):
+# com.android.chrome (phone Chrome 50), com.opera.browser, com.microsoft.xboxone.smartglass,
+# com.microsoft.rdc.androidx, com.teamviewer.quicksupport.addon.universal, com.tcl.browser,
+# com.benq.screenshareios, com.mm.TruAirPlay.audio.lite,
+# com.gamepass (phone app, replaced by the Cloud Gaming app: local.cloudgaming)
+
+# Launcher extras enabled over adb on 2026-10-19 (restore.sh undoes both):
+#   adb shell dpm set-active-admin --user 0 com.gathin.tvhome/.SleepAdmin        Control Center's Sleep button
+#   adb shell settings put secure enabled_accessibility_services com.gathin.tvhome/com.gathin.tvhome.HomeKeyService
+#   adb shell settings put secure accessibility_enabled 1                          hold Home for Control Center
+# The device admin must be removed (dpm remove-active-admin) before the launcher can be uninstalled.
+#   adb shell cmd notification allow_dnd com.gathin.tvhome                       Control Center's Do Not Disturb tile
+#   adb shell cmd notification allow_listener com.gathin.tvhome/com.gathin.tvhome.MediaListener   Now Playing in the status pill
+# Profiles in the status pill were seeded from the TV's Google account names into the launcher's own prefs.
+
+# Display: output switched from 1080p 23.976 Hz (the TV's earlier preference) to 1080p 60 Hz on 2026-10-19,
+# because the 2011 Samsung froze its picture when showing its volume overlay at 24 Hz.
+#   adb shell settings put global user_preferred_refresh_rate 60.000004   (then restart)
+# To go back: Settings > Display & Sound > Resolution, or the same command with 23.976025.
+
+# 2026-10-19 later: com.google.android.tungsten.setupwraith and com.google.android.apps.tv.launcherx are ENABLED again.
+#   setupwraith supplies the Cast device credentials (CastInfoProvider); without it Google Home and casting fail.
+#   launcherx stays enabled so Android has a real home screen; the launcher's HomeKeyService takes the Home button
+#   and swaps the launcher in whenever Google TV's home appears. com.google.android.tv.remotecontrol.logging re-enabled.
+#   Default keyboard restored to com.google.android.tv.remote.service/.ImeBridgeService (phone-remote typing).
+
+# 2026-10-19 final: launcherx and setupwraith DISABLED again at the user's request (the launcher is the real home).
+#   Trade-off: Google Home and casting from a phone fail (no Cast device credentials without setupwraith).
+#   Never enable setupwraith while launcherx is disabled: its RecoveryActivity loops and crashed Android once.
+# HDMI-CEC volume control turned ON (was off):
+#   adb shell settings put global hdmi_control_volume_control_enabled 1
+#   adb shell cmd hdmi_control cec_setting set volume_control_enabled 1
+# Undo with 0 in both. The remote itself is still set to infrared until its buttons are set up again.
+
+# Phone/Mac remote: the launcher's HomeKeyService runs a small web server on port 8800 (http://192.168.1.50:8800).
+#   Devices pair once with a 4-digit code shown on the TV. To forget all paired devices:
+#   adb shell am force-stop com.gathin.tvhome; adb shell run-as com.gathin.tvhome rm shared_prefs/remote.xml
+#   (then re-enable the accessibility service line above).
+
+# Bonjour: the remote server is advertised as "_tvremote._tcp" ("<TV name> Remote", TXT name=<TV name>), so the
+#   native iPhone and Mac apps (tv-remote-apps/) find the TV without its address.
+# Apple Home: HomeKeyService also runs a HomeKit television accessory (HAP-Java) on port 9123, advertised as
+#   "_hap._tcp". Add it from the Home app with the QR code under Settings > Apple Home (or Control Center >
+#   Apple Home). It then also appears in the iPhone's built-in Apple TV Remote in Control Center.
+#   To forget every Home it was added to: Settings > Apple Home > Remove from Apple Home, or
+#   adb shell am force-stop com.gathin.tvhome; adb shell run-as com.gathin.tvhome rm shared_prefs/homekit.xml
+#   (then re-enable the accessibility service line above).
+
+# 2026-10-19 evening:
+# AirPlay: installed io.github.jqssun.airplay 0.0.31 (F-Droid build of UxPlay for Android, GPL-3.0) over adb.
+#   Its AirPlay name is "Living room TV " with a trailing space: Android 14 refuses two network services with
+#   the same name, and Google's own remote service already uses "Living room TV".
+#   Remove with: adb uninstall io.github.jqssun.airplay
+# Launcher servers: 8800 HTTP API, 8801 live control channel (remote apps, Mac cursor), 8802 Mac display stream,
+#   9123 HomeKit. The Mac app forwards 18800-18802 to these over USB with adb when the Chromecast is plugged in.
+# Granted to the launcher over adb (redo after an uninstall):
+#   adb shell appops set com.gathin.tvhome TURN_SCREEN_ON allow          (remote and Apple Home can wake the TV)
+#   adb shell pm grant com.gathin.tvhome android.permission.GET_ACCOUNTS (Google accounts for profiles)
+# Stray app launches from the home screen are now ignored and logged: adb logcat -s TvHome
+
+# 2026-10-19 night: project renamed OpenTV (Otv); the launcher is "OtvOS" and reports its model as "OpenTV" in
+#   Settings > About, Apple Home and Bonjour. Android's own Build.MODEL (Chromecast HD) is in the read-only system
+#   image and can't change without root.
+# The launcher allows plain HTTP (usesCleartextTraffic) so it can play videos a paired Mac serves on the LAN.
+# The Mac's cursor on the TV scrolls with focus moves: this TV has no touchscreen, so Android can't inject touches.
+# Companion apps renamed: "Otv Remote" (iPhone), "OpenTV Companion" (Mac, /Applications/OpenTV Companion.app).
+
+# Added 2026-10-20 (the installer's "Speed up the TV" does the same; Restore undoes it):
+com.google.android.syncadapters.calendar   # Calendar sync
+com.android.settings.intelligence          # Settings search suggestions
+com.google.android.tv.dfuservice           # remote control firmware updates
+# Play Store kept, but not in the background:
+#   adb shell cmd appops set com.android.vending RUN_ANY_IN_BACKGROUND ignore   (undo: allow)

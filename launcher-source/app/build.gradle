@@ -1,0 +1,55 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.gathin.tvhome'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.gathin.tvhome'
+        minSdk 26
+        targetSdk 34
+        versionCode 3
+        versionName '2.0'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            // Release (not debuggable, so Android compiles it ahead of time and runs it faster), signed with the
+            // same key as before so it updates in place: no reinstall, nothing to pair again.
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    lint {
+        // The launcher is sideloaded over ADB, never published to Google Play, so Play's minimum targetSdk
+        // does not apply; without this, lintVitalRelease fails assembleRelease.
+        disable 'ExpiredTargetSdkVersion'
+    }
+
+    packaging {
+        resources {
+            excludes += ['META-INF/INDEX.LIST', 'META-INF/io.netty.versions.properties', 'META-INF/*.SF',
+                         'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/versions/**', 'META-INF/LICENSE*', 'META-INF/NOTICE*']
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'androidx.recyclerview:recyclerview:1.3.2'
+    implementation 'androidx.dynamicanimation:dynamicanimation:1.0.0'
+    // Apple Home: HomeKit Accessory Protocol server, and QR codes for its setup code.
+    implementation('io.github.hap-java:hap:2.0.7') {
+        exclude group: 'javax.json', module: 'javax.json-api'   // also inside org.glassfish:javax.json
+        exclude group: 'org.zeromq', module: 'curve25519-java'  // djb.Curve25519 also ships in ecc-25519-java
+    }
+    implementation 'com.google.zxing:core:3.5.3'
+    implementation 'org.slf4j:slf4j-android:1.7.36'   // HAP-Java's log messages go to logcat
+}
