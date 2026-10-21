@@ -12,6 +12,7 @@
 
 <p align="center">
   <a href="https://github.com/harkhowalia-1/OpenTV/releases/latest/download/OpenTV-Installer.zip"><b>Mac installer</b></a> ·
+  <a href="https://github.com/harkhowalia-1/OpenTV/releases/latest/download/OpenTV-Windows.zip"><b>Windows app</b></a> ·
   <a href="https://github.com/harkhowalia-1/OpenTV/releases/latest/download/Otv-Remote.ipa"><b>iPhone remote (IPA)</b></a> ·
   <a href="https://github.com/harkhowalia-1/OpenTV/releases/latest/download/OtvOS.apk"><b>OtvOS for the TV (APK)</b></a> ·
   <a href="https://github.com/harkhowalia-1/OpenTV/releases/latest/download/IPTV.apk"><b>IPTV (APK)</b></a>
@@ -21,6 +22,7 @@
   <img alt="Android TV 8+" src="https://img.shields.io/badge/Android%20TV-8%2B-3DDC84?style=flat-square&logo=androidtv&logoColor=white">
   <img alt="Google TV" src="https://img.shields.io/badge/Google%20TV-supported-4285F4?style=flat-square&logo=googletv&logoColor=white">
   <img alt="macOS 14+" src="https://img.shields.io/badge/macOS-14%2B-000000?style=flat-square&logo=apple&logoColor=white">
+  <img alt="Windows 10+" src="https://img.shields.io/badge/Windows-10%2B-0078D4?style=flat-square&logo=windows&logoColor=white">
   <img alt="iOS 18+" src="https://img.shields.io/badge/iOS-18%2B-000000?style=flat-square&logo=apple&logoColor=white">
   <img alt="Java" src="https://img.shields.io/badge/TV-Java-E76F00?style=flat-square&logo=openjdk&logoColor=white">
   <img alt="Swift" src="https://img.shields.io/badge/Mac%20%26%20iPhone-SwiftUI-F05138?style=flat-square&logo=swift&logoColor=white">
@@ -31,6 +33,7 @@
   <a href="#on-the-tv">On the TV</a> ·
   <a href="#with-your-iphone">iPhone</a> ·
   <a href="#with-your-mac">Mac</a> ·
+  <a href="#with-your-windows-pc">Windows</a> ·
   <a href="#install">Install</a> ·
   <a href="#credits">Credits</a>
 </p>
@@ -104,6 +107,16 @@
 - **TV Manager**: every app on the TV with its picture: open, stop, clear cache or data, turn off, uninstall, or drop an `.apk` from your Mac to install it. Tweaks for animations, resolution and refresh rate, interface size, screensaver and sleep, ad-blocking private DNS and HDMI-CEC. Screenshots to the Desktop, files to the TV, restart.
 - Remote with the keyboard: arrow keys, Return, Esc, Space, H for Home, C for Control Center.
 
+## With your Windows PC
+
+**OpenTV for Windows** lives in the notification area. Click it for the remote; right-click for everything else.
+
+- **The remote**: find and pair your TV with its four-digit code, then the click pad, Back, Home, Control Center, play and pause, mute, volume, typing and what's playing. While it's open the keyboard is the remote: arrow keys, Enter, Esc, Space, H for Home, C for Control Center, M to mute, + and −, T to type.
+- **Your PC's pointer on the TV**: push the cursor past the top of the screen and it carries on onto the TV. Hover to focus, click to open, scroll to swipe, type with the keyboard, right-click for Back. Push into the TV's left edge for **Back** and its top edge for **Control Center**. Ctrl+Esc always brings the cursor back.
+- **TV as Display**: shows any of your monitors on the TV with hardware H.264, and the PC's sound with it. The TV's remote drives the PC meanwhile. Plug the TV in with USB-C and it goes over the cable.
+- **Send to TV** (Ctrl+Alt+T from anywhere): the tab open in Chrome, Edge, Firefox, Brave, Opera or Vivaldi, or the video playing in Media Player, VLC, MPC-HC, PotPlayer or mpv, carries on on the TV at the same moment. Ctrl+Alt+R opens the remote.
+- Starts with Windows if you like, needs no administrator rights, and keeps the pairing token encrypted for your Windows account.
+
 ## Install
 
 ### 1. OpenTV Installer for Mac (easiest)
@@ -144,6 +157,10 @@ adb shell appops set com.gathin.tvhome TURN_SCREEN_ON allow
 
 Install **[Otv-Remote.ipa](https://github.com/harkhowalia-1/OpenTV/releases/latest/download/Otv-Remote.ipa)** with [AltStore](https://altstore.io) or [Sideloadly](https://sideloadly.io), which sign it with your own Apple ID, or build it with Xcode (below).
 
+### Windows
+
+Download **[OpenTV-Windows.zip](https://github.com/harkhowalia-1/OpenTV/releases/latest/download/OpenTV-Windows.zip)**, unzip it and run **OpenTV.exe** (Windows 10 version 1809 or later, 64-bit). If SmartScreen stops it, choose **More info › Run anyway**. Install OtvOS on the TV first with one of the ways above. For USB, put [Android platform-tools](https://developer.android.com/tools/releases/platform-tools) somewhere on your PATH.
+
 ### OpenTV Companion for Mac on its own
 
 Download [OpenTV-Companion.zip](https://github.com/harkhowalia-1/OpenTV/releases/latest/download/OpenTV-Companion.zip), unzip it into Applications and open it (right-click › Open the first time).
@@ -154,20 +171,23 @@ Android TV and Google TV from **Android 8 (Oreo)** onward: Chromecast with Googl
 
 ## Build from source
 
-JDK 17 and the Android SDK for the TV; Xcode 26 and [XcodeGen](https://github.com/yonaskolb/XcodeGen) for the Mac and iPhone.
+JDK 17 and the Android SDK for the TV; Xcode 26 and [XcodeGen](https://github.com/yonaskolb/XcodeGen) for the Mac and iPhone; the .NET 8 SDK for Windows.
 
 ```sh
 git clone https://github.com/harkhowalia-1/OpenTV.git
 cd OpenTV
 scripts/install-tv.sh            # builds OtvOS and IPTV and sets them up on the TV connected over adb
 cd tv-remote-apps && xcodegen && open TVRemote.xcodeproj
+dotnet run --project windows-app/src/OpenTV.Windows                    # OpenTV for Windows (on Windows)
+dotnet run --project windows-app/tests/OpenTV.ProtocolTest -- --offline   # protocol checks (any OS)
 ```
 
-Schemes: **TVRemote** (Otv Remote), **TVRemoteMac** (OpenTV Companion), **OpenTVInstaller**. To run on your own devices, change `DEVELOPMENT_TEAM` in `tv-remote-apps/project.yml`. `scripts/release.sh <version>` builds everything and publishes the release the installer downloads.
+Schemes: **TVRemote** (Otv Remote), **TVRemoteMac** (OpenTV Companion), **OpenTVInstaller**. To run on your own devices, change `DEVELOPMENT_TEAM` in `tv-remote-apps/project.yml`. `scripts/release.sh <version>` builds everything and publishes the release the installer downloads; GitHub Actions then builds OpenTV for Windows and attaches `OpenTV-Windows.zip` to it.
 
 ```
 launcher-source/   OtvOS (app) and IPTV (otvlive) for the TV
 tv-remote-apps/    Otv Remote (iOS), OpenTV Companion and OpenTV Installer (macOS)
+windows-app/       OpenTV for Windows, and protocol checks that run on any OS
 cloud-gaming/      a small Xbox Cloud Gaming app for the TV
 scripts/           release and developer install scripts
 docs/              the website
@@ -195,6 +215,8 @@ OpenTV stands on these open-source projects. Thank you to their authors.
 | [Outfit](https://github.com/Outfitio/Outfit-Fonts) | The home screen's font | SIL OFL 1.1 |
 | [Android platform-tools (adb)](https://developer.android.com/tools/releases/platform-tools) | Downloaded by the installer to talk to the TV | Android SDK licence |
 | [XcodeGen](https://github.com/yonaskolb/XcodeGen) | Generates the Xcode project | MIT |
+| [Vortice.Windows](https://github.com/amerkoleci/Vortice.Windows) | Direct3D 11, DXGI and Media Foundation for TV as Display on Windows | MIT |
+| [NAudio](https://github.com/naudio/NAudio) | The PC's sound for TV as Display on Windows | MIT |
 
 The low-latency streaming draws on ideas from [Moonlight](https://github.com/moonlight-stream), [Sunshine](https://github.com/LizardByte/Sunshine) and Parsec (pacing frames to the network, adaptive bitrate, a cursor drawn on the receiving side); no code from them is included.
 
@@ -206,6 +228,6 @@ If you enjoy this project, you can support me here:
 
 ---
 
-<sub>OpenTV is an independent project and is not affiliated with, endorsed by or sponsored by Apple Inc. or Google LLC. AirPlay, Apple Home, Siri, iPhone, iPad and Mac are trademarks of Apple Inc. Android TV, Google TV and Chromecast are trademarks of Google LLC. IPTV only lists free channels that broadcasters publish openly; OpenTV does not host any streams.</sub>
+<sub>OpenTV is an independent project and is not affiliated with, endorsed by or sponsored by Apple Inc. or Google LLC. AirPlay, Apple Home, Siri, iPhone, iPad and Mac are trademarks of Apple Inc. Windows is a trademark of Microsoft Corporation. Android TV, Google TV and Chromecast are trademarks of Google LLC. IPTV only lists free channels that broadcasters publish openly; OpenTV does not host any streams.</sub>
 
 <sub>Copyright © 2026 Harkhowalia. All rights reserved.</sub>

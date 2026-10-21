@@ -1,0 +1,81 @@
+name: OpenTV for Windows
+
+# Builds OpenTV for Windows, runs the offline protocol checks, and publishes a single OpenTV.exe.
+# On a published release (scripts/release.sh) it also attaches OpenTV-Windows.zip to that release.
+on:
+  push:
+    branches: [main]
+    paths: ["windows-app/**", ".github/workflows/windows.yml"]
+  pull_request:
+    paths: ["windows-app/**", ".github/workflows/windows.yml"]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Version
+        id: version
+        shell: pwsh
+        run: |
+          $v = "1.0.0"
+          if ("${{ github.event_name }}" -eq "release") { $v = "${{ github.event.release.tag_name }}".TrimStart("v") }
+          if ($v -notmatch '^\d+(\.\d+){0,3}$') { $v = "1.0.0" }
+          "value=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Protocol checks (offline)
+        run: dotnet run --project windows-app/tests/OpenTV.ProtocolTest -c Release -- --offline
+
+      - name: Build
+        run: dotnet build windows-app/src/OpenTV.Windows -c Release -p:Version=${{ steps.version.outputs.value }} "-flp:errorsonly;logfile=build-errors.log"
+
+      - name: Publish OpenTV.exe
+        run: >
+          dotnet publish windows-app/src/OpenTV.Windows -c Release -r win-x64 --self-contained true
+          -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.value }} -o publish
+
+      - name: Package
+        shell: pwsh
+        run: Compress-Archive -Path publish/OpenTV.exe -DestinationPath OpenTV-Windows.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OpenTV-Windows
+          path: OpenTV-Windows.zip
+
+      # GitHub shows only the first 10 errors as annotations: put the whole list on the pull request.
+      - name: Report build errors
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          if (-not (Test-Path build-errors.log)) { exit 0 }
+          $root = [regex]::Escape("$env:GITHUB_WORKSPACE\")
+          $lines = Get-Content build-errors.log | ForEach-Object { ($_ -replace $root, '') -replace ' \[[^\]]+\.csproj\]$', '' } | Sort-Object -Unique | Select-Object -First 200
+          $fence = '```'
+          $body = "Build errors ($($lines.Count)):`n$fence`n" + ($lines -join "`n") + "`n$fence"
+          Set-Content -Path comment.md -Value $body -Encoding utf8
+          gh api "repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" -F body=@comment.md
+
+      - name: Attach to the release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" OpenTV-Windows.zip --clobber --repo "${{ github.repository }}"
