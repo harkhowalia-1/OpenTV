@@ -735,17 +735,17 @@ internal sealed class RemoteWindow : Form
                 Put(pad, (width - padSize) / 2, y, padSize, padSize);
                 y += padSize + S(16);
 
-                var b = S(52);
+                var bs = S(52);
                 var gap = S(18);
-                var gridX = (width - 3 * b - 2 * gap) / 2;
-                Put(back, gridX, y, b, b);
-                Put(home, gridX + b + gap, y, b, b);
-                Put(control, gridX + 2 * (b + gap), y, b, b);
-                y += b + S(14);
-                Put(playPause, gridX, y, b, b);
-                Put(mute, gridX + b + gap, y, b, b);
-                Put(keyboard, gridX + 2 * (b + gap), y, b, b);
-                y += b + S(16);
+                var gridX = (width - 3 * bs - 2 * gap) / 2;
+                Put(back, gridX, y, bs, bs);
+                Put(home, gridX + bs + gap, y, bs, bs);
+                Put(control, gridX + 2 * (bs + gap), y, bs, bs);
+                y += bs + S(14);
+                Put(playPause, gridX, y, bs, bs);
+                Put(mute, gridX + bs + gap, y, bs, bs);
+                Put(keyboard, gridX + 2 * (bs + gap), y, bs, bs);
+                y += bs + S(16);
 
                 var v = S(44);
                 Put(previous, pad16, y, v, v);
