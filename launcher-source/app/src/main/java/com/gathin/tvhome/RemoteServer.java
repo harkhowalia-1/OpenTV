@@ -178,6 +178,9 @@ final class RemoteServer {
                     o.put("paired", authorized(headers));
                     o.put("control", ControlServer.PORT);
                     o.put("display", ScreenReceiver.PORT);
+                    // A TV with HDMI or other inputs (not a Chromecast): the remotes show an Inputs button.
+                    o.put("inputs", TvInputs.available(ctx));
+                    o.put("version", Updater.installedVersion(ctx));
                     json(out, 200, o);
                     return;
                 }
@@ -218,6 +221,11 @@ final class RemoteServer {
             } else if (path.equals("/api/text")) {
                 actions.text(in.optString("text"));
                 json(out, 200, new JSONObject().put("ok", true));
+            } else if (path.equals("/api/inputs")) {
+                json(out, 200, new JSONObject().put("inputs", TvInputs.json(ctx)));
+            } else if (path.equals("/api/input")) {
+                boolean ok = TvInputs.open(ctx, in.optString("id"));
+                json(out, ok ? 200 : 404, new JSONObject().put("ok", ok));
             } else if (path.equals("/api/state")) {
                 json(out, 200, state());
             } else if (path.equals("/api/apps")) {

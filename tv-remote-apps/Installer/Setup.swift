@@ -270,6 +270,8 @@ final class Setup: ObservableObject {
                 "cmd notification allow_dnd \(p)",
                 "cmd notification allow_listener \(p)/\(p).MediaListener",
                 "appops set \(p) TURN_SCREEN_ON allow",
+                // OtvOS Update installs new releases on the TV by itself.
+                "appops set \(p) REQUEST_INSTALL_PACKAGES allow",
                 "pm grant \(p) android.permission.GET_ACCOUNTS",
                 "pm grant \(p) android.permission.ACCESS_FINE_LOCATION",
             ] { _ = await shell(c) }

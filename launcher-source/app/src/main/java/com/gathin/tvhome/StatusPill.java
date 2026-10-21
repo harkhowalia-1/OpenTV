@@ -13,13 +13,14 @@ import android.widget.TextClock;
 
 /**
  * The tvOS top-right status pill in smoked glass: the time, then plain icons for Now Playing (only while
- * something is playing), Control Center and the profile avatar. A focused icon sits in a white circle; the
- * icon whose panel is open sits in a grey one. The home screen and the panels build the same pill in the
- * same spot, so a panel appears to drop out of it.
+ * something is playing), Inputs (only on a TV with HDMI or other inputs), Control Center and the profile
+ * avatar. A focused icon sits in a white circle; the icon whose panel is open sits in a grey one. The home
+ * screen and the panels build the same pill in the same spot, so a panel appears to drop out of it.
  */
 final class StatusPill {
 
     static final String MEDIA = "media";
+    static final String INPUTS = "inputs";
     static final String CONTROL = "control";
     static final String PROFILE = "profile";
 
@@ -53,6 +54,10 @@ final class StatusPill {
         if (showMedia) {
             pill.addView(iconButton(ctx, R.id.pillMedia, R.drawable.ic_waveform, MEDIA.equals(active),
                     v -> listener.onPill(MEDIA)));
+        }
+        if (TvInputs.available(ctx)) {
+            pill.addView(iconButton(ctx, R.id.pillInputs, R.drawable.ic_input, INPUTS.equals(active),
+                    v -> listener.onPill(INPUTS)));
         }
         pill.addView(iconButton(ctx, R.id.pillControl, R.drawable.ic_toggles, CONTROL.equals(active),
                 v -> listener.onPill(CONTROL)));

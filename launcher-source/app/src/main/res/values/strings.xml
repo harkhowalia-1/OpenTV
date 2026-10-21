@@ -67,4 +67,5 @@
     <string name="remote_app_sub">Pair a device</string>
     <string name="home_key_service">Hold Home for Control Center</string>
     <string name="sleep_setup">Sleep needs a one-time setup: adb shell dpm set-active-admin com.gathin.tvhome/.SleepAdmin</string>
+    <string name="update_available">OtvOS %1$s is available. Install it from Settings › OtvOS Update.</string>
 </resources>

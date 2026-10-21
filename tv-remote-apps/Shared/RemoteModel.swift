@@ -18,6 +18,10 @@ final class RemoteModel: ObservableObject {
     @Published private(set) var tv: TV? = TVStore.tv
     @Published private(set) var phase: Phase = .searching
     @Published private(set) var nowPlaying: NowPlaying?
+    /// The TV has HDMI or other inputs (not a Chromecast): the remote shows an Inputs button.
+    @Published private(set) var hasInputs = UserDefaults.standard.bool(forKey: "tvHasInputs") {
+        didSet { UserDefaults.standard.set(hasInputs, forKey: "tvHasInputs") }
+    }
     @Published var error: String?
 
     /// The live connection; the Mac's cursor bridge uses it too.
@@ -84,6 +88,7 @@ final class RemoteModel: ObservableObject {
         guard let route else { phase = .searching; return }
         do {
             let hello = try await RemoteClient(tv: route).hello()
+            if hasInputs != hello.inputs { hasInputs = hello.inputs }
             if var t = tv, hello.name != t.name || (hello.id != nil && hello.id != t.tvID) {
                 let token = TVStore.token(for: t)
                 t.name = hello.name
@@ -128,6 +133,7 @@ final class RemoteModel: ObservableObject {
     // MARK: Choosing and pairing
 
     func choose(_ tv: TV) {
+        hasInputs = false
         update(tv)
         phase = TVStore.token(for: tv) == nil ? .pairing : .offline
         reconnect()
@@ -140,6 +146,7 @@ final class RemoteModel: ObservableObject {
         TVStore.tv = nil
         tv = nil
         nowPlaying = nil
+        hasInputs = false
         phase = .searching
         startBrowsing()
     }

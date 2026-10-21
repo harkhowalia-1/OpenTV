@@ -162,6 +162,9 @@ public class HomeKeyService extends AccessibilityService implements RemoteServer
                 case "back": performGlobalAction(GLOBAL_ACTION_BACK); break;
                 case "home": goHome(); break;
                 case "control": ControlCenterActivity.toggle(this); break;
+                case "inputs":
+                    if (TvInputs.available(this)) ControlCenterActivity.toggle(this, StatusPill.INPUTS);
+                    break;
                 case "playpause": media(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE); break;
                 case "next": media(KeyEvent.KEYCODE_MEDIA_NEXT); break;
                 case "previous": media(KeyEvent.KEYCODE_MEDIA_PREVIOUS); break;

@@ -51,11 +51,12 @@ internal static class Theme
 /// <summary>Icon font code points (identical in Segoe MDL2 Assets and Segoe Fluent Icons).</summary>
 internal static class Glyph
 {
-    public const string Power = "", Back = "", Home = "", Control = "";
-    public const string Up = "", Down = "", Left = "", Right = "";
-    public const string Play = "", Pause = "", Mute = "", Volume = "";
-    public const string Previous = "", Next = "", Keyboard = "", Tv = "";
-    public const string Plus = "", Minus = "", Music = "", Send = "", Cable = "";
+    public const string Power = "\uE7E8", Back = "\uE76B", Home = "\uE80F", Control = "\uE9E9";
+    public const string Up = "\uE70E", Down = "\uE70D", Left = "\uE76B", Right = "\uE76C";
+    public const string Play = "\uE768", Pause = "\uE769", Mute = "\uE74F", Volume = "\uE767";
+    public const string Previous = "\uE892", Next = "\uE893", Keyboard = "\uE765", Tv = "\uE7F4";
+    public const string Inputs = "\uE961";
+    public const string Plus = "\uE710", Minus = "\uE738", Music = "\uEC4F", Send = "\uE724", Cable = "\uE88E";
 }
 
 internal enum ButtonShape { Circle, Pill, Rounded }
