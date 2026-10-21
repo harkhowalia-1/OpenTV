@@ -24,8 +24,12 @@ import android.view.accessibility.AccessibilityNodeInfo;
  * The Mac's cursor on the TV, Universal Control style: it comes in through the edge facing the Mac, hovering
  * moves the TV's focus to whatever is under it (so TV apps highlight it as if the remote had moved there),
  * clicking selects it, two-finger scrolling (and click-dragging) moves through rows and across shelves the
- * way the remote does, and a two-finger click is the Home button . Leaving through the same edge hands the cursor back to the
- * Mac. (A TV has no touch screen, so Android can't take injected touches here; scrolling uses the TV's own
+ * way the remote does, and a two-finger click is the Home button. Leaving through the same edge hands the cursor back to the
+ * Mac.
+ *
+ * <p>The remote's other buttons, for any mouse or trackpad: push the cursor on against the TV's left edge and a
+ * Back bubble grows there until it goes Back (like swiping in from the edge of a phone); push against the top
+ * edge for Control Center. A mouse's back button is Back and its middle button is Home. (A TV has no touch screen, so Android can't take injected touches here; scrolling uses the TV's own
  * navigation, which every TV app supports.)
  *
  * <p>Smoothness: the cursor has a window and a display thread of its own, so it keeps moving however busy the
@@ -72,6 +76,12 @@ final class PointerOverlay {
 
     /** A two-finger click (the Mac's right button): one press of the Home button. */
     private final Runnable homePress;
+
+    // Edge gestures: how far the cursor has been pushed past an edge, and the bubble that shows it.
+    private static final float PUSH = 240;
+    private float pushBack, pushTop;
+    private boolean edgeArmed = true;
+    private android.widget.TextView bubble;
 
     PointerOverlay(AccessibilityService service, Runnable homePress) {
         this.service = service;
@@ -148,6 +158,9 @@ final class PointerOverlay {
         }
         layer = null;
         cursor = null;
+        bubble = null;
+        pushBack = pushTop = 0;
+        edgeArmed = true;
         hovered = null;
         down = false;
         pendingX = pendingY = 0;
@@ -184,6 +197,7 @@ final class PointerOverlay {
             if (exit != null) exit.left(along);
             return;
         }
+        edgePush();
         x = clampX(x);
         y = clampY(y);
         place();
@@ -196,6 +210,76 @@ final class PointerOverlay {
         hoverLater(HOVER_EVERY_MS);
     };
 
+    /**
+     * Pushing on past the left edge goes Back and past the top edge opens Control Center (whichever edges the
+     * cursor didn't come in by). A bubble at the edge grows with the push so it's clear what is about to happen;
+     * moving away cancels it, and the cursor must leave the edge before it can fire again.
+     */
+    private void edgePush() {
+        boolean backEdge = edge.equals("left") ? x > width : x < 0;
+        float backOver = edge.equals("left") ? x - width : -x;
+        boolean topEdge = !edge.equals("top") && y < 0;
+        if (!edgeArmed) {
+            if (x > 60 && x < width - 60 && y > 60) edgeArmed = true;
+            return;
+        }
+        pushBack = backEdge ? pushBack + backOver : Math.max(0, pushBack - 40);
+        pushTop = topEdge ? pushTop - y : Math.max(0, pushTop - 40);
+        if (pushBack >= PUSH) {
+            fireEdge(true);
+        } else if (pushTop >= PUSH) {
+            fireEdge(false);
+        } else if (pushBack > 8 || pushTop > 8) {
+            showBubble(pushBack >= pushTop, Math.max(pushBack, pushTop) / PUSH);
+        } else if (bubble != null && bubble.getAlpha() > 0) {
+            bubble.animate().alpha(0).setDuration(150).start();
+        }
+    }
+
+    private void fireEdge(boolean back) {
+        pushBack = pushTop = 0;
+        edgeArmed = false;
+        if (back) service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK);
+        else ControlCenterActivity.toggle(service);
+        if (bubble != null) {
+            bubble.animate().scaleX(1.25f).scaleY(1.25f).alpha(0).setDuration(220).start();
+        }
+    }
+
+    private void showBubble(boolean back, float progress) {
+        if (layer == null) return;
+        float d = service.getResources().getDisplayMetrics().density;
+        int size = (int) (64 * d);
+        if (bubble == null) {
+            bubble = new android.widget.TextView(service);
+            bubble.setGravity(Gravity.CENTER);
+            bubble.setTextColor(0xFFFFFFFF);
+            bubble.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL));
+            android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+            bg.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+            bg.setColor(0xF2202026);
+            bg.setStroke(Math.max(1, (int) d), 0x40FFFFFF);
+            bubble.setBackground(bg);
+            bubble.setElevation(12 * d);
+            layer.addView(bubble, 0, new FrameLayout.LayoutParams(size, size, Gravity.TOP | Gravity.START));
+        }
+        bubble.animate().cancel();
+        bubble.setText(back ? "‹" : "⌃");
+        bubble.setTextSize(back ? 40 : 30);
+        float k = Math.min(1f, progress);
+        bubble.setAlpha(Math.min(1f, 0.25f + k));
+        bubble.setScaleX(0.55f + 0.45f * k);
+        bubble.setScaleY(0.55f + 0.45f * k);
+        if (back) {
+            boolean right = edge.equals("left");
+            bubble.setTranslationX(right ? width - size - 24 * d * k : 24 * d * k);
+            bubble.setTranslationY(clampY(y) - size / 2f);
+        } else {
+            bubble.setTranslationX(clampX(x) - size / 2f);
+            bubble.setTranslationY(24 * d * k);
+        }
+    }
+
     private void place() {
         if (cursor == null) return;
         cursor.setTranslationX(x - hotX);
@@ -206,10 +290,15 @@ final class PointerOverlay {
 
     private void doButton(int button, boolean isDown) {
         if (layer == null) return;
-        if (button == 1) {          // right button (two-finger click or tap): Home
+        if (button == 1 || button == 2) {   // right button (two-finger click or tap) or middle button: Home
             if (isDown) homePress.run();
             return;
         }
+        if (button == 3) {                  // a mouse's back button
+            if (isDown) service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK);
+            return;
+        }
+        if (button > 3) return;
         if (isDown) {
             down = true;
             downX = x;

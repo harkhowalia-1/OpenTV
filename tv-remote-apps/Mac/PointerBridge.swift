@@ -2,7 +2,8 @@ import AppKit
 import ApplicationServices
 
 /// Universal Control for the TV: push the cursor past the top edge of the Mac's screen and it continues onto
-/// the TV (the TV shows its own cursor, hovering highlights, clicking selects, scrolling swipes, typing goes
+/// the TV. There, push it on against the TV's left edge for Back and the top edge for Control Center; a
+/// two-finger click (or the middle button) is Home and a mouse's back button is Back (the TV shows its own cursor, hovering highlights, clicking selects, scrolling swipes, typing goes
 /// into the TV's text field). Push it back down off the bottom of the TV and it returns to the Mac where it
 /// left. ⌘Esc always brings it back.
 ///
@@ -47,7 +48,8 @@ final class PointerBridge: ObservableObject {
         needsPermission = false
         var mask: CGEventMask = 0
         for t: CGEventType in [.mouseMoved, .leftMouseDragged, .rightMouseDragged, .leftMouseDown, .leftMouseUp,
-                               .rightMouseDown, .rightMouseUp, .scrollWheel, .keyDown, .keyUp] {
+                               .rightMouseDown, .rightMouseUp, .otherMouseDown, .otherMouseUp,
+                               .otherMouseDragged, .scrollWheel, .keyDown, .keyUp] {
             mask |= 1 << t.rawValue
         }
         let me = Unmanaged.passUnretained(self).toOpaque()
@@ -110,6 +112,10 @@ final class PointerBridge: ObservableObject {
         case .leftMouseUp: channel.pointerButton(0, down: false)
         case .rightMouseDown: channel.pointerButton(1, down: true)
         case .rightMouseUp: channel.pointerButton(1, down: false)
+        // Middle button: Home. A mouse's back button (3): Back.
+        case .otherMouseDown: channel.pointerButton(Int(event.getIntegerValueField(.mouseEventButtonNumber)), down: true)
+        case .otherMouseUp: channel.pointerButton(Int(event.getIntegerValueField(.mouseEventButtonNumber)), down: false)
+        case .otherMouseDragged: break
         case .scrollWheel:
             scroll(event, channel)
         case .keyDown:

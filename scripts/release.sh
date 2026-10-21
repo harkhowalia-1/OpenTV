@@ -28,7 +28,15 @@ done
 ditto -c -k --keepParent "$DD/Build/Products/Release/OpenTV Companion.app" "$OUT/OpenTV-Companion.zip"
 ditto -c -k --keepParent "$DD/Build/Products/Release/OpenTV Installer.app" "$OUT/OpenTV-Installer.zip"
 
+echo "▸ iPhone remote (unsigned IPA, for AltStore or Sideloadly)"
+xcodebuild -project tv-remote-apps/TVRemote.xcodeproj -scheme TVRemote -configuration Release -sdk iphoneos \
+  -destination 'generic/platform=iOS' -derivedDataPath "$DD" MARKETING_VERSION="$VERSION" \
+  CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO -quiet build
+mkdir -p "$OUT/ipa/Payload"
+cp -R "$DD/Build/Products/Release-iphoneos/TVRemote.app" "$OUT/ipa/Payload/"
+(cd "$OUT/ipa" && zip -qry ../Otv-Remote.ipa Payload)
+
 echo "▸ Release v$VERSION"
 gh release create "v$VERSION" --title "OpenTV $VERSION" --notes "$NOTES" \
-  "$OUT/OpenTV-Installer.zip" "$OUT/OpenTV-Companion.zip" "$OUT/OtvOS.apk" "$OUT/IPTV.apk"
+  "$OUT/OpenTV-Installer.zip" "$OUT/OpenTV-Companion.zip" "$OUT/OtvOS.apk" "$OUT/IPTV.apk" "$OUT/Otv-Remote.ipa"
 echo "Done: https://github.com/harkhowalia-1/OpenTV/releases/tag/v$VERSION"

@@ -125,7 +125,7 @@ struct MenuRemote: View {
                 VStack(alignment: .leading, spacing: 1) {
                     Text("Move the pointer onto the TV").font(.system(size: 12))
                     Text(bridge.needsPermission ? "Allow OpenTV Companion in Privacy & Security > Accessibility."
-                         : "Push past the top of the screen. ⌘Esc comes back.")
+                         : "Push past the top of the screen. On the TV: push into the left edge for Back, the top edge for Control Center; two-finger click is Home. ⌘Esc comes back.")
                         .font(.system(size: 11)).foregroundStyle(.secondary)
                 }
             }
