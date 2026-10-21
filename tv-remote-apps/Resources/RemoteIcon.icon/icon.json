@@ -1,0 +1,106 @@
+{
+  "fill": {
+    "linear-gradient": [
+      "srgb:0.20000,0.20000,0.20000,1.00000",
+      "srgb:0.05000,0.05000,0.05000,1.00000"
+    ]
+  },
+  "groups": [
+    {
+      "name": "Controls",
+      "layers": [
+        {
+          "fill": {
+            "solid": "srgb:0.16100,0.16100,0.16100,1.00000"
+          },
+          "glass": false,
+          "hidden": false,
+          "image-name": "touchpad-center.svg",
+          "name": "Touchpad Center",
+          "position": {
+            "scale": 1,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "fill": {
+            "automatic-gradient": "srgb:0.16500,0.16500,0.16500,1.00000"
+          },
+          "glass": false,
+          "hidden": false,
+          "image-name": "touchpad.svg",
+          "name": "Touchpad",
+          "position": {
+            "scale": 1,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "fill": {
+            "solid": "srgb:0.14100,0.14100,0.14100,1.00000"
+          },
+          "glass": false,
+          "hidden": false,
+          "image-name": "buttons.svg",
+          "name": "Buttons",
+          "position": {
+            "scale": 1,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "lighting": "individual",
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.25
+      },
+      "specular": true,
+      "translucency": {
+        "enabled": false,
+        "value": 0.5
+      }
+    },
+    {
+      "name": "Remote",
+      "layers": [
+        {
+          "fill": {
+            "automatic-gradient": "srgb:0.82400,0.82400,0.82400,1.00000"
+          },
+          "glass": false,
+          "hidden": false,
+          "image-name": "remote-body.svg",
+          "name": "Remote Body",
+          "position": {
+            "scale": 1,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
+      },
+      "specular": true,
+      "translucency": {
+        "enabled": false,
+        "value": 0.5
+      }
+    }
+  ],
+  "supported-platforms": {
+    "squares": "shared"
+  }
+}
