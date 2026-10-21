@@ -135,7 +135,7 @@ public static class Program
         Expect(big.Length <= 3 + 0xFFFF && (big.Length - 3) % 2 == 0, "TEXT is cut to 64 KB on a character boundary");
         foreach (var k in Enum.GetValues<RemoteKey>()) Expect(RemoteKeys.Parse(k.Wire()) == k, $"key name {k}");
         Expect(string.Join(",", Enum.GetValues<RemoteKey>().Select(k => k.Wire())) ==
-               "up,down,left,right,select,back,home,control,playpause,next,previous,volup,voldown,mute,power", "wire names");
+               "up,down,left,right,select,back,home,control,inputs,playpause,next,previous,volup,voldown,mute,power", "wire names");
     }
 
     private static void ControlReader()

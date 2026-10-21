@@ -54,6 +54,7 @@ internal sealed class RemoteWindow : Form
     private readonly GlyphButton back = new() { Glyph = Glyph.Back };
     private readonly GlyphButton home = new() { Glyph = Glyph.Home };
     private readonly GlyphButton control = new() { Glyph = Glyph.Control };
+    private readonly GlyphButton inputs = new() { Glyph = Glyph.Inputs };
     private readonly GlyphButton playPause = new() { Glyph = Glyph.Play };
     private readonly GlyphButton mute = new() { Glyph = Glyph.Mute };
     private readonly GlyphButton keyboard = new() { Glyph = Glyph.Keyboard };
@@ -128,6 +129,7 @@ internal sealed class RemoteWindow : Form
         tips.SetToolTip(back, "Back (Esc)");
         tips.SetToolTip(home, "Home (H)");
         tips.SetToolTip(control, "Control Center (C)");
+        tips.SetToolTip(inputs, "Inputs: HDMI, AV and Live TV (I)");
         tips.SetToolTip(playPause, "Play or pause (Space)");
         tips.SetToolTip(mute, "Mute (M)");
         tips.SetToolTip(keyboard, "Type on the TV");
@@ -136,14 +138,14 @@ internal sealed class RemoteWindow : Form
         tips.SetToolTip(volume, "Volume (+ and -)");
         tips.SetToolTip(usbTag, "The TV is plugged into this PC: everything goes over the cable.");
         tips.SetToolTip(sendButton, "Sends the tab open in your browser, or the video playing in a player on this PC, to the TV. Ctrl+Alt+T from anywhere.");
-        tips.SetToolTip(keysIcon, "Arrow keys move, Enter selects, Esc goes back, Space plays or pauses, H goes Home, C opens Control Center, M mutes, + and - change the volume.");
+        tips.SetToolTip(keysIcon, "Arrow keys move, Enter selects, Esc goes back, Space plays or pauses, H goes Home, C opens Control Center, I opens Inputs, M mutes, + and - change the volume.");
         tips.SetToolTip(displayButton, "Shows this PC's screen on the TV. The TV's remote drives the PC meanwhile.");
 
         Controls.AddRange([header, power, errorLabel]);
         phaseControls.AddRange([
             power, searchIcon, searchTitle, searchHint, addressBox, addressButton,
             pairTitle, pairHint, codeBox, showCode, otherTv,
-            nowPlaying, pad, back, home, control, playPause, mute, keyboard, previous, volume, next, typeBox, typeHint,
+            nowPlaying, pad, back, home, control, inputs, playPause, mute, keyboard, previous, volume, next, typeBox, typeHint,
             line1, displayTitle, usbTag, monitorBox, displayButton, soundBox, displayStatus, pointerBox, pointerHint,
             sendButton, sendStatus, line2, startupBox, keysIcon, quitLink, errorLabel,
         ]);
@@ -199,6 +201,7 @@ internal sealed class RemoteWindow : Form
         back.Click += (_, _) => Model.Press(RemoteKey.Back);
         home.Click += (_, _) => Model.Press(RemoteKey.Home);
         control.Click += (_, _) => Model.Press(RemoteKey.Control);
+        inputs.Click += (_, _) => Model.Press(RemoteKey.Inputs);
         playPause.Click += (_, _) => Model.Press(RemoteKey.PlayPause);
         mute.Click += (_, _) => Model.Press(RemoteKey.Mute);
         previous.Click += (_, _) => Model.Press(RemoteKey.Previous);
@@ -420,6 +423,7 @@ internal sealed class RemoteWindow : Form
             Keys.Space or Keys.MediaPlayPause => RemoteKey.PlayPause,
             Keys.H or Keys.BrowserHome => RemoteKey.Home,
             Keys.C => RemoteKey.Control,
+            Keys.I when Model.HasInputs => RemoteKey.Inputs,
             Keys.M or Keys.VolumeMute => RemoteKey.Mute,
             Keys.Oemplus or Keys.Add or Keys.VolumeUp => RemoteKey.VolUp,
             Keys.OemMinus or Keys.Subtract or Keys.VolumeDown => RemoteKey.VolDown,
@@ -651,7 +655,7 @@ internal sealed class RemoteWindow : Form
         pad.SetFonts(DeviceDpi);
         volume.SetFonts(DeviceDpi);
         nowPlaying.SetFonts(DeviceDpi);
-        foreach (var b in new[] { power, addressButton, showCode, back, home, control, playPause, mute, keyboard, previous, next, displayButton, sendButton }.Concat(foundButtons))
+        foreach (var b in new[] { power, addressButton, showCode, back, home, control, inputs, playPause, mute, keyboard, previous, next, displayButton, sendButton }.Concat(foundButtons))
         {
             b.SetFonts(DeviceDpi);
         }
@@ -735,13 +739,17 @@ internal sealed class RemoteWindow : Form
                 Put(pad, (width - padSize) / 2, y, padSize, padSize);
                 y += padSize + S(16);
 
+                // Back, Home, Control Center (and Inputs on a TV with inputs), then play/pause, mute, keyboard.
                 var bs = S(52);
-                var gap = S(18);
-                var gridX = (width - 3 * bs - 2 * gap) / 2;
-                Put(back, gridX, y, bs, bs);
-                Put(home, gridX + bs + gap, y, bs, bs);
-                Put(control, gridX + 2 * (bs + gap), y, bs, bs);
+                var gap = Model.HasInputs ? S(14) : S(18);
+                var topCount = Model.HasInputs ? 4 : 3;
+                var topX = (width - topCount * bs - (topCount - 1) * gap) / 2;
+                Put(back, topX, y, bs, bs);
+                Put(home, topX + bs + gap, y, bs, bs);
+                Put(control, topX + 2 * (bs + gap), y, bs, bs);
+                if (Model.HasInputs) Put(inputs, topX + 3 * (bs + gap), y, bs, bs);
                 y += bs + S(14);
+                var gridX = (width - 3 * bs - 2 * gap) / 2;
                 Put(playPause, gridX, y, bs, bs);
                 Put(mute, gridX + bs + gap, y, bs, bs);
                 Put(keyboard, gridX + 2 * (bs + gap), y, bs, bs);

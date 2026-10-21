@@ -20,6 +20,7 @@ for c in \
   "cmd notification allow_dnd $P" \
   "cmd notification allow_listener $P/$P.MediaListener" \
   "appops set $P TURN_SCREEN_ON allow" \
+  "appops set $P REQUEST_INSTALL_PACKAGES allow" \
   "pm grant $P android.permission.GET_ACCOUNTS" \
   "cmd package set-home-activity --user 0 $P/.MainActivity"; do
   a shell "$c" || true

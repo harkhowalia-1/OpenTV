@@ -29,6 +29,7 @@ import android.widget.Toast;
 public class TvSettingsActivity extends Activity {
 
     private float density;
+    private View updateRow;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,6 +97,10 @@ public class TvSettingsActivity extends Activity {
         row(list, R.drawable.ic_display, "Display and Sound", displayMode(), new Intent(Settings.ACTION_SOUND_SETTINGS));
         row(list, R.drawable.ic_accessibility, "Accessibility", null, new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
         row(list, R.drawable.ic_keyboard, "Subtitles", null, new Intent(Settings.ACTION_CAPTIONING_SETTINGS));
+        if (TvInputs.available(this)) {
+            row(list, R.drawable.ic_input, getString(R.string.inputs), "HDMI, AV and Live TV",
+                    new Intent(this, ControlCenterActivity.class).putExtra(ControlCenterActivity.EXTRA_PANEL, StatusPill.INPUTS));
+        }
 
         section(list, "Remotes and Devices");
         row(list, R.drawable.ic_gamepad, "Pair Accessory", "Controllers, keyboards",
@@ -116,8 +121,9 @@ public class TvSettingsActivity extends Activity {
         row(list, R.drawable.ic_timer, "Date and Time", null, new Intent(Settings.ACTION_DATE_SETTINGS));
         row(list, R.drawable.ic_keyboard, "Keyboard", null, new Intent(Settings.ACTION_INPUT_METHOD_SETTINGS));
         row(list, R.drawable.ic_storage, "Storage", null, new Intent(Settings.ACTION_INTERNAL_STORAGE_SETTINGS));
-        row(list, R.drawable.ic_update, "Software Updates", null, new Intent("android.settings.SYSTEM_UPDATE_SETTINGS"));
-        row(list, R.drawable.ic_info, "About", Brand.MODEL + " · " + Brand.OS + " " + Brand.OS_VERSION,
+        updateRow = row(list, R.drawable.ic_update, "OtvOS Update", updateValue(), new Intent(this, UpdateActivity.class));
+        row(list, R.drawable.ic_update, "System Updates", null, new Intent("android.settings.SYSTEM_UPDATE_SETTINGS"));
+        row(list, R.drawable.ic_info, "About", Brand.MODEL + " · " + Brand.OS + " " + Updater.installedVersion(this),
                 new Intent(Settings.ACTION_DEVICE_INFO_SETTINGS));
 
         section(list, "");
@@ -126,6 +132,21 @@ public class TvSettingsActivity extends Activity {
 
         setContentView(root);
         first.requestFocus();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // The OtvOS Update row says when a newer release is out (checked in the background).
+        if (updateRow == null) return;
+        Updater.check(this, (r, error) -> {
+            TextView value = updateRow.findViewWithTag("value");
+            if (value != null && !isFinishing()) value.setText(updateValue());
+        });
+    }
+
+    private String updateValue() {
+        return Updater.available(this) ? "Update available" : Updater.installedVersion(this);
     }
 
     /** "1080p · 60 Hz" for the current HDMI output. */
@@ -180,6 +201,7 @@ public class TvSettingsActivity extends Activity {
             val.setTextSize(16);
             val.setDuplicateParentStateEnabled(true);
             val.setPadding(0, 0, dp(10), 0);
+            val.setTag("value");
             r.addView(val);
         }
         TextView chev = new TextView(this);

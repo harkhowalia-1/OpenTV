@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <item name="pillMedia" type="id" />
+    <item name="pillInputs" type="id" />
     <item name="pillControl" type="id" />
     <item name="pillProfile" type="id" />
 </resources>

@@ -50,7 +50,7 @@
     <td width="50%" valign="top">
       <img src="docs/images/control-center.jpg" alt="Control Center" width="100%">
       <h3>Control Center</h3>
-      Hold Home: power and sleep, sleep timer, Wi-Fi, Do Not Disturb, screensaver, volume, AirPlay, Apple Home and <b>Close Background Apps</b>, which frees memory in a few seconds.
+      Hold Home: power and sleep, sleep timer, Wi-Fi, Do Not Disturb, screensaver, volume, AirPlay, Apple Home and <b>Close Background Apps</b>, which frees memory in a few seconds. On a TV, <b>Inputs</b> sits beside it in the status bar.
     </td>
   </tr>
   <tr>
@@ -67,6 +67,8 @@
   </tr>
 </table>
 
+- **Inputs** on TVs (not on a Chromecast or other stick): an Inputs button beside Control Center in the status bar, and on every remote, drops down the TV's HDMI ports with what's plugged in, AV and Live TV. Also in Settings, and `/api/inputs` for your own scripts.
+- **OtvOS Update**: Settings › OtvOS Update finds the newest release on GitHub and installs OtvOS (and IPTV) on the TV, no computer needed. The home screen mentions a new release once when it appears.
 - **AirPlay** from iPhone, iPad and Mac, with the open-source UxPlay receiver.
 - **Apple Home and Siri**: the TV appears in the Home app. Turn it on and off, change the volume, and use the remote in your iPhone's Control Center.
 - **Fast on small chips**: built and tuned on a Chromecast with 1.4 GB of memory. One switch turns off the Google TV extras that run in the background.
@@ -79,7 +81,7 @@
     <td valign="top">
       <h3>Otv Remote</h3>
       <ul>
-        <li>A touch surface and buttons: swipe to move, tap to select, Back, Home, Control Center, play and pause, mute, skip.</li>
+        <li>A touch surface and buttons: swipe to move, tap to select, Back, Home, Control Center, Inputs (on a TV with HDMI ports), play and pause, mute, skip.</li>
         <li>The iPhone's volume buttons change the TV's volume while the app is open.</li>
         <li>Type on the TV with the iPhone's keyboard.</li>
         <li>Controls for Control Center and the Lock Screen, Siri and Shortcuts actions.</li>
@@ -105,13 +107,13 @@
 - **Your Mac's pointer on the TV**: push the cursor past the top of the screen and keep going. Hover to focus, click to open, scroll with two fingers, type with the keyboard. Push into the TV's left edge to go **Back**, its top edge for **Control Center**; a two-finger click is **Home**, and a mouse's back and middle buttons work too.
 - **Send to TV**: the tab in Safari, Chrome, Edge, Brave, Arc, Firefox and others, or the video playing in QuickTime or VLC, carries on on the TV at the same moment.
 - **TV Manager**: every app on the TV with its picture: open, stop, clear cache or data, turn off, uninstall, or drop an `.apk` from your Mac to install it. Tweaks for animations, resolution and refresh rate, interface size, screensaver and sleep, ad-blocking private DNS and HDMI-CEC. Screenshots to the Desktop, files to the TV, restart.
-- Remote with the keyboard: arrow keys, Return, Esc, Space, H for Home, C for Control Center.
+- Remote with the keyboard: arrow keys, Return, Esc, Space, H for Home, C for Control Center, I for Inputs.
 
 ## With your Windows PC
 
 **OpenTV for Windows** lives in the notification area. Click it for the remote; right-click for everything else.
 
-- **The remote**: find and pair your TV with its four-digit code, then the click pad, Back, Home, Control Center, play and pause, mute, volume, typing and what's playing. While it's open the keyboard is the remote: arrow keys, Enter, Esc, Space, H for Home, C for Control Center, M to mute, + and −, T to type.
+- **The remote**: find and pair your TV with its four-digit code, then the click pad, Back, Home, Control Center, Inputs (on a TV), play and pause, mute, volume, typing and what's playing. While it's open the keyboard is the remote: arrow keys, Enter, Esc, Space, H for Home, C for Control Center, I for Inputs, M to mute, + and −, T to type.
 - **Your PC's pointer on the TV**: push the cursor past the top of the screen and it carries on onto the TV. Hover to focus, click to open, scroll to swipe, type with the keyboard, right-click for Back. Push into the TV's left edge for **Back** and its top edge for **Control Center**. Ctrl+Esc always brings the cursor back.
 - **TV as Display**: shows any of your monitors on the TV with hardware H.264, and the PC's sound with it. The TV's remote drives the PC meanwhile. Plug the TV in with USB-C and it goes over the cable.
 - **Send to TV** (Ctrl+Alt+T from anywhere): the tab open in Chrome, Edge, Firefox, Brave, Opera or Vivaldi, or the video playing in Media Player, VLC, MPC-HC, PotPlayer or mpv, carries on on the TV at the same moment. Ctrl+Alt+R opens the remote.
@@ -125,7 +127,7 @@
 2. Download **[OpenTV Installer](https://github.com/harkhowalia-1/OpenTV/releases/latest/download/OpenTV-Installer.zip)**, unzip it and open it. The first time, right-click it and choose **Open**.
 3. Pick your TV (it finds it on your Wi-Fi, or plug it in with USB-C), choose what to install and press **Install**.
 
-The installer downloads the newest release every time, so running it again updates everything, and it fetches Android's connection tools if your Mac doesn't have them. **Restore Original TV** puts the TV's own home screen back and removes OpenTV.
+The installer downloads the newest release every time, and it fetches Android's connection tools if your Mac doesn't have them. After that, the TV updates itself: **Settings › OtvOS Update**. **Restore Original TV** puts the TV's own home screen back and removes OpenTV.
 
 ### 2. From the TV, without a computer
 
@@ -133,7 +135,7 @@ The installer downloads the newest release every time, so running it again updat
 2. In Downloader, open **`harkhowalia-1.github.io/OpenTV/apk`** and install OtvOS. For IPTV, open **`harkhowalia-1.github.io/OpenTV/iptv`**.
 3. On the TV, open Settings › System › Accessibility (or Settings › Accessibility), choose **OtvOS** and turn it on. Pressing Home now opens OtvOS.
 
-A few extras (the Sleep button, Do Not Disturb, Now Playing, waking the TV from the remote) need the installer or the commands below once.
+A few extras (the Sleep button, Do Not Disturb, Now Playing, waking the TV from the remote) need the installer or the commands below once. OtvOS Update asks you to allow **Install unknown apps** for OtvOS the first time.
 
 ### 3. With adb, from any computer
 
@@ -149,6 +151,7 @@ adb shell dpm set-active-admin --user 0 com.gathin.tvhome/.SleepAdmin
 adb shell cmd notification allow_dnd com.gathin.tvhome
 adb shell cmd notification allow_listener com.gathin.tvhome/com.gathin.tvhome.MediaListener
 adb shell appops set com.gathin.tvhome TURN_SCREEN_ON allow
+adb shell appops set com.gathin.tvhome REQUEST_INSTALL_PACKAGES allow
 ```
 
 `restore.sh` undoes it.
@@ -182,7 +185,7 @@ dotnet run --project windows-app/src/OpenTV.Windows                    # OpenTV 
 dotnet run --project windows-app/tests/OpenTV.ProtocolTest -- --offline   # protocol checks (any OS)
 ```
 
-Schemes: **TVRemote** (Otv Remote), **TVRemoteMac** (OpenTV Companion), **OpenTVInstaller**. To run on your own devices, change `DEVELOPMENT_TEAM` in `tv-remote-apps/project.yml`. `scripts/release.sh <version>` builds everything and publishes the release the installer downloads; GitHub Actions then builds OpenTV for Windows and attaches `OpenTV-Windows.zip` to it.
+Schemes: **TVRemote** (Otv Remote), **TVRemoteMac** (OpenTV Companion), **OpenTVInstaller**. To run on your own devices, change `DEVELOPMENT_TEAM` in `tv-remote-apps/project.yml`. `scripts/release.sh <version>` builds everything and publishes the release the installer downloads and OtvOS Update installs. The version becomes the apps' version (1.3 → versionCode 10300), and the TV apps are signed with your Android debug key, so keep using the same Mac (or copy `~/.android/debug.keystore`) or TVs can't update in place. GitHub Actions then builds OpenTV for Windows and attaches `OpenTV-Windows.zip` to the release, and on every pull request compiles the TV apps, the Mac and iPhone apps and the Windows app.
 
 ```
 launcher-source/   OtvOS (app) and IPTV (otvlive) for the TV

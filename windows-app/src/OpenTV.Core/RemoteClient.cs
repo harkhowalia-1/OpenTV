@@ -6,8 +6,8 @@ using System.Text.Json.Nodes;
 
 namespace OpenTV.Core;
 
-/// <summary>What <c>GET /api/hello</c> says about the TV.</summary>
-public sealed record TvHello(string Name, string? Id, bool Paired, int ControlPort, int DisplayPort);
+/// <summary>What <c>GET /api/hello</c> says about the TV. <see cref="Inputs"/>: a TV with HDMI or other inputs.</summary>
+public sealed record TvHello(string Name, string? Id, bool Paired, int ControlPort, int DisplayPort, bool Inputs = false);
 
 /// <summary>
 /// The TV's small JSON API on port 8800. Every call except hello and pairing carries this PC's token in
@@ -75,7 +75,8 @@ public sealed class RemoteClient(TvDevice tv, string? token)
             Str(o, "id"),
             Bool(o, "paired"),
             Int(o, "control") ?? Tv.ControlPort,
-            Int(o, "display") ?? Tv.DisplayPort);
+            Int(o, "display") ?? Tv.DisplayPort,
+            Bool(o, "inputs"));
     }
 
     /// <summary>Puts a 4-digit code on the TV screen (it stays valid for two minutes).</summary>

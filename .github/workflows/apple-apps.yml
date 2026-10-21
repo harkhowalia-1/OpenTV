@@ -1,0 +1,52 @@
+name: Otv Remote, OpenTV Companion and Installer
+
+# Compiles the iPhone remote and the two Mac apps, unsigned, on every change to them.
+on:
+  push:
+    branches: [main]
+    paths: ["tv-remote-apps/**", ".github/workflows/apple-apps.yml"]
+  pull_request:
+    paths: ["tv-remote-apps/**", ".github/workflows/apple-apps.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Newest Xcode
+        run: |
+          xcode=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          sudo xcode-select -s "$xcode"
+          xcodebuild -version
+
+      - name: Generate the project
+        working-directory: tv-remote-apps
+        run: brew install xcodegen && xcodegen
+
+      - name: Build
+        run: |
+          set -o pipefail
+          common="-project tv-remote-apps/TVRemote.xcodeproj -configuration Release CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY= -derivedDataPath dd"
+          status=0
+          xcodebuild $common -scheme TVRemote -sdk iphoneos -destination 'generic/platform=iOS' build 2>&1 | tee -a build.log | grep -E "error:|BUILD (SUCCEEDED|FAILED)" || status=1
+          for scheme in TVRemoteMac OpenTVInstaller; do
+            xcodebuild $common -scheme "$scheme" -destination 'generic/platform=macOS' build 2>&1 | tee -a build.log | grep -E "error:|BUILD (SUCCEEDED|FAILED)" || status=1
+          done
+          grep -q "BUILD FAILED" build.log && exit 1
+          exit $status
+
+      - name: Report build errors
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [ -f build.log ] || exit 0
+          { echo "Apple apps build errors:"; echo '```'; grep -E "error:" build.log | sed "s|$GITHUB_WORKSPACE/||" | sort -u | head -150; echo '```'; } > comment.md
+          gh api "repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" -F body=@comment.md

@@ -21,6 +21,10 @@
     <!-- App Store page: the Uninstall button. -->
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
 
+    <!-- OtvOS Update: installs a newer OtvOS (and IPTV) from the project's GitHub releases. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
+
     <!-- Android 11+ package visibility: let the launcher see every app with a TV launch entry. -->
     <!-- Every app, for the Mac manager's app list (sideloaded, never on Google Play). -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
@@ -82,6 +86,10 @@
             android:exported="true"
             android:excludeFromRecents="true" />
         <activity
+            android:name=".UpdateActivity"
+            android:exported="false"
+            android:excludeFromRecents="true" />
+        <activity
             android:name=".StoreActivity"
             android:exported="true"
             android:excludeFromRecents="true"
@@ -121,6 +129,10 @@
 
         <receiver
             android:name=".SleepTimerReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".UpdateReceiver"
             android:exported="false" />
 
         <receiver

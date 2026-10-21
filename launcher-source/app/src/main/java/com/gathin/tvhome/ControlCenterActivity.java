@@ -36,7 +36,7 @@ import android.widget.Toast;
 import java.util.Locale;
 
 /**
- * The status pill's drop-down panels, tvOS 26 style: Control Center, Now Playing and Profiles. The pill is
+ * The status pill's drop-down panels, tvOS 26 style: Control Center, Inputs, Now Playing and Profiles. The pill is
  * rebuilt here in the same spot as on the home screen, with the open panel's icon in a grey circle; choosing
  * another pill icon swaps the panel in place. Opened by holding Home (HomeKeyService), the pill, or Menu.
  */
@@ -130,12 +130,22 @@ public class ControlCenterActivity extends Activity {
 
     /** Opens Control Center, or closes it when it is already open (the remote's Control Center button). */
     static void toggle(android.content.Context ctx) {
+        toggle(ctx, StatusPill.CONTROL);
+    }
+
+    /**
+     * Opens <code>panel</code>; closes it when it is the one already open, or swaps to it from another panel
+     * (the remote's Control Center and Inputs buttons).
+     */
+    static void toggle(android.content.Context ctx, String panel) {
         ControlCenterActivity cc = current;
-        if (cc != null && !cc.isFinishing()) {
-            cc.close();
+        if (cc != null && !cc.isFinishing() && !cc.closing) {
+            if (panel.equals(cc.panelName)) cc.close();
+            else cc.show(panel);
             return;
         }
-        ctx.startActivity(new Intent(ctx, ControlCenterActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        ctx.startActivity(new Intent(ctx, ControlCenterActivity.class).putExtra(EXTRA_PANEL, panel)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
     }
 
     @Override
@@ -163,6 +173,7 @@ public class ControlCenterActivity extends Activity {
         switch (which) {
             case StatusPill.MEDIA: panel = buildMedia(); break;
             case StatusPill.PROFILE: panel = buildProfiles(); break;
+            case StatusPill.INPUTS: panel = buildInputs(); break;
             default: panel = buildControl(); break;
         }
         holder.addView(panel);
@@ -345,6 +356,66 @@ public class ControlCenterActivity extends Activity {
         words.addView(sub);
         t.addView(words, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         return t;
+    }
+
+    // ---- Inputs ------------------------------------------------------------------------------------
+
+    /** The TV's inputs: HDMI ports with whether something is plugged in, then AV and the like, then Live TV. */
+    private View buildInputs() {
+        LinearLayout p = panelShell(280);
+        p.setPadding(dp(8), dp(8), dp(8), dp(8));
+        int lastKind = -1;
+        boolean first = true;
+        for (TvInputs.Input in : TvInputs.list(this)) {
+            if (lastKind != -1 && in.kind != lastKind) {
+                View line = new View(this);
+                line.setBackgroundColor(0x1FFFFFFF);
+                LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Math.max(1, dp(1)));
+                llp.setMargins(dp(12), dp(6), dp(12), dp(6));
+                p.addView(line, llp);
+            }
+            lastKind = in.kind;
+            View row = inputRow(in);
+            if (first) row.setTag("first");
+            first = false;
+            LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46));
+            rlp.topMargin = p.getChildCount() == 0 ? 0 : dp(4);
+            p.addView(row, rlp);
+        }
+        if (first) {
+            TextView none = text(getString(R.string.no_inputs), 14, false, getColorStateList(R.drawable.glass_subtext));
+            none.setPadding(dp(14), dp(14), dp(14), dp(14));
+            p.addView(none);
+        }
+        return p;
+    }
+
+    private View inputRow(TvInputs.Input in) {
+        LinearLayout r = new LinearLayout(this);
+        r.setOrientation(LinearLayout.HORIZONTAL);
+        r.setGravity(Gravity.CENTER_VERTICAL);
+        r.setPadding(dp(14), 0, dp(14), 0);
+        tile(r, v -> {
+            if (TvInputs.open(this, in)) finish();
+            else Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show();
+        });
+        r.addView(icon(in.icon(), 20, glassText()));
+        TextView title = text(in.label, 15, true, glassText());
+        title.setMaxLines(1);
+        title.setPadding(dp(12), 0, dp(10), 0);
+        r.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        if (in.state == TvInputs.CONNECTED) {
+            View dot = new View(this);
+            GradientDrawable g = new GradientDrawable();
+            g.setShape(GradientDrawable.OVAL);
+            g.setColor(0xFF30D158);
+            dot.setBackground(g);
+            LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(dp(7), dp(7));
+            dlp.setMarginEnd(dp(7));
+            r.addView(dot, dlp);
+            r.addView(text(getString(R.string.connected), 11, false, getColorStateList(R.drawable.glass_subtext)));
+        }
+        return r;
     }
 
     // ---- volume ------------------------------------------------------------------------------------
