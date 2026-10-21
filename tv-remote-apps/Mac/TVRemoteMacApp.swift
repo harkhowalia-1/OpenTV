@@ -12,6 +12,8 @@ struct TVRemoteMacApp: App {
     @ObservedObject private var display = Services.display
     @ObservedObject private var bridge = PointerBridge.shared
 
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
     init() {
         Services.start()
     }
@@ -222,5 +224,13 @@ enum ManagerWindow {
     @MainActor
     static func show() {
         _ = Windows.show("manager", title: "TV Manager", size: NSSize(width: 860, height: 600)) { ManagerView() }
+    }
+}
+
+/// One app: clicking OpenTV Companion in the Dock or opening it again from Finder or Launchpad shows the TV Manager.
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        MainActor.assumeIsolated { ManagerWindow.show() }
+        return true
     }
 }
