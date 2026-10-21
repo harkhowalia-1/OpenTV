@@ -29,6 +29,7 @@
 		82383E22068058C2DC2E5605 /* RemoteClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D15003BFCB253BEEF2F9D87C /* RemoteClient.swift */; };
 		8358C23A50C87C7D805D8300 /* Installer.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EF34A0C2E18520D6AB08490B /* Installer.xcassets */; };
 		996C7A929E35708C55A08A2E /* ControlChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E330D43EA9C760574CB68FE /* ControlChannel.swift */; };
+		A2FEF85245D6391F15227808 /* RemoteIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = DC71C591851CB6D328070F77 /* RemoteIcon.icon */; };
 		B43A79B07987F953811042D3 /* PointerBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDA3B77452957EF29ED411FE /* PointerBridge.swift */; };
 		B70DC5C590CEC98F6E34D41C /* RemoteClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D15003BFCB253BEEF2F9D87C /* RemoteClient.swift */; };
 		BA56B5BDF651BA8C3B9E3D60 /* TabSender.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEE20E18D0305B83081D9595 /* TabSender.swift */; };
@@ -112,6 +113,7 @@
 		D153EE2F08BD23A5B40DCE0E /* Shortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shortcuts.swift; sourceTree = "<group>"; };
 		D27992DE5333F667EE810AAE /* TrayIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrayIcon.swift; sourceTree = "<group>"; };
 		D3FF676E62E89F0BE73DEAE3 /* VolumeButtons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeButtons.swift; sourceTree = "<group>"; };
+		DC71C591851CB6D328070F77 /* RemoteIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = wrapper.icon; path = RemoteIcon.icon; sourceTree = "<group>"; };
 		DCE79915A6B00DD3018DBA04 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		DFE96D2559B330E2D31D8D87 /* TVRemote.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TVRemote.entitlements; sourceTree = "<group>"; };
 		E1E891DC6B0F1EF404454AD4 /* TVControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVControls.swift; sourceTree = "<group>"; };
@@ -168,6 +170,7 @@
 				EF34A0C2E18520D6AB08490B /* Installer.xcassets */,
 				391EDD60295DDF75B335E97B /* iOS.xcassets */,
 				BD873AFF8EFD56CDC218F89A /* Mac.xcassets */,
+				DC71C591851CB6D328070F77 /* RemoteIcon.icon */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -414,6 +417,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A2FEF85245D6391F15227808 /* RemoteIcon.icon in Resources */,
 				C66AF969E533CA78D8575910 /* iOS.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -524,7 +528,7 @@
 		2BEC5CDAED92E68D627E7844 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = RemoteIcon;
 				CODE_SIGN_ENTITLEMENTS = iOS/TVRemote.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = iOS/Info.plist;
@@ -790,7 +794,7 @@
 		FDA805FBBC1F5271E398EEB5 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = RemoteIcon;
 				CODE_SIGN_ENTITLEMENTS = iOS/TVRemote.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = iOS/Info.plist;
