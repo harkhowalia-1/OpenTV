@@ -98,10 +98,10 @@ private struct IntroPage: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Welcome to OpenTV").font(.largeTitle.bold())
-            Text("OpenTV turns an Android TV or Google TV into something that looks and works like an Apple TV, with an iPhone remote and a Mac that works with it.")
+            Text("Your Android TV experience, reimagined: a fast, beautiful home screen, your iPhone as the remote, and a Mac that works hand in hand with your TV.")
                 .font(.title3).foregroundStyle(.secondary)
             VStack(alignment: .leading, spacing: 10) {
-                Feature(icon: "tv", title: "OtvOS", text: "A tvOS-style home screen, Control Center, profiles, Apple Home, and the TV as a display for your Mac.")
+                Feature(icon: "tv", title: "OtvOS", text: "A new home screen with Control Center, profiles, Apple Home, and the TV as a display for your Mac.")
                 Feature(icon: "antenna.radiowaves.left.and.right", title: "IPTV", text: "Free live channels from around the world, with favourites.")
                 Feature(icon: "airplayvideo", title: "AirPlay", text: "Play from your iPhone, iPad or Mac.")
                 Feature(icon: "menubar.rectangle", title: "OpenTV Companion", text: "Remote, TV as Display, Send to TV and the TV Manager, in this Mac's menu bar.")
@@ -202,7 +202,7 @@ private struct ComponentsPage: View {
             Text("What to install").font(.title.bold())
             Text("On \(setup.device?.title ?? "the TV"). The newest version of everything is downloaded.")
                 .foregroundStyle(.secondary)
-            Toggle(isOn: .constant(true)) { Choice(title: "OtvOS", text: "The home screen and everything that makes the TV work like an Apple TV. Required.") }
+            Toggle(isOn: .constant(true)) { Choice(title: "OtvOS", text: "The new home screen and everything that comes with it. Required.") }
                 .disabled(true)
             Toggle(isOn: $setup.installIPTV) { Choice(title: "IPTV", text: "Free live TV channels from every country.") }
             Toggle(isOn: $setup.installAirPlay) { Choice(title: "AirPlay receiver", text: "Play and mirror from Apple devices (open-source UxPlay, from F-Droid).") }

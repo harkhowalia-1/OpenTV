@@ -54,6 +54,10 @@ final class ADB: ObservableObject {
             self?.pairingAvailable = e != nil
         }
         Task { await refresh() }
+        // Wi-Fi links drop (the TV sleeps, the app restarts): check again every few seconds.
+        Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { [weak self] _ in
+            Task { @MainActor in await self?.refresh() }
+        }
     }
 
     private func browse(_ type: String, found: @escaping @MainActor (NWEndpoint?) -> Void) -> NWBrowser {
