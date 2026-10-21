@@ -73,7 +73,7 @@ internal sealed class ScreenCapture : IDisposable
 
         // The device must live on the GPU that drives this monitor, or duplication fails (hybrid laptops).
         D3D11.D3D11CreateDevice(adapter, DriverType.Unknown, DeviceCreationFlags.BgraSupport | DeviceCreationFlags.VideoSupport,
-            [FeatureLevel.Level_11_1, FeatureLevel.Level_11_0, FeatureLevel.Level_10_1], out var device, out var context).CheckError();
+            [FeatureLevel.Level_11_1, FeatureLevel.Level_11_0, FeatureLevel.Level_10_1], out ID3D11Device? device, out ID3D11DeviceContext? context).CheckError();
         Device = device!;
         Context = context!;
         using (var mt = Device.QueryInterface<ID3D11Multithread>()) mt.SetMultithreadProtected(true);   // Media Foundation shares it

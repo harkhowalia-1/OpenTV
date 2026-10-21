@@ -14,6 +14,8 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
+  issues: write
 
 jobs:
   build:
@@ -41,7 +43,7 @@ jobs:
         run: dotnet run --project windows-app/tests/OpenTV.ProtocolTest -c Release -- --offline
 
       - name: Build
-        run: dotnet build windows-app/src/OpenTV.Windows -c Release -p:Version=${{ steps.version.outputs.value }}
+        run: dotnet build windows-app/src/OpenTV.Windows -c Release -p:Version=${{ steps.version.outputs.value }} "-flp:errorsonly;logfile=build-errors.log"
 
       - name: Publish OpenTV.exe
         run: >
@@ -56,6 +58,21 @@ jobs:
         with:
           name: OpenTV-Windows
           path: OpenTV-Windows.zip
+
+      # GitHub shows only the first 10 errors as annotations: put the whole list on the pull request.
+      - name: Report build errors
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          if (-not (Test-Path build-errors.log)) { exit 0 }
+          $root = [regex]::Escape("$env:GITHUB_WORKSPACE\")
+          $lines = Get-Content build-errors.log | ForEach-Object { ($_ -replace $root, '') -replace ' \[[^\]]+\.csproj\]$', '' } | Sort-Object -Unique | Select-Object -First 200
+          $fence = '```'
+          $body = "Build errors ($($lines.Count)):`n$fence`n" + ($lines -join "`n") + "`n$fence"
+          Set-Content -Path comment.md -Value $body -Encoding utf8
+          gh api "repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" -F body=@comment.md
 
       - name: Attach to the release
         if: github.event_name == 'release'
