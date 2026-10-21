@@ -1,0 +1,52 @@
+name: OtvOS and IPTV
+
+# Compiles the TV apps (release build, as scripts/release.sh makes them) on every change to them. The APKs
+# here are signed with the runner's throwaway debug key, so they're for checking the build, not for TVs:
+# releases come from scripts/release.sh, signed with the same key as the installed apps.
+on:
+  push:
+    branches: [main]
+    paths: ["launcher-source/**", ".github/workflows/tv-apps.yml"]
+  pull_request:
+    paths: ["launcher-source/**", ".github/workflows/tv-apps.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # the last release tag names development builds
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Build OtvOS and IPTV
+        working-directory: launcher-source
+        run: |
+          set -o pipefail
+          ./gradlew --no-daemon assembleRelease -PotvVersion=0.0.${{ github.run_number }} 2>&1 | tee ../build.log
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tv-apps
+          path: |
+            launcher-source/app/build/outputs/apk/release/*.apk
+            launcher-source/otvlive/build/outputs/apk/release/*.apk
+
+      - name: Report build errors
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [ -f build.log ] || exit 0
+          { echo "TV apps build errors:"; echo '```'; grep -E "error:|e: |FAILURE|What went wrong" -A3 build.log | sed "s|$GITHUB_WORKSPACE/||" | head -150; echo '```'; } > comment.md
+          gh api "repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" -F body=@comment.md

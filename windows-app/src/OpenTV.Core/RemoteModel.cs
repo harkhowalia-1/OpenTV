@@ -52,6 +52,9 @@ public sealed class RemoteModel : IDisposable
     public TvDevice? Tv { get; private set; }
     public RemotePhase Phase { get; private set; } = RemotePhase.Searching;
     public NowPlaying? NowPlaying { get; private set; }
+
+    /// <summary>The TV has HDMI or other inputs (not a Chromecast): the remote shows an Inputs button.</summary>
+    public bool HasInputs { get; private set; }
     public string? Error { get; set; }
     public TvStore Store => store;
 
@@ -138,6 +141,7 @@ public sealed class RemoteModel : IDisposable
         try
         {
             var hello = await new RemoteClient(route, store.Token(route)).HelloAsync().ConfigureAwait(true);
+            HasInputs = hello.Inputs;
             if (Tv is { } t && (hello.Name != t.Name || (hello.Id is not null && hello.Id != t.TvId)))
             {
                 var token = store.Token(t);
@@ -207,6 +211,7 @@ public sealed class RemoteModel : IDisposable
     {
         Update(tv);
         NowPlaying = null;
+        HasInputs = false;
         Phase = store.Token(tv) is null ? RemotePhase.Pairing : RemotePhase.Offline;
         Reconnect();
         Notify();
@@ -220,6 +225,7 @@ public sealed class RemoteModel : IDisposable
         store.Tv = null;
         Tv = null;
         NowPlaying = null;
+        HasInputs = false;
         Phase = RemotePhase.Searching;
         Notify();
         browser.Refresh();

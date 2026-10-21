@@ -166,6 +166,7 @@ final class ControlServer {
                 JSONObject hello = new JSONObject();
                 hello.put("name", MainActivity.tvName(ctx));
                 hello.put("id", RemoteServer.tvId(ctx));
+                hello.put("inputs", TvInputs.available(ctx));
                 send(WELCOME, hello.toString().getBytes(StandardCharsets.UTF_8));
                 while (running) {
                     int len = in.readUnsignedShort();

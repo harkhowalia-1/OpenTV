@@ -168,7 +168,7 @@ struct MenuRemote: View {
             Image(systemName: "keyboard")
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)
-                .help("Arrow keys move, Return selects, Esc goes back, Space plays or pauses, H goes Home, C opens Control Center")
+                .help("Arrow keys move, Return selects, Esc goes back, Space plays or pauses, H goes Home, C opens Control Center, I opens Inputs")
             Spacer()
             Button("Quit") { NSApp.terminate(nil) }
                 .buttonStyle(.plain)
@@ -208,6 +208,7 @@ struct MenuRemote: View {
             switch press.characters {
             case "h": key = .home
             case "c": key = .control
+            case "i": key = .inputs
             case "m": key = .mute
             case "=", "+": key = .volup
             case "-": key = .voldown

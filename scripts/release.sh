@@ -14,7 +14,7 @@ export JAVA_HOME="${JAVA_HOME:-$(/usr/libexec/java_home -v 17 2>/dev/null || ech
 export ANDROID_HOME="${ANDROID_HOME:-$([ -d ~/Library/Android/sdk ] && echo ~/Library/Android/sdk || echo /opt/homebrew/share/android-commandlinetools)}"
 
 echo "▸ TV apps"
-(cd launcher-source && ./gradlew -q assembleRelease)
+(cd launcher-source && ./gradlew -q assembleRelease -PotvVersion="$VERSION")
 cp launcher-source/app/build/outputs/apk/release/app-release.apk "$OUT/OtvOS.apk"
 cp launcher-source/otvlive/build/outputs/apk/release/otvlive-release.apk "$OUT/IPTV.apk"
 

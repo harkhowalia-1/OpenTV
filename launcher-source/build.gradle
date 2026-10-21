@@ -1,3 +1,37 @@
 plugins {
     id 'com.android.application' version '8.5.2' apply false
 }
+
+// The apps' version comes from the release: scripts/release.sh passes -PotvVersion=1.3, and OtvOS Update
+// compares versionCodes made the same way (Updater.codeFor): 1.3 → 10300, 1.3.2 → 10302. A build without it
+// (scripts/install-tv.sh, Android Studio) is "<last release>-dev", one step above that release.
+long otvCode(String version) {
+    def parts = version.replaceFirst(/^[vV]/, '').split(/[.\-+ ]/)
+    long code = 0
+    for (int i = 0; i < 3; i++) {
+        long n = 0
+        if (i < parts.length && parts[i].isLong()) n = Math.min(99L, Math.max(0L, parts[i].toLong()))
+        code = code * 100 + n
+    }
+    return code
+}
+
+def lastTag = { ->
+    try {
+        def p = ['git', 'describe', '--tags', '--abbrev=0'].execute(null, rootDir)
+        p.waitFor()
+        return p.exitValue() == 0 ? p.text.trim() : null
+    } catch (Exception ignored) {
+        return null
+    }
+}
+
+def release = findProperty('otvVersion')?.toString()?.replaceFirst(/^[vV]/, '')
+if (release) {
+    ext.otvVersionName = release
+    ext.otvVersionCode = (int) otvCode(release)
+} else {
+    def tag = lastTag()
+    ext.otvVersionName = tag ? tag.replaceFirst(/^[vV]/, '') + '-dev' : 'dev'
+    ext.otvVersionCode = (int) Math.max(1L, (tag ? otvCode(tag) : 0L) + 1)
+}
