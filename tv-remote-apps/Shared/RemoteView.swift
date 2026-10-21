@@ -360,9 +360,10 @@ struct SearchingView: View {
     var body: some View {
         VStack(spacing: 18) {
             Spacer(minLength: 0)
-            Image(systemName: "appletvremote.gen4.fill")
-                .font(.system(size: 54, weight: .light))
-                .foregroundStyle(.white.opacity(0.85))
+            Image("RemoteGlyph")   // the app icon's remote
+                .resizable()
+                .scaledToFit()
+                .frame(height: 64)
             Text(model.found.isEmpty ? "Looking for your TV…" : "Choose your TV")
                 .font(.system(size: 20, weight: .semibold))
             if model.found.isEmpty {
@@ -414,9 +415,10 @@ struct PairingView: View {
     var body: some View {
         VStack(spacing: 18) {
             Spacer(minLength: 0)
-            Image(systemName: "appletvremote.gen4.fill")
-                .font(.system(size: 50, weight: .light))
-                .foregroundStyle(.white.opacity(0.85))
+            Image("RemoteGlyph")   // the app icon's remote
+                .resizable()
+                .scaledToFit()
+                .frame(height: 64)
             Text("Connect to \(model.tv?.name ?? "TV")")
                 .font(.system(size: 20, weight: .semibold))
                 .multilineTextAlignment(.center)
