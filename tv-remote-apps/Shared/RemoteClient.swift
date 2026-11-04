@@ -166,6 +166,35 @@ struct RemoteClient: Sendable {
         return NowPlaying(title: title, artist: o["artist"] as? String ?? "", playing: o["playing"] as? Bool ?? false)
     }
 
+    /// Makes a picture the TV's wallpaper (kept in its Your Pictures). JPEG, PNG or HEIC, any size.
+    func uploadWallpaper(_ image: Data, name: String) async throws {
+        try await upload("wallpaper", image, name: name)
+    }
+
+    /// A macOS dynamic wallpaper: "OTVD", u16 count, then u16 minute of day, u32 length, JPEG for each picture.
+    func uploadDynamicWallpaper(_ packed: Data, name: String) async throws {
+        try await upload("wallpaper/dynamic", packed, name: name)
+    }
+
+    private func upload(_ path: String, _ body: Data, name: String) async throws {
+        let n = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "Picture"
+        var r = URLRequest(url: URL(string: "http://\(tv.host):\(tv.port)/api/\(path)?name=\(n)")!)
+        r.httpMethod = "POST"
+        r.timeoutInterval = 120
+        if let token = TVStore.token(for: tv) { r.setValue(token, forHTTPHeaderField: "X-Token") }
+        r.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
+        let (_, resp) = try await URLSession.shared.upload(for: r, from: body)
+        let status = (resp as? HTTPURLResponse)?.statusCode ?? 0
+        if status == 401 { throw RemoteError.notPaired }
+        guard status == 200 else { throw RemoteError.unreachable }
+    }
+
+    /// The TV screen's real size in pixels (3840 on a 4K TV).
+    func screenWidth() async -> Int {
+        guard let o = try? await call(request("hello", method: "GET")) else { return 3840 }
+        return o["screenWidth"] as? Int ?? 1920
+    }
+
     /// Every app on the TV, for the Mac's TV Manager.
     func apps() async throws -> [TVApp] {
         let o = try await call(request("apps", method: "GET"))

@@ -60,6 +60,15 @@ public class HomeKeyService extends AccessibilityService implements RemoteServer
         }
     };
 
+    /** Hourly: Bing's new picture each day, old downloads tidied away, dynamic wallpapers kept on time. */
+    private final Runnable wallpapers = new Runnable() {
+        @Override
+        public void run() {
+            new Thread(() -> Wallpapers.refresh(HomeKeyService.this), "otv-wallpaper").start();
+            handler.postDelayed(this, 60 * 60 * 1000);
+        }
+    };
+
     private final Runnable longPress = () -> {
         homeDown = false;
         ControlCenterActivity.toggle(this);
@@ -79,6 +88,7 @@ public class HomeKeyService extends AccessibilityService implements RemoteServer
         screen.start();
         // New releases from GitHub install themselves: a few minutes after start, then every six hours.
         handler.postDelayed(autoUpdate, 3 * 60 * 1000);
+        handler.postDelayed(wallpapers, 60 * 1000);
         // The Mac's two-finger click is the Home button.
         pointer = new PointerOverlay(this, () -> handler.post(this::goHome));
         // A Google account added or removed anywhere on the TV gets (or loses) its profile straight away.
@@ -93,6 +103,7 @@ public class HomeKeyService extends AccessibilityService implements RemoteServer
     @Override
     public void onDestroy() {
         handler.removeCallbacks(autoUpdate);
+        handler.removeCallbacks(wallpapers);
         if (current == this) current = null;
         if (remote != null) remote.stop();
         if (appleHome != null) appleHome.stop();

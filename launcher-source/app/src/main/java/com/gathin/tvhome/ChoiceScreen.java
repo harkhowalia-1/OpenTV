@@ -19,7 +19,7 @@ import android.widget.TextView;
  */
 abstract class ChoiceScreen extends Activity {
 
-    private LinearLayout cards;
+    private LinearLayout cards, rows;
     private TextView note;
 
     int dp(float v) {
@@ -43,6 +43,38 @@ abstract class ChoiceScreen extends Activity {
         s.setTextSize(15);
         s.setPadding(0, dp(6), 0, dp(28));
         root.addView(s);
+        android.widget.ScrollView vertical = new android.widget.ScrollView(this);
+        vertical.setVerticalScrollBarEnabled(false);
+        vertical.setClipToPadding(false);
+        rows = new LinearLayout(this);
+        rows.setOrientation(LinearLayout.VERTICAL);
+        rows.setClipChildren(false);
+        vertical.addView(rows);
+        root.addView(vertical, new LinearLayout.LayoutParams(-1, 0, 1));
+        newRow(null);
+        note = new TextView(this);
+        note.setTextColor(0x99FFFFFF);
+        note.setTextSize(15);
+        note.setPadding(0, dp(24), 0, 0);
+        root.addView(note);
+        setContentView(root);
+    }
+
+    /** Starts a new row of cards under a heading. */
+    void section(String heading) {
+        newRow(heading);
+    }
+
+    private void newRow(String heading) {
+        if (heading != null) {
+            TextView h = new TextView(this);
+            h.setText(heading);
+            h.setTextColor(0xE6FFFFFF);
+            h.setTextSize(18);
+            h.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+            h.setPadding(0, dp(18), 0, 0);
+            rows.addView(h);
+        }
         HorizontalScrollView scroll = new HorizontalScrollView(this);
         scroll.setHorizontalScrollBarEnabled(false);
         scroll.setClipToPadding(false);
@@ -50,13 +82,12 @@ abstract class ChoiceScreen extends Activity {
         cards = new LinearLayout(this);
         cards.setClipChildren(false);
         scroll.addView(cards);
-        root.addView(scroll);
-        note = new TextView(this);
-        note.setTextColor(0x99FFFFFF);
-        note.setTextSize(15);
-        note.setPadding(0, dp(24), 0, 0);
-        root.addView(note);
-        setContentView(root);
+        rows.addView(scroll);
+    }
+
+    /** The card's picture, to fill in once a preview has loaded. */
+    static ImageView picture(View card) {
+        return card.findViewWithTag("pic");
     }
 
     void note(String text) {
@@ -75,12 +106,11 @@ abstract class ChoiceScreen extends Activity {
         bg.setColor(fill);
         tile.setBackground(bg);
         tile.setClipToOutline(true);
-        if (picture != null) {
-            ImageView iv = new ImageView(this);
-            iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            iv.setImageDrawable(picture);
-            tile.addView(iv, new FrameLayout.LayoutParams(-1, -1));
-        }
+        ImageView iv = new ImageView(this);
+        iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        iv.setTag("pic");
+        if (picture != null) iv.setImageDrawable(picture);
+        tile.addView(iv, new FrameLayout.LayoutParams(-1, -1));
         if (current) {
             TextView tick = new TextView(this);
             tick.setText("✓");

@@ -248,23 +248,109 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     private String shownWallpaper;
+    private android.view.TextureView aerialView;
+    private android.media.MediaPlayer aerial;
+    private String aerialUrl;
+    private final Runnable wallpaperTick = new Runnable() {
+        @Override
+        public void run() {
+            // Dynamic wallpapers follow the time of day; Bing changes each morning.
+            new Thread(() -> {
+                Wallpapers.refresh(MainActivity.this);
+                runOnUiThread(MainActivity.this::applyWallpaper);
+            }, "otv-wallpaper").start();
+            handler.postDelayed(this, 5 * 60 * 1000);
+        }
+    };
 
-    /** Draws the wallpaper chosen in Settings (only when it changed), or nothing for the colour glow. */
+    /** Draws the chosen wallpaper (only when it changed): a still, or a live aerial over its still. */
     private void applyWallpaper() {
-        String pref = getSharedPreferences("home", MODE_PRIVATE).getString(WallpaperActivity.PREF, "");
-        java.io.File f = WallpaperActivity.file(this);
-        String key = pref.isEmpty() || !f.exists() ? "" : pref + f.lastModified();
-        if (key.equals(shownWallpaper)) return;
-        shownWallpaper = key;
+        String kind = Wallpapers.kind(this);
+        java.io.File f = Wallpapers.current(this);
+        String key = kind.isEmpty() || !f.exists() ? "" : kind + f.lastModified();
         android.widget.ImageView wall = findViewById(R.id.wallpaper);
-        if (key.isEmpty()) {
-            wall.setImageDrawable(null);
-            wall.setVisibility(View.GONE);
+        if (!key.equals(shownWallpaper)) {
+            shownWallpaper = key;
+            if (key.isEmpty()) {
+                wall.setImageDrawable(null);
+                wall.setVisibility(View.GONE);
+            } else {
+                android.graphics.BitmapFactory.Options o = new android.graphics.BitmapFactory.Options();
+                o.inPreferredConfig = android.graphics.Bitmap.Config.RGB_565;
+                wall.setImageBitmap(android.graphics.BitmapFactory.decodeFile(f.getPath(), o));
+                wall.setColorFilter(0x59000000, android.graphics.PorterDuff.Mode.SRC_ATOP);
+                wall.setVisibility(View.VISIBLE);
+            }
+        }
+        playAerial(Wallpapers.video(this));
+    }
+
+    /** A live aerial: plays muted and looping behind the apps, only while Home is showing. */
+    private void playAerial(String url) {
+        View scrim = findViewById(R.id.root).findViewWithTag("aerialScrim");
+        if (url == null) {
+            stopAerial();
+            if (aerialView != null) aerialView.setVisibility(View.GONE);
+            if (scrim != null) scrim.setVisibility(View.GONE);
             return;
         }
-        wall.setImageBitmap(android.graphics.BitmapFactory.decodeFile(f.getPath()));
-        wall.setColorFilter(0x66000000, android.graphics.PorterDuff.Mode.SRC_ATOP);
-        wall.setVisibility(View.VISIBLE);
+        if (scrim != null) scrim.setVisibility(View.VISIBLE);
+        if (aerialView == null) {
+            aerialView = new android.view.TextureView(this);
+            aerialView.setAlpha(0f);
+            android.view.ViewGroup root = findViewById(R.id.root);
+            root.addView(aerialView, 1, new android.widget.FrameLayout.LayoutParams(-1, -1));
+            View dim = new View(this);
+            dim.setBackgroundColor(0x59000000);
+            dim.setTag("aerialScrim");
+            root.addView(dim, 2, new android.widget.FrameLayout.LayoutParams(-1, -1));
+        }
+        aerialView.setVisibility(View.VISIBLE);
+        if (aerial != null && url.equals(aerialUrl)) {
+            if (!aerial.isPlaying()) aerial.start();
+            return;
+        }
+        stopAerial();
+        aerialUrl = url;
+        Runnable start = () -> {
+            try {
+                android.media.MediaPlayer mp = new android.media.MediaPlayer();
+                aerial = mp;
+                mp.setSurface(new android.view.Surface(aerialView.getSurfaceTexture()));
+                mp.setDataSource(url);
+                mp.setLooping(true);
+                mp.setVolume(0f, 0f);
+                mp.setOnPreparedListener(p -> {
+                    p.start();
+                    aerialView.animate().alpha(1f).setDuration(800).start();
+                });
+                mp.setOnErrorListener((p, w, e) -> true);   // the still stays up
+                mp.prepareAsync();
+            } catch (Exception ignored) {
+            }
+        };
+        if (aerialView.isAvailable()) {
+            start.run();
+        } else {
+            aerialView.setSurfaceTextureListener(new android.view.TextureView.SurfaceTextureListener() {
+                @Override public void onSurfaceTextureAvailable(android.graphics.SurfaceTexture t, int w, int h) { start.run(); }
+                @Override public void onSurfaceTextureSizeChanged(android.graphics.SurfaceTexture t, int w, int h) { }
+                @Override public boolean onSurfaceTextureDestroyed(android.graphics.SurfaceTexture t) { stopAerial(); return true; }
+                @Override public void onSurfaceTextureUpdated(android.graphics.SurfaceTexture t) { }
+            });
+        }
+    }
+
+    private void stopAerial() {
+        if (aerial != null) {
+            try {
+                aerial.release();
+            } catch (Exception ignored) {
+            }
+            aerial = null;
+            aerialUrl = null;
+        }
+        if (aerialView != null) aerialView.setAlpha(0f);
     }
 
     @Override
@@ -273,6 +359,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         resumedAt = SystemClock.uptimeMillis();
         Profiles.syncAccounts(this);
         applyWallpaper();
+        handler.removeCallbacks(wallpaperTick);
+        handler.postDelayed(wallpaperTick, 1000);
         glassShown = false;
         glass.setAlpha(0f);
         heroShown = false;
@@ -302,6 +390,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         super.onPause();
         statusSlot.setVisibility(View.INVISIBLE);   // a panel on top draws its own pill in the same spot
         handler.removeCallbacks(minuteTick);
+        handler.removeCallbacks(wallpaperTick);
+        if (aerial != null && aerial.isPlaying()) aerial.pause();   // no video while an app is in front
     }
 
     @Override

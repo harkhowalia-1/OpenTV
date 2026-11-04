@@ -192,6 +192,27 @@ final class RemoteModel: ObservableObject {
         TVStore.tv = tv
     }
 
+    // MARK: Wallpaper
+
+    @Published private(set) var sendingWallpaper = false
+
+    /// Sends a picture to the TV as its wallpaper, sized for the TV (full 4K on a 4K TV).
+    func sendWallpaper(_ data: Data, name: String) {
+        guard let route else { return }
+        sendingWallpaper = true
+        Task {
+            defer { sendingWallpaper = false }
+            let client = RemoteClient(tv: route)
+            let width = await client.screenWidth()
+            do {
+                try await client.uploadWallpaper(WallpaperImage.fit(data, width: width), name: name)
+                Haptics.tap()
+            } catch {
+                self.error = "The picture couldn't be sent to the TV."
+            }
+        }
+    }
+
     // MARK: Trackpad
 
     /// Moves the TV's cursor (bringing it up in the middle of the screen the first time).

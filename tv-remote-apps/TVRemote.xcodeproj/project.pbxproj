@@ -10,11 +10,14 @@
 		0293534B96C254113158A7B2 /* TVRemoteShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CCDB51C1CF0BB17615CA78A6 /* TVRemoteShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		0914BFAE03899EFD645FB28B /* Intents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91F4CE686612E7CC3B057977 /* Intents.swift */; };
 		111FB8D10E335166E8319686 /* TVControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E891DC6B0F1EF404454AD4 /* TVControls.swift */; };
+		1A6B88A8AF5D2D2E7F103494 /* WallpaperImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4FB49F3FE9806CD28D73BC7 /* WallpaperImage.swift */; };
+		2FF9C61933EEC678D23B82F8 /* MacWallpapers.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4729B8827DAC892F7BADDA5 /* MacWallpapers.swift */; };
 		3B0B1D6BECA7435E569F02EE /* USBLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A3163D50B921FFA9883C6DC /* USBLink.swift */; };
 		3B83BCCE61886CB236F2C00B /* scrcpy-server in Resources */ = {isa = PBXBuildFile; fileRef = A0B4C3A14807EBBBD76BC3D1 /* scrcpy-server */; };
 		3EDD92B516D96ABB891A8258 /* ControlChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E330D43EA9C760574CB68FE /* ControlChannel.swift */; };
 		410EC854AA486D5FEED0F6CF /* VolumeButtons.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3FF676E62E89F0BE73DEAE3 /* VolumeButtons.swift */; };
 		42F9D2C3169EEFEC8EEE85E3 /* TVManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2BD3E396CE46AF081278C30 /* TVManager.swift */; };
+		47CB1AF8A4555A83C36CAD0C /* WallpaperImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4FB49F3FE9806CD28D73BC7 /* WallpaperImage.swift */; };
 		5568B9AD0CE8CC863D59D08F /* TVMirror.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AE29995596301E8DDBE02AD /* TVMirror.swift */; };
 		563A55AC882860988D81CDCD /* RemoteModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2C565855A45AAB61E37DD9 /* RemoteModel.swift */; };
 		57A7F3660CC58DCEE0DE5424 /* Setup.swift in Sources */ = {isa = PBXBuildFile; fileRef = F70E809DF723719B506F0D6E /* Setup.swift */; };
@@ -104,8 +107,10 @@
 		9AE29995596301E8DDBE02AD /* TVMirror.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVMirror.swift; sourceTree = "<group>"; };
 		9FA67227FE61067232CDF1E8 /* ADB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ADB.swift; sourceTree = "<group>"; };
 		A0B4C3A14807EBBBD76BC3D1 /* scrcpy-server */ = {isa = PBXFileReference; path = "scrcpy-server"; sourceTree = "<group>"; };
+		B4729B8827DAC892F7BADDA5 /* MacWallpapers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacWallpapers.swift; sourceTree = "<group>"; };
 		B5D81D9300445997999E3EF5 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		BD873AFF8EFD56CDC218F89A /* Mac.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Mac.xcassets; sourceTree = "<group>"; };
+		C4FB49F3FE9806CD28D73BC7 /* WallpaperImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WallpaperImage.swift; sourceTree = "<group>"; };
 		CCDB51C1CF0BB17615CA78A6 /* TVRemoteShare.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = TVRemoteShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		CDA3B77452957EF29ED411FE /* PointerBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointerBridge.swift; sourceTree = "<group>"; };
 		CEE20E18D0305B83081D9595 /* TabSender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabSender.swift; sourceTree = "<group>"; };
@@ -131,6 +136,7 @@
 				9FA67227FE61067232CDF1E8 /* ADB.swift */,
 				0560BEA2CEA100A74E2C7BBD /* DisplayStreamer.swift */,
 				3E4DFDDD67AE7CD8F4743AAE /* Info.plist */,
+				B4729B8827DAC892F7BADDA5 /* MacWallpapers.swift */,
 				CDA3B77452957EF29ED411FE /* PointerBridge.swift */,
 				33F9C485FE10AF6B5D1C4DAD /* StreamSocket.swift */,
 				CEE20E18D0305B83081D9595 /* TabSender.swift */,
@@ -242,6 +248,7 @@
 				D15003BFCB253BEEF2F9D87C /* RemoteClient.swift */,
 				1A2C565855A45AAB61E37DD9 /* RemoteModel.swift */,
 				989406DA19F06477DFEBA75D /* RemoteView.swift */,
+				C4FB49F3FE9806CD28D73BC7 /* WallpaperImage.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -437,6 +444,7 @@
 				5F4F454FA1E6F679415F7E58 /* Shortcuts.swift in Sources */,
 				57CCB7DD7D5F556D57958A18 /* TVRemoteApp.swift in Sources */,
 				410EC854AA486D5FEED0F6CF /* VolumeButtons.swift in Sources */,
+				47CB1AF8A4555A83C36CAD0C /* WallpaperImage.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -476,6 +484,7 @@
 				BB7EAF6990F83D82DA2837F7 /* ADB.swift in Sources */,
 				996C7A929E35708C55A08A2E /* ControlChannel.swift in Sources */,
 				7C49CD427E53F5BCEB8617BD /* DisplayStreamer.swift in Sources */,
+				2FF9C61933EEC678D23B82F8 /* MacWallpapers.swift in Sources */,
 				B43A79B07987F953811042D3 /* PointerBridge.swift in Sources */,
 				82383E22068058C2DC2E5605 /* RemoteClient.swift in Sources */,
 				EC5FE9788ED182CE419949A4 /* RemoteModel.swift in Sources */,
@@ -487,6 +496,7 @@
 				BA56B5BDF651BA8C3B9E3D60 /* TabSender.swift in Sources */,
 				7821D8FB08D3BC99AACB1504 /* TrayIcon.swift in Sources */,
 				3B0B1D6BECA7435E569F02EE /* USBLink.swift in Sources */,
+				1A6B88A8AF5D2D2E7F103494 /* WallpaperImage.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

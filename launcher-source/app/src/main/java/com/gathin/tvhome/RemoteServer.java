@@ -119,10 +119,9 @@ final class RemoteServer {
 
     private void handle(Socket s) {
         try (Socket sock = s) {
-            sock.setSoTimeout(8000);
-            InputStream in = sock.getInputStream();
-            BufferedReader r = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-            String requestLine = r.readLine();
+            sock.setSoTimeout(15000);
+            java.io.BufferedInputStream in = new java.io.BufferedInputStream(sock.getInputStream(), 16384);
+            String requestLine = readLine(in);
             if (requestLine == null) return;
             String[] parts = requestLine.split(" ");
             if (parts.length < 2) return;
@@ -130,32 +129,58 @@ final class RemoteServer {
             String path = parts[1];
             Map<String, String> headers = new HashMap<>();
             String line;
-            while ((line = r.readLine()) != null && !line.isEmpty()) {
+            while ((line = readLine(in)) != null && !line.isEmpty()) {
                 int c = line.indexOf(':');
                 if (c > 0) headers.put(line.substring(0, c).trim().toLowerCase(Locale.ROOT), line.substring(c + 1).trim());
             }
-            String body = "";
+            // Wallpapers are pictures (up to 64 MB for a dynamic set); everything else is small JSON.
+            int limit = path.startsWith("/api/wallpaper") ? 64 << 20 : 65536;
             int len = parseInt(headers.get("content-length"));
-            if (len > 0 && len < 65536) {
-                char[] buf = new char[len];
-                int got = 0;
-                while (got < len) {
-                    // Content-Length counts bytes and this counts chars, so stop once the body has drained.
-                    if (got > 0 && !r.ready()) break;
-                    int n = r.read(buf, got, len - got);
-                    if (n < 0) break;
-                    got += n;
-                }
-                body = new String(buf, 0, got);
+            byte[] raw = new byte[len > 0 && len <= limit ? len : 0];
+            int got = 0;
+            while (got < raw.length) {
+                int n = in.read(raw, got, raw.length - got);
+                if (n < 0) break;
+                got += n;
             }
-            route(sock.getOutputStream(), method, path, headers, body);
+            route(sock.getOutputStream(), method, path, headers, new String(raw, 0, got, StandardCharsets.UTF_8), raw);
         } catch (Exception e) {
             Log.w(TAG, "request failed", e);
         }
     }
 
-    private void route(OutputStream out, String method, String path, Map<String, String> headers, String body)
-            throws IOException {
+    /** One CRLF-terminated header line, as bytes off the stream (so a binary body after it stays intact). */
+    private static String readLine(InputStream in) throws IOException {
+        ByteArrayOutputStream b = new ByteArrayOutputStream();
+        int c;
+        while ((c = in.read()) >= 0) {
+            if (c == '\n') break;
+            if (c != '\r') b.write(c);
+            if (b.size() > 8192) break;
+        }
+        if (c < 0 && b.size() == 0) return null;
+        return b.toString("UTF-8");
+    }
+
+    private static String query(String path, String key) {
+        int q = path.indexOf('?');
+        if (q < 0) return null;
+        for (String kv : path.substring(q + 1).split("&")) {
+            int e = kv.indexOf('=');
+            if (e > 0 && kv.substring(0, e).equals(key)) {
+                try {
+                    return java.net.URLDecoder.decode(kv.substring(e + 1), "UTF-8");
+                } catch (Exception ex) {
+                    return kv.substring(e + 1);
+                }
+            }
+        }
+        return null;
+    }
+
+    private void route(OutputStream out, String method, String path, Map<String, String> headers, String body,
+                       byte[] raw) throws IOException {
+        String fullPath = path;
         int q = path.indexOf('?');
         if (q >= 0) path = path.substring(0, q);
 
@@ -178,6 +203,9 @@ final class RemoteServer {
                     o.put("paired", authorized(headers));
                     o.put("control", ControlServer.PORT);
                     o.put("display", ScreenReceiver.PORT);
+                    int[] screen = Wallpapers.screen(ctx);
+                    o.put("screenWidth", screen[0]);
+                    o.put("screenHeight", screen[1]);
                     json(out, 200, o);
                     return;
                 }
@@ -220,6 +248,14 @@ final class RemoteServer {
                 json(out, 200, new JSONObject().put("ok", true));
             } else if (path.equals("/api/state")) {
                 json(out, 200, state());
+            } else if (path.equals("/api/wallpaper") && raw.length > 0) {
+                // A picture from the iPhone or Mac becomes the wallpaper (kept in Your Pictures).
+                Wallpapers.saveUpload(ctx, query(fullPath, "name"), raw);
+                json(out, 200, new JSONObject().put("ok", true));
+            } else if (path.equals("/api/wallpaper/dynamic") && raw.length > 0) {
+                // A macOS dynamic wallpaper from the Mac: pictures for each time of day.
+                Wallpapers.saveDynamic(ctx, query(fullPath, "name"), raw);
+                json(out, 200, new JSONObject().put("ok", true));
             } else if (path.equals("/api/apps")) {
                 json(out, 200, new JSONObject().put("apps", apps()));
             } else if (path.startsWith("/api/icon/")) {

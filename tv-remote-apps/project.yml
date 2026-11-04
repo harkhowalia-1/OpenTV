@@ -105,6 +105,7 @@ targets:
       - Shared/ControlChannel.swift
       - Shared/RemoteModel.swift
       - Shared/RemoteView.swift
+      - Shared/WallpaperImage.swift
       - path: Mac
         excludes: ["*.h"]
       - path: Resources/Mac.xcassets

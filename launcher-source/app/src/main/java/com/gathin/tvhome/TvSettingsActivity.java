@@ -90,8 +90,7 @@ public class TvSettingsActivity extends Activity {
         row(list, R.drawable.ic_person, "Users and Accounts", Profiles.active(this),
                 new Intent(Settings.ACTION_SYNC_SETTINGS));
         row(list, R.drawable.ic_display, getString(R.string.wallpaper),
-                getSharedPreferences("home", MODE_PRIVATE).getString(WallpaperActivity.PREF, "").isEmpty()
-                        ? getString(R.string.wallpaper_glow) : getString(R.string.wallpaper_device),
+                wallpaperName(),
                 new Intent(this, WallpaperActivity.class));
         row(list, R.drawable.ic_screensaver, "Screen Saver", getString(R.string.dream_name),
                 new Intent("com.google.android.tv.settings.ambient"));
@@ -134,6 +133,17 @@ public class TvSettingsActivity extends Activity {
 
         setContentView(root);
         first.requestFocus();
+    }
+
+    /** "Bing Daily Wallpaper", "Apple TV Aerial", "Catalina (Dynamic)"… for the Wallpaper row. */
+    private String wallpaperName() {
+        String k = Wallpapers.kind(this);
+        if (k.isEmpty()) return getString(R.string.wallpaper_glow);
+        if (k.equals("bing")) return getString(R.string.wallpaper_bing);
+        if (k.startsWith("aerial:")) return "Apple TV Aerial";
+        if (k.startsWith("upload:")) return k.substring(7);
+        if (k.startsWith("dynamic:")) return k.substring(8) + " (" + getString(R.string.wallpaper_dynamic) + ")";
+        return getString(R.string.wallpaper_device);
     }
 
     private String versionName() {

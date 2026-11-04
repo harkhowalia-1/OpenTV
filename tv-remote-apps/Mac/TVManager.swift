@@ -302,12 +302,13 @@ enum Windows {
 
 struct ManagerView: View {
     enum Section: String, CaseIterable, Identifiable {
-        case overview = "Overview", apps = "Apps", tweaks = "Tweaks", files = "Files"
+        case overview = "Overview", apps = "Apps", wallpapers = "Wallpapers", tweaks = "Tweaks", files = "Files"
         var id: String { rawValue }
         var icon: String {
             switch self {
             case .overview: "tv"
             case .apps: "square.grid.2x2"
+            case .wallpapers: "photo.on.rectangle"
             case .tweaks: "slider.horizontal.3"
             case .files: "folder"
             }
@@ -332,6 +333,7 @@ struct ManagerView: View {
                     switch section ?? .overview {
                     case .overview: OverviewPane()
                     case .apps: AppsPane()
+                    case .wallpapers: WallpapersPane()
                     case .tweaks: TweaksPane()
                     case .files: FilesPane()
                     }

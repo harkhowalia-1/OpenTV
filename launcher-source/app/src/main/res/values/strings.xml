@@ -43,6 +43,16 @@
     <string name="wallpaper_sub">Choose what\'s behind your apps on the Home screen.</string>
     <string name="wallpaper_glow">Colour Glow</string>
     <string name="wallpaper_device">Device Wallpaper</string>
+    <string name="wallpaper_bing">Bing Daily Wallpaper</string>
+    <string name="wallpaper_yours">Your Pictures</string>
+    <string name="wallpaper_dynamic">Dynamic</string>
+    <string name="wallpaper_photos">Photos on This TV</string>
+    <string name="wallpaper_photos_allow">Show Photos on This TV</string>
+    <string name="wallpaper_photos_none">No photos on this TV yet</string>
+    <string name="wallpaper_aerials">Apple TV Aerials</string>
+    <string name="wallpaper_send">Send a photo from Otv Remote on your iPhone, or macOS wallpapers from OpenTV Companion on your Mac.</string>
+    <string name="wallpaper_setting">Setting wallpaper…</string>
+    <string name="wallpaper_failed">That wallpaper couldn\'t be set. Check the internet connection and try again.</string>
     <string name="wallpaper_none">This device has no built-in wallpapers, so the colour glow is the only choice.</string>
     <string name="inputs_sub">Switch the TV to another HDMI device.</string>
     <string name="inputs_none">This device can\'t switch the TV\'s inputs. Use the Input button on your TV\'s remote.</string>
