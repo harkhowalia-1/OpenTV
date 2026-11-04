@@ -28,7 +28,47 @@ final class Aerials {
     private static final long WEEK = 7L * 24 * 3600 * 1000;
 
     static final class Aerial {
-        String id, name, url1080, url4k, category;
+        String id, name, url1080, url4k;
+        /** tvOS's theme: Landscape, Cityscape, Earth or Underwater. */
+        String category;
+        /** Where the camera is, by second of the video (Apple's captions: "Over Midtown Manhattan…"). */
+        final java.util.TreeMap<Integer, String> places = new java.util.TreeMap<>();
+    }
+
+    /** Apple's theme names on tvOS, from the list's category keys. */
+    static String theme(String key) {
+        switch (key) {
+            case "Cities": return "Cityscape";
+            case "Space": return "Earth";
+            case "Landscapes": return "Landscape";
+            default: return key;
+        }
+    }
+
+    static final String[] THEMES = {"Landscape", "Cityscape", "Earth", "Underwater"};
+
+    private static File stringsFile(Context c) {
+        return new File(c.getFilesDir(), "aerials-strings.plist");
+    }
+
+    private static java.util.Map<?, ?> strings;
+
+    /** The caption for this moment of the aerial ("Over the Dominican Republic…"), or its name. */
+    static String caption(Context c, Aerial a, int seconds) {
+        java.util.Map.Entry<Integer, String> e = a.places.floorEntry(seconds);
+        if (e == null) return a.name;
+        synchronized (Aerials.class) {
+            if (strings == null) {
+                try {
+                    Object o = MacOS.bplist(java.nio.file.Files.readAllBytes(stringsFile(c).toPath()));
+                    strings = o instanceof java.util.Map ? (java.util.Map<?, ?>) o : new HashMap<>();
+                } catch (Exception ex) {
+                    strings = new HashMap<>();
+                }
+            }
+        }
+        Object s = strings.get(e.getValue());
+        return s != null ? s.toString().replace('\u00A0', ' ') : a.name;
     }
 
     private static File cache(Context c) {
@@ -39,12 +79,24 @@ final class Aerials {
     static List<Aerial> list(Context c) {
         File f = cache(c);
         try {
-            if (!f.exists() || System.currentTimeMillis() - f.lastModified() > WEEK) {
+            if (!f.exists() || !stringsFile(c).exists() || System.currentTimeMillis() - f.lastModified() > WEEK) {
                 byte[] tar = Wallpapers.getBytes(LIST);
                 byte[] json = untar(tar, "entries.json");
                 if (json != null) {
                     try (FileOutputStream out = new FileOutputStream(f)) {
                         out.write(json);
+                    }
+                }
+                // The captions, in this TV's language (English if Apple has none for it).
+                String lang = java.util.Locale.getDefault().getLanguage();
+                byte[] strs = untar(tar, "/" + lang + ".lproj/Localizable.nocache.strings");
+                if (strs == null) strs = untar(tar, "/en.lproj/Localizable.nocache.strings");
+                if (strs != null) {
+                    try (FileOutputStream out = new FileOutputStream(stringsFile(c))) {
+                        out.write(strs);
+                    }
+                    synchronized (Aerials.class) {
+                        strings = null;
                     }
                 }
             }
@@ -70,7 +122,17 @@ final class Aerials {
                 x.url1080 = plain(e.optString("url-1080-H264", null));
                 x.url4k = plain(e.optString("url-4K-SDR", null));
                 JSONArray ec = e.optJSONArray("categories");
-                x.category = ec != null && ec.length() > 0 ? cats.getOrDefault(ec.getString(0), "") : "";
+                x.category = theme(ec != null && ec.length() > 0 ? cats.getOrDefault(ec.getString(0), "") : "");
+                JSONObject poi = e.optJSONObject("pointsOfInterest");
+                if (poi != null) {
+                    for (java.util.Iterator<String> k = poi.keys(); k.hasNext(); ) {
+                        String at = k.next();
+                        try {
+                            x.places.put(Integer.parseInt(at), poi.getString(at));
+                        } catch (NumberFormatException ignored) {
+                        }
+                    }
+                }
                 if (x.url1080 != null) out.add(x);
             }
         } catch (Exception e) {

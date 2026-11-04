@@ -27,6 +27,7 @@
 		5F8F49FF96D3BEE0C5AD7FB5 /* Intents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91F4CE686612E7CC3B057977 /* Intents.swift */; };
 		6086F8FE5BA076D407D39C37 /* InstallerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5019452CE5FB47F577C76AE4 /* InstallerApp.swift */; };
 		74E289680045E793DCF7FB86 /* RemoteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 989406DA19F06477DFEBA75D /* RemoteView.swift */; };
+		74E6899BAE0911BCB80BBD9A /* TVSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABD2A0C2C52560A288C6A19D /* TVSettingsView.swift */; };
 		7821D8FB08D3BC99AACB1504 /* TrayIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = D27992DE5333F667EE810AAE /* TrayIcon.swift */; };
 		7C49CD427E53F5BCEB8617BD /* DisplayStreamer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0560BEA2CEA100A74E2C7BBD /* DisplayStreamer.swift */; };
 		82383E22068058C2DC2E5605 /* RemoteClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D15003BFCB253BEEF2F9D87C /* RemoteClient.swift */; };
@@ -107,6 +108,7 @@
 		9AE29995596301E8DDBE02AD /* TVMirror.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVMirror.swift; sourceTree = "<group>"; };
 		9FA67227FE61067232CDF1E8 /* ADB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ADB.swift; sourceTree = "<group>"; };
 		A0B4C3A14807EBBBD76BC3D1 /* scrcpy-server */ = {isa = PBXFileReference; path = "scrcpy-server"; sourceTree = "<group>"; };
+		ABD2A0C2C52560A288C6A19D /* TVSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVSettingsView.swift; sourceTree = "<group>"; };
 		B4729B8827DAC892F7BADDA5 /* MacWallpapers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacWallpapers.swift; sourceTree = "<group>"; };
 		B5D81D9300445997999E3EF5 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		BD873AFF8EFD56CDC218F89A /* Mac.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Mac.xcassets; sourceTree = "<group>"; };
@@ -198,6 +200,7 @@
 				D153EE2F08BD23A5B40DCE0E /* Shortcuts.swift */,
 				DFE96D2559B330E2D31D8D87 /* TVRemote.entitlements */,
 				094F7813DE0ACC2A7988613E /* TVRemoteApp.swift */,
+				ABD2A0C2C52560A288C6A19D /* TVSettingsView.swift */,
 				D3FF676E62E89F0BE73DEAE3 /* VolumeButtons.swift */,
 			);
 			path = iOS;
@@ -443,6 +446,7 @@
 				D68C61251905F64EAD33B234 /* RemoteView.swift in Sources */,
 				5F4F454FA1E6F679415F7E58 /* Shortcuts.swift in Sources */,
 				57CCB7DD7D5F556D57958A18 /* TVRemoteApp.swift in Sources */,
+				74E6899BAE0911BCB80BBD9A /* TVSettingsView.swift in Sources */,
 				410EC854AA486D5FEED0F6CF /* VolumeButtons.swift in Sources */,
 				47CB1AF8A4555A83C36CAD0C /* WallpaperImage.swift in Sources */,
 			);

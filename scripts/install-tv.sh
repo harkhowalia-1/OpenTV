@@ -23,6 +23,9 @@ for c in \
   "pm grant $P android.permission.GET_ACCOUNTS" \
   "pm grant $P android.permission.BLUETOOTH_CONNECT" \
   "appops set $P REQUEST_INSTALL_PACKAGES allow" \
+  "appops set $P WRITE_SETTINGS allow" \
+  "pm grant $P android.permission.WRITE_SECURE_SETTINGS" \
+  "pm grant $P android.permission.BLUETOOTH_SCAN" \
   "cmd package set-home-activity --user 0 $P/.MainActivity"; do
   a shell "$c" || true
 done

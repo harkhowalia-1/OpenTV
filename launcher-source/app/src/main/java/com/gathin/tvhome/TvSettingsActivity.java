@@ -29,7 +29,7 @@ import android.widget.Toast;
 public class TvSettingsActivity extends Activity {
 
     private float density;
-    private ViewGroup wallpaperRow;
+    private ViewGroup wallpaperRow, screenSaverRow;
 
     @Override
     protected void onResume() {
@@ -37,6 +37,9 @@ public class TvSettingsActivity extends Activity {
         // The wallpaper may have just been changed (here, or from the iPhone or Mac): show its current name.
         if (wallpaperRow != null && wallpaperRow.getChildAt(2) instanceof TextView) {
             ((TextView) wallpaperRow.getChildAt(2)).setText(wallpaperName());
+        }
+        if (screenSaverRow != null && screenSaverRow.getChildAt(2) instanceof TextView) {
+            ((TextView) screenSaverRow.getChildAt(2)).setText(ScreenSaver.typeName(this));
         }
     }
 
@@ -57,6 +60,7 @@ public class TvSettingsActivity extends Activity {
         // Left: the Settings icon, as tvOS shows the app's artwork beside its list.
         FrameLayout left = new FrameLayout(this);
         ImageView art = new ImageView(this);
+        this.art = art;
         art.setImageResource(R.drawable.banner_settings);
         art.setScaleType(ImageView.ScaleType.CENTER_CROP);
         art.setOutlineProvider(new ViewOutlineProvider() {
@@ -87,13 +91,27 @@ public class TvSettingsActivity extends Activity {
         root.addView(scroll, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 0.56f));
 
         TextView title = new TextView(this);
-        title.setText(R.string.settings);
+        title.setText(screenTitle());
         title.setTextColor(0xFFFFFFFF);
         title.setTextSize(34);
         title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         title.setPadding(dp(16), 0, 0, dp(18));
         list.addView(title);
 
+        View first = fill(list);
+        setContentView(root);
+        first.requestFocus();
+    }
+
+    /** The left-hand artwork, for screens that show a preview there. */
+    protected ImageView art;
+
+    protected String screenTitle() {
+        return getString(R.string.settings);
+    }
+
+    /** Adds this screen's rows; returns the one to focus first. */
+    protected View fill(LinearLayout list) {
         section(list, "General");
         View first = row(list, R.drawable.ic_wifi, "Network", MainActivity.networkName(this),
                 new Intent(Settings.ACTION_WIFI_SETTINGS));
@@ -102,8 +120,8 @@ public class TvSettingsActivity extends Activity {
         wallpaperRow = (ViewGroup) row(list, R.drawable.ic_display, getString(R.string.wallpaper),
                 wallpaperName(),
                 new Intent(this, WallpaperActivity.class));
-        row(list, R.drawable.ic_screensaver, "Screen Saver", getString(R.string.dream_name),
-                new Intent("com.google.android.tv.settings.ambient"));
+        screenSaverRow = (ViewGroup) row(list, R.drawable.ic_screensaver, getString(R.string.screen_saver),
+                ScreenSaver.typeName(this), new Intent(this, ScreenSaverActivity.class));
 
         section(list, "Video and Audio");
         row(list, R.drawable.ic_display, "Display and Sound", displayMode(), new Intent(Settings.ACTION_SOUND_SETTINGS));
@@ -140,9 +158,7 @@ public class TvSettingsActivity extends Activity {
         section(list, "");
         row(list, R.drawable.ic_settings, "All Google TV Settings", null,
                 new Intent().setComponent(new ComponentName("com.android.tv.settings", "com.android.tv.settings.MainSettings")));
-
-        setContentView(root);
-        first.requestFocus();
+        return first;
     }
 
     /** "Bing Daily Wallpaper", "Apple TV Aerial", "Catalina (Dynamic)"… for the Wallpaper row. */
@@ -174,7 +190,7 @@ public class TvSettingsActivity extends Activity {
         return m.getPhysicalHeight() + "p · " + Math.round(m.getRefreshRate()) + " Hz";
     }
 
-    private void section(LinearLayout list, String name) {
+    protected void section(LinearLayout list, String name) {
         TextView t = new TextView(this);
         t.setText(name.toUpperCase());
         t.setTextColor(0x80FFFFFF);
@@ -186,7 +202,17 @@ public class TvSettingsActivity extends Activity {
     }
 
     /** A tvOS list row: icon, title, an optional value on the right and a chevron. White when focused. */
-    private View row(LinearLayout list, int icon, String title, String value, Intent target) {
+    protected View row(LinearLayout list, int icon, String title, String value, Intent target) {
+        return row(list, icon, title, value, () -> open(target));
+    }
+
+    /** The row's value text (to change it in place), or null. */
+    protected static TextView valueOf(View row) {
+        ViewGroup g = (ViewGroup) row;
+        return g.getChildCount() > 3 && g.getChildAt(2) instanceof TextView ? (TextView) g.getChildAt(2) : null;
+    }
+
+    protected View row(LinearLayout list, int icon, String title, String value, Runnable action) {
         ColorStateList text = getColorStateList(R.drawable.glass_text);
         LinearLayout r = new LinearLayout(this);
         r.setOrientation(LinearLayout.HORIZONTAL);
@@ -195,7 +221,7 @@ public class TvSettingsActivity extends Activity {
         r.setFocusable(true);
         r.setClickable(true);
         r.setPadding(dp(16), 0, dp(16), 0);
-        r.setOnClickListener(v -> open(target));
+        r.setOnClickListener(v -> action.run());
         r.setOnFocusChangeListener((v, f) -> v.animate().scaleX(f ? 1.03f : 1f).scaleY(f ? 1.03f : 1f)
                 .setDuration(150).start());
 
@@ -235,7 +261,7 @@ public class TvSettingsActivity extends Activity {
         return r;
     }
 
-    private void open(Intent i) {
+    protected void open(Intent i) {
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         try {
             startActivity(i);
@@ -244,7 +270,7 @@ public class TvSettingsActivity extends Activity {
         }
     }
 
-    private int dp(int v) {
+    protected int dp(int v) {
         return (int) (v * density);
     }
 }

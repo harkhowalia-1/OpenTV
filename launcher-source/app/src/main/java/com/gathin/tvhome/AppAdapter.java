@@ -64,6 +64,12 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
 
         /** OK or Back while a tile is being moved. */
         void onMoveDone();
+
+        /** Back (or Home) in edit mode: tiles stop jiggling. */
+        void onEditDone();
+
+        /** Play/Pause or Menu on a tile in edit mode: its options (folders, app info), as on tvOS. */
+        void onTileOptions(int position);
     }
 
     static final class Entry {
@@ -286,9 +292,33 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
 
     // ---- moving ----------------------------------------------------------------------------------
 
+    // Edit mode, as on iPhone: hold OK and every tile jiggles; OK picks a tile up, arrows carry it, OK drops it.
+    private boolean editing;
+    static final String WIGGLE = "wiggle";
+
+    void startEditing() {
+        if (editing) return;
+        editing = true;
+        notifyItemRangeChanged(0, items.size(), WIGGLE);
+    }
+
+    boolean isEditing() {
+        return editing;
+    }
+
+    void endEditing() {
+        if (!editing) return;
+        if (movingKey != null) {
+            movingKey = null;
+            saveOrder();
+        }
+        editing = false;
+        notifyItemRangeChanged(0, items.size(), WIGGLE);
+    }
+
     void startMove(int position) {
         movingKey = items.get(position).key;
-        notifyItemChanged(position);
+        notifyItemChanged(position, WIGGLE);
     }
 
     boolean isMoving() {
@@ -301,14 +331,16 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
         if (to == from) return from;
         items.add(to, items.remove(from));
         notifyItemMoved(from, to);
+        saveOrder();   // kept even if the TV turns off before the tile is dropped
         return to;
     }
 
     void endMove() {
         if (movingKey == null) return;
+        int at = positionOf(movingKey);
         movingKey = null;
         saveOrder();
-        notifyDataSetChanged();
+        if (at >= 0) notifyItemChanged(at, WIGGLE);
     }
 
     // ---- binding ---------------------------------------------------------------------------------
@@ -360,7 +392,21 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
         h.card.setScaleX(focused ? FOCUS_SCALE : 1f);
         h.card.setScaleY(focused ? FOCUS_SCALE : 1f);
         h.sheen.setAlpha(focused ? 1f : 0f);
-        h.setWiggle(e.key.equals(movingKey));
+        h.setWiggle(wiggleState(e));
+    }
+
+    private int wiggleState(Entry e) {
+        if (e.key.equals(movingKey)) return Holder.LIFTED;
+        return editing ? Holder.JIGGLE : Holder.STILL;
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull Holder h, int position, @NonNull List<Object> payloads) {
+        if (payloads.contains(WIGGLE) && payloads.size() == 1) {
+            h.setWiggle(wiggleState(items.get(position)));   // just the jiggle: no rebinding the pictures
+            return;
+        }
+        onBindViewHolder(h, position);
     }
 
     /** Fills a tile: the banner when there is one, otherwise the icon over the app's name. */
@@ -530,7 +576,19 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
         final TextView label;
         final TextView name;
         final View sheen;
-        private ObjectAnimator wiggle;
+        /** Tiles jiggling now, and the one animation that moves them all (about 4 swings a second). */
+        private static final java.util.Set<Holder> JIGGLING = new java.util.HashSet<>();
+        private static final ValueAnimator CLOCK = ValueAnimator.ofFloat(0f, 1f);
+
+        static {
+            CLOCK.setDuration(1000);
+            CLOCK.setRepeatCount(ValueAnimator.INFINITE);
+            CLOCK.setInterpolator(new android.view.animation.LinearInterpolator());
+            CLOCK.addUpdateListener(a -> {
+                double t = a.getCurrentPlayTime() / 1000.0 * Math.PI * 2 * 3.9;
+                for (Holder h : JIGGLING) h.card.setRotation((float) (h.amp * Math.sin(t + h.phase)));
+            });
+        }
 
         Holder(View v, AppAdapter adapter) {
             super(v);
@@ -559,13 +617,32 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
             });
             card.setOnLongClickListener(view -> {
                 int pos = getBindingAdapterPosition();
-                if (pos != RecyclerView.NO_POSITION && !adapter.isMoving()) listener.onTileLongPressed(pos);
+                if (pos != RecyclerView.NO_POSITION && !adapter.isEditing()) listener.onTileLongPressed(pos);
                 return true;
             });
 
             card.setOnKeyListener((view, keyCode, event) -> {
                 int pos = getBindingAdapterPosition();
                 if (pos == RecyclerView.NO_POSITION) return false;
+                if (adapter.isEditing() && !adapter.isMoving()) {
+                    boolean down = event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0;
+                    switch (keyCode) {
+                        case KeyEvent.KEYCODE_DPAD_CENTER:
+                        case KeyEvent.KEYCODE_ENTER:
+                            if (down) adapter.startMove(pos);   // pick it up
+                            return true;
+                        case KeyEvent.KEYCODE_BACK:
+                        case KeyEvent.KEYCODE_ESCAPE:
+                            if (down) listener.onEditDone();
+                            return true;
+                        case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
+                        case KeyEvent.KEYCODE_MENU:
+                            if (down) listener.onTileOptions(pos);
+                            return true;
+                        default:
+                            break;   // arrows move focus as usual
+                    }
+                }
                 if (adapter.isMoving()) {
                     // Move mode: arrows carry the tile, OK or Back drops it. Swallow everything else.
                     if (event.getAction() != KeyEvent.ACTION_DOWN) return true;
@@ -611,7 +688,7 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
 
         /** Parallax: the tile leans in the direction focus arrived from, then settles flat. */
         private void tiltFrom(int prev, int pos, int columns) {
-            if (prev < 0 || prev == pos || wiggle != null) return;
+            if (prev < 0 || prev == pos || wiggleState == JIGGLE) return;
             int dx = Integer.signum(pos % columns - prev % columns);
             int dy = Integer.signum(pos / columns - prev / columns);
             if (dx == 0 && dy == 0) return;
@@ -621,21 +698,31 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
                     .setInterpolator(new OvershootInterpolator(2.2f)).start();
         }
 
-        /** The tile being moved jiggles until it is dropped. */
-        void setWiggle(boolean on) {
-            if (on && wiggle == null) {
+        static final int STILL = 0, JIGGLE = 1, LIFTED = 2;
+        private int wiggleState = STILL;
+        private float phase, amp;
+
+        /**
+         * Edit mode: every tile jiggles like iPhone apps (each slightly out of step, so they don't move as one);
+         * the tile being carried stops jiggling and lifts above the rest. One shared clock drives every tile.
+         */
+        void setWiggle(int state) {
+            if (state == wiggleState) return;
+            wiggleState = state;
+            card.setRotation(0f);
+            if (state == JIGGLE) {
                 card.setRotationX(0f);
                 card.setRotationY(0f);
-                wiggle = ObjectAnimator.ofFloat(card, View.ROTATION, -1.8f, 1.8f);
-                wiggle.setDuration(130);
-                wiggle.setRepeatMode(ValueAnimator.REVERSE);
-                wiggle.setRepeatCount(ValueAnimator.INFINITE);
-                wiggle.start();
-            } else if (!on && wiggle != null) {
-                wiggle.cancel();
-                wiggle = null;
-                card.setRotation(0f);
+                phase = (float) (Math.random() * Math.PI * 2);
+                amp = 1.4f + (float) Math.random() * 0.5f;
+                JIGGLING.add(this);
+                if (!CLOCK.isStarted()) CLOCK.start();
+            } else {
+                JIGGLING.remove(this);
+                if (JIGGLING.isEmpty()) CLOCK.cancel();
             }
+            float lift = state == LIFTED ? FOCUS_SCALE * 1.08f : card.isFocused() ? FOCUS_SCALE : 1f;
+            card.animate().scaleX(lift).scaleY(lift).setDuration(200).start();
         }
     }
 }

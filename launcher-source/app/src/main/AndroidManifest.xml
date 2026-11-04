@@ -29,6 +29,12 @@
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <!-- Software Update installs new versions of OtvOS and IPTV (you confirm each on the TV). -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Screen Saver: Start After (granted with appops by the installer) and making OtvOS's screensaver the TV's. -->
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
+    <!-- Pairing Bluetooth accessories from the phone remote. -->
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
     <!-- Settings › Wallpaper: photos stored on the TV. -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
@@ -57,6 +63,8 @@
         <activity android:name=".UpdateActivity" android:exported="false" android:launchMode="singleTop"
             android:screenOrientation="landscape" />
         <activity android:name=".WallpaperActivity" android:exported="false" android:screenOrientation="landscape" />
+        <activity android:name=".ScreenSaverActivity" android:exported="false" android:screenOrientation="landscape"
+            android:theme="@style/Theme.TvHome" />
         <activity android:name=".InputActivity" android:exported="false" android:screenOrientation="landscape" />
         <activity
             android:name=".PlayerActivity"

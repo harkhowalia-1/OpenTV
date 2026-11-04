@@ -283,9 +283,19 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 wall.setImageDrawable(null);
                 wall.setVisibility(View.GONE);
             } else {
+                // Decoded at the interface's size (the 4K file stays for 4K uses): a 4K texture drawn at 1080p
+                // costs the GPU four times the memory and bandwidth for no visible detail.
                 android.graphics.BitmapFactory.Options o = new android.graphics.BitmapFactory.Options();
+                o.inJustDecodeBounds = true;
+                android.graphics.BitmapFactory.decodeFile(f.getPath(), o);
+                int want = Math.max(1, getResources().getDisplayMetrics().widthPixels);
+                o.inSampleSize = 1;
+                while (o.outWidth / (o.inSampleSize * 2) >= want) o.inSampleSize *= 2;
+                o.inJustDecodeBounds = false;
                 o.inPreferredConfig = android.graphics.Bitmap.Config.RGB_565;
+                android.graphics.drawable.Drawable old = wall.getDrawable();
                 wall.setImageBitmap(android.graphics.BitmapFactory.decodeFile(f.getPath(), o));
+                if (old instanceof android.graphics.drawable.BitmapDrawable) ((android.graphics.drawable.BitmapDrawable) old).getBitmap().recycle();
                 wall.setColorFilter(0x59000000, android.graphics.PorterDuff.Mode.SRC_ATOP);
                 wall.setVisibility(View.VISIBLE);
             }
@@ -402,6 +412,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     protected void onPause() {
         super.onPause();
         resumed = false;
+        adapter.endEditing();   // leaving Home ends edit mode, as pressing Home does on iPhone
         statusSlot.setVisibility(View.INVISIBLE);   // a panel on top draws its own pill in the same spot
         handler.removeCallbacks(minuteTick);
         handler.removeCallbacks(wallpaperTick);
@@ -552,8 +563,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
     };
 
-    private Bitmap smallScreen() {
+    private Bitmap spareHome, sparePanel;
+    private boolean copying;
+
+    /** A small screen-sized picture: the spare one from last time when it fits, so frames don't allocate. */
+    private Bitmap smallScreen(Bitmap spare) {
         int w = Math.max(1, root.getWidth() / Backdrop.SCALE), h = Math.max(1, root.getHeight() / Backdrop.SCALE);
+        if (spare != null && !spare.isRecycled() && spare.getWidth() == w && spare.getHeight() == h) return spare;
+        if (spare != null) spare.recycle();
         return Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
     }
 
@@ -562,24 +579,25 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (root.getWidth() == 0) return;
         ImageView wall = findViewById(R.id.wallpaper);
         if (live) {
-            Bitmap small = smallScreen();
+            Bitmap small = smallScreen(spareHome);
+            spareHome = null;
             aerialView.getBitmap(small);
             android.graphics.Canvas cv = new android.graphics.Canvas(small);
             cv.drawColor(0x59000000);   // the aerial's dimming
-            if (backdropDim != null) cv.drawColor(((int) (0x4D * backdropDim.getAlpha()) << 24));
-            Backdrop.update(Backdrop.HOME, small, root.getWidth(), root.getHeight(), density);
+            spareHome = Backdrop.update(Backdrop.HOME, small, root.getWidth(), root.getHeight(), density);
             frostedStill = null;
-        } else if (wall.getVisibility() == View.VISIBLE && wall.getDrawable() != null) {
-            String key = shownWallpaper + "|" + (int) (backdropAmount * 10);
+        } else if (shownWallpaper != null && !shownWallpaper.isEmpty() && wall.getDrawable() != null) {
+            String key = shownWallpaper;
             if (key.equals(frostedStill)) return;
             frostedStill = key;
-            Bitmap small = smallScreen();
+            Bitmap small = smallScreen(spareHome);
+            spareHome = null;
             android.graphics.Canvas cv = new android.graphics.Canvas(small);
+            cv.drawColor(0xFF000000);
             cv.scale(small.getWidth() / (float) wall.getWidth(), small.getHeight() / (float) wall.getHeight());
             wall.draw(cv);   // software drawing: the still and its dimming, without the on-screen blur
             cv.setMatrix(null);
-            if (backdropDim != null) cv.drawColor(((int) (0x4D * backdropDim.getAlpha()) << 24));
-            Backdrop.update(Backdrop.HOME, small, root.getWidth(), root.getHeight(), density);
+            spareHome = Backdrop.update(Backdrop.HOME, small, root.getWidth(), root.getHeight(), density);
         } else if (frostedStill == null || !frostedStill.isEmpty()) {
             frostedStill = "";
             Backdrop.clear(Backdrop.HOME);   // the colour glow: glass keeps its glow tint instead
@@ -588,25 +606,28 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     /** Panels over Home (Control Center) see all of Home, apps and all, copied from this window. */
     private void updatePanelFrost() {
-        if (root.getWidth() == 0 || Build.VERSION.SDK_INT < 26) return;
-        Bitmap small = smallScreen();
+        if (root.getWidth() == 0 || Build.VERSION.SDK_INT < 26 || copying) return;
+        Bitmap small = smallScreen(sparePanel);
+        sparePanel = null;
+        copying = true;
         try {
             android.view.PixelCopy.request(getWindow(), small, result -> {
+                copying = false;
                 if (result == android.view.PixelCopy.SUCCESS && !resumed) {
-                    Backdrop.update(Backdrop.PANEL, small, root.getWidth(), root.getHeight(), density);
+                    sparePanel = Backdrop.update(Backdrop.PANEL, small, root.getWidth(), root.getHeight(), density);
                 } else {
-                    small.recycle();
+                    sparePanel = small;
                 }
             }, handler);
         } catch (IllegalArgumentException e) {
-            small.recycle();
+            copying = false;
+            sparePanel = small;
         }
     }
 
     private boolean backdropDeep;
     private float backdropAmount;
     private android.animation.ValueAnimator backdropAnim;
-    private View backdropDim;
 
     private void setBackdrop(boolean deep) {
         if (deep == backdropDeep) return;
@@ -621,23 +642,37 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     private void applyBackdrop(float t) {
         backdropAmount = t;
-        if (backdropDim == null) {
+        if (deepBlur == null) {
             ViewGroup root = findViewById(R.id.root);
-            backdropDim = new View(this);
-            backdropDim.setBackgroundColor(0x4D000000);
-            backdropDim.setAlpha(0f);
-            root.addView(backdropDim, root.indexOfChild(ambient), new FrameLayout.LayoutParams(-1, -1));
+            deepBlur = new View(this) {
+                private final android.graphics.Paint paint = new android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG);
+                private final android.graphics.Rect dst = new android.graphics.Rect();
+
+                @Override
+                protected void onDraw(android.graphics.Canvas c) {
+                    Bitmap b = Backdrop.deep();
+                    if (b == null || b.isRecycled()) return;
+                    dst.set(0, 0, getWidth(), getHeight());
+                    c.drawBitmap(b, null, dst, paint);
+                    c.drawColor(0x4D000000);   // and dimmer, so the apps stand out
+                }
+            };
+            deepBlur.setAlpha(0f);
+            deepBlur.setVisibility(View.GONE);
+            Backdrop.watch(deepBlur);
+            root.addView(deepBlur, root.indexOfChild(ambient), new FrameLayout.LayoutParams(-1, -1));
         }
-        backdropDim.setAlpha(t);
-        if (Build.VERSION.SDK_INT >= 31) {
-            float r = t * 36 * density;
-            android.graphics.RenderEffect blur = r < 0.5f ? null
-                    : android.graphics.RenderEffect.createBlurEffect(r, r, android.graphics.Shader.TileMode.CLAMP);
-            View wall = findViewById(R.id.wallpaper);
-            if (wall != null) wall.setRenderEffect(blur);
-            if (aerialView != null) aerialView.setRenderEffect(blur);
-        }
+        // The blurred, dimmed wallpaper fades in over the sharp one. Only one is drawn at rest: the blur covers
+        // the whole screen, so the sharp picture under it is hidden then (each full-screen layer costs the GPU).
+        boolean show = t > 0.01f && Backdrop.deep() != null;
+        deepBlur.setVisibility(show ? View.VISIBLE : View.GONE);
+        deepBlur.setAlpha(t);
+        ImageView wall = findViewById(R.id.wallpaper);
+        boolean covered = show && t > 0.999f;
+        if (wall.getDrawable() != null) wall.setVisibility(covered ? View.INVISIBLE : View.VISIBLE);
     }
+
+    private View deepBlur;
 
     private void syncGlassTint() {
         float s = glowOn ? ambient.getAlpha() : 0f;
@@ -683,14 +718,25 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         else if (realPress(e.key)) AppAdapter.launch(this, e);
     }
 
+    /** Holding OK on a tile: every tile jiggles, as on iPhone, and can be moved. */
     @Override
     public void onTileLongPressed(int position) {
+        adapter.startEditing();
+        Toast.makeText(this, R.string.edit_hint, Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onEditDone() {
+        adapter.endEditing();
+        grid.postDelayed(() -> focusTile(lastFocused), 60);
+    }
+
+    @Override
+    public void onTileOptions(int position) {
         AppAdapter.Entry e = adapter.entryAt(position);
         if (e == null) return;
         List<String> labels = new ArrayList<>();
         List<Runnable> actions = new ArrayList<>();
-        labels.add(getString(R.string.move));
-        actions.add(() -> adapter.startMove(position));
         if (e.isFolder()) {
             labels.add(getString(R.string.rename));
             actions.add(() -> askFolderName(e.folderName(), name -> {
@@ -883,6 +929,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         LinearLayout pill = StatusPill.build(this, this::openPanel, null, MediaListener.current(this) != null);
         ((LiquidGlass) pill.getBackground()).frosted(Backdrop.HOME, null);
         statusSlot.addView(pill);
+        StatusPill.rememberHome(pill);
         syncGlassTint();
     }
 

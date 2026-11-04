@@ -206,6 +206,40 @@ struct RemoteClient: Sendable {
         }
     }
 
+    // MARK: TV settings (the remote's Settings screen)
+
+    /// Settings calls can take a while the first time (the TV fetches Apple's lists), so they wait longer.
+    private static let slow: URLSession = {
+        let c = URLSessionConfiguration.ephemeral
+        c.timeoutIntervalForRequest = 30
+        c.timeoutIntervalForResource = 90
+        c.waitsForConnectivity = false
+        return URLSession(configuration: c)
+    }()
+
+    /// /api/tv/<path>: JSON in, JSON out.
+    @discardableResult
+    func tv(_ path: String, _ body: [String: Any]? = nil) async throws -> [String: Any] {
+        let r = request("tv/\(path)", method: body == nil ? "GET" : "POST", body: body)
+        let data: Data, resp: URLResponse
+        do {
+            (data, resp) = try await Self.slow.data(for: r)
+        } catch {
+            throw RemoteError.unreachable
+        }
+        if (resp as? HTTPURLResponse)?.statusCode == 401 { throw RemoteError.notPaired }
+        return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:]
+    }
+
+    /// A wallpaper's preview picture (JPEG).
+    func wallpaperThumb(_ kind: String) async -> Data? {
+        let q = kind.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? kind
+        let r = request("tv/wallpaper/thumb?kind=\(q)", method: "GET")
+        guard let (data, resp) = try? await Self.slow.data(for: r),
+              (resp as? HTTPURLResponse)?.statusCode == 200 else { return nil }
+        return data
+    }
+
     /// An app's banner or icon (PNG).
     func icon(_ package: String) async -> Data? {
         let r = request("icon/\(package)", method: "GET")

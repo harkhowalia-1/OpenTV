@@ -41,12 +41,12 @@ final class LiquidGlass extends Drawable {
     private int tintColor;
     private float tintStrength;
     private final RectF rect = new RectF();
-    private final Path clip = new Path();
     private int alpha = 255;
     private int frostLayer = -1;
     private android.view.View frostHost;
     private final int[] loc = new int[2];
-    private final RectF frostRect = new RectF();
+    private final android.graphics.Matrix frostMatrix = new android.graphics.Matrix();
+    private android.graphics.Bitmap frostBitmap;
     private final Paint frostPaint = new Paint(Paint.FILTER_BITMAP_FLAG);
 
     LiquidGlass(Context ctx, float radiusDp, int style, boolean interactive) {
@@ -69,6 +69,7 @@ final class LiquidGlass extends Drawable {
         android.graphics.ColorMatrix m = new android.graphics.ColorMatrix();
         m.setSaturation(1.8f);
         frostPaint.setColorFilter(new android.graphics.ColorMatrixColorFilter(m));
+        frostPaint.setAntiAlias(true);
         if (host != null) Backdrop.watch(host);
         return this;
     }
@@ -150,7 +151,10 @@ final class LiquidGlass extends Drawable {
         float inset = rim.getStrokeWidth() / 2f;
         rect.set(b.left + inset, b.top + inset, b.right - inset, b.bottom - inset);
         float r = radius < 0 ? rect.height() / 2f : radius;
-        int save = c.saveLayerAlpha(rect.left - inset, rect.top - inset, rect.right + inset, rect.bottom + inset, alpha);
+        // An offscreen layer only while fading (alpha below 255): drawing straight to the screen is much cheaper.
+        int save = alpha < 255
+                ? c.saveLayerAlpha(rect.left - inset, rect.top - inset, rect.right + inset, rect.bottom + inset, alpha)
+                : c.save();
 
         if (focused) {
             // Focused tvOS control: an opaque white lozenge with a faint inner shading.
@@ -161,8 +165,6 @@ final class LiquidGlass extends Drawable {
             return;
         }
 
-        clip.reset();
-        clip.addRoundRect(rect, r, r, Path.Direction.CW);
         if (frostLayer >= 0 && !on) {
             android.view.View host = frostHost != null ? frostHost
                     : getCallback() instanceof android.view.View ? (android.view.View) getCallback() : null;
@@ -170,22 +172,25 @@ final class LiquidGlass extends Drawable {
             if (host != null) {
                 Backdrop.watch(host);
                 if (fb != null && !fb.isRecycled()) {
+                    // The frosted picture, mapped to where this glass is on screen, filled straight into the
+                    // rounded shape (a shader, not a clip: no stencil work for the GPU).
                     host.getLocationInWindow(loc);
-                    frostRect.set(-loc[0], -loc[1], -loc[0] + Backdrop.screenWidth(), -loc[1] + Backdrop.screenHeight());
-                    c.save();
-                    c.clipPath(clip);
-                    c.drawBitmap(fb, null, frostRect, frostPaint);
-                    c.restore();
+                    if (fb != frostBitmap) {
+                        frostBitmap = fb;
+                        frostPaint.setShader(new android.graphics.BitmapShader(fb, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
+                    }
+                    frostMatrix.setScale(Backdrop.screenWidth() / (float) fb.getWidth(), Backdrop.screenHeight() / (float) fb.getHeight());
+                    frostMatrix.postTranslate(-loc[0], -loc[1]);
+                    frostPaint.getShader().setLocalMatrix(frostMatrix);
+                    c.drawRoundRect(rect, r, r, frostPaint);
                 }
             }
         }
         c.drawRoundRect(rect, r, r, fill);
         if (tintStrength > 0) c.drawRoundRect(rect, r, r, tint);
-        c.save();
-        c.clipPath(clip);
-        c.drawRect(rect.left, rect.top, rect.right, rect.top + rect.height() * 0.48f, sheen);
-        c.drawRect(rect.left, rect.top + rect.height() * 0.62f, rect.right, rect.bottom, glow);
-        c.restore();
+        // Sheen and glow fade out within the shape (their gradients end clear), so no clipping is needed.
+        c.drawRoundRect(rect, r, r, sheen);
+        c.drawRoundRect(rect, r, r, glow);
         c.drawRoundRect(rect, r, r, rim);
         c.restoreToCount(save);
     }

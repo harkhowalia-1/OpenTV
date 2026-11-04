@@ -89,6 +89,9 @@ public class ControlCenterActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         density = getResources().getDisplayMetrics().density;
+        // See-through, so Home (and a live aerial) stays visible and running behind the panel. The theme says so
+        // too; this makes sure, as Android can keep an out-of-date copy of an updated app's theme.
+        if (Build.VERSION.SDK_INT >= 30) setTranslucent(true);
 
         // Real blur of whatever is behind, where the TV supports it; otherwise only a light dim, as on tvOS.
         boolean blur = Build.VERSION.SDK_INT >= 31 && getWindowManager().isCrossWindowBlurEnabled();
@@ -108,7 +111,11 @@ public class ControlCenterActivity extends Activity {
         column.setClipChildren(false);
         FrameLayout.LayoutParams clp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.END | Gravity.TOP);
-        clp.setMargins(0, dp(26), dp(40), 0);   // same spot as the home screen's pill
+        // Exactly where Home's pill is, so opening a panel doesn't nudge it.
+        int[] home = StatusPill.homeRect;
+        int screenW = getResources().getDisplayMetrics().widthPixels;
+        if (home[3] > home[1]) clp.setMargins(0, home[1], Math.max(0, screenW - home[2]), 0);
+        else clp.setMargins(0, dp(26), dp(40), 0);
         root.addView(column, clp);
 
         holder = new FrameLayout(this);
@@ -156,7 +163,8 @@ public class ControlCenterActivity extends Activity {
             else show(p);
         }, which, showMedia);
         ((LiquidGlass) pill.getBackground()).frosted(Backdrop.PANEL, null);
-        column.addView(pill, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(48)));
+        int pillH = StatusPill.homeRect[3] > StatusPill.homeRect[1] ? StatusPill.homeRect[3] - StatusPill.homeRect[1] : dp(54);
+        column.addView(pill, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, pillH));
 
         holder.removeAllViews();
         View panel;
@@ -219,7 +227,7 @@ public class ControlCenterActivity extends Activity {
         add(grid, bluetooth, 1, 1, 2, 2, cell, gap);
 
         add(grid, wideTile(icon(R.drawable.ic_screensaver, 22, glassText()), getString(R.string.screen_saver),
-                getString(R.string.dream_name), v -> startScreenSaver()), 2, 1, 0, 2, cell, gap);
+                ScreenSaver.typeName(this), v -> startScreenSaver()), 2, 1, 0, 2, cell, gap);
         View timer = wideTile(icon(R.drawable.ic_timer, 22, glassText()), getString(R.string.sleep_timer), "",
                 v -> cycleTimer());
         timerValue = timer.findViewWithTag("sub");

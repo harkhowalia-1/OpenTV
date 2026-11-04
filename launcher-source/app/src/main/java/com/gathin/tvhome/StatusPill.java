@@ -30,6 +30,20 @@ final class StatusPill {
     private StatusPill() {
     }
 
+    /** Where Home's pill is on screen (left, top, right, bottom), so panels draw theirs in exactly that spot. */
+    static final int[] homeRect = new int[4];
+
+    static void rememberHome(android.view.View pill) {
+        pill.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
+            int[] at = new int[2];
+            v.getLocationInWindow(at);
+            homeRect[0] = at[0];
+            homeRect[1] = at[1];
+            homeRect[2] = at[0] + v.getWidth();
+            homeRect[3] = at[1] + v.getHeight();
+        });
+    }
+
     static LinearLayout build(Context ctx, Listener listener, String active, boolean showMedia) {
         float d = ctx.getResources().getDisplayMetrics().density;
         LinearLayout pill = new LinearLayout(ctx);

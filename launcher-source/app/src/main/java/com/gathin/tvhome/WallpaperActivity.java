@@ -90,7 +90,8 @@ public class WallpaperActivity extends ChoiceScreen {
                     String kind = "aerial:" + a.id;
                     View v = cardIn(aerialRow, null, 0xFF101826, a.name, current.equals(kind), () -> pick(() -> {
                         Aerials.saveStill(this, a, Wallpapers.current(this));
-                        Wallpapers.prefs(this).edit().putString("aerialUrl", Aerials.videoFor(this, a)).apply();
+                        Wallpapers.prefs(this).edit().putString("aerialUrl", Aerials.videoFor(this, a))
+                                .putString("aerialHome", a.url1080).apply();
                         Wallpapers.set(this, kind);
                     }));
                     previews.execute(() -> show(v, Aerials.thumbnail(this, a)));
@@ -200,14 +201,49 @@ public class WallpaperActivity extends ChoiceScreen {
     }
 
     /** Applies a choice off the main thread, then returns to Home. */
+    private boolean busy;
+
+    /**
+     * Applies a choice off the main thread, with Apple's download ring on the card and how far along it is
+     * underneath ("Downloading Big Sur… 42%"), then returns to Home.
+     */
     private void pick(Job job) {
+        if (busy) return;
+        busy = true;
+        View card = lastClicked;
+        String name = card instanceof android.view.ViewGroup && ((android.view.ViewGroup) card).getChildAt(1) instanceof android.widget.TextView
+                ? ((android.widget.TextView) ((android.view.ViewGroup) card).getChildAt(1)).getText().toString().replaceFirst(" · .*$", "")
+                : "";
         note(getString(R.string.wallpaper_setting));
+        progress(card, -1);
+        long[] lastNote = {0};
+        Wallpapers.Progress p = (f, downloading) -> {
+            long now = android.os.SystemClock.uptimeMillis();
+            if (now - lastNote[0] < 100 && f < 0.999f) return;   // ten updates a second is plenty
+            lastNote[0] = now;
+            main.post(() -> {
+                progress(card, f);
+                if (downloading && f >= 0) note(getString(R.string.wallpaper_downloading, name, Math.round(f * 100)));
+                else note(getString(R.string.wallpaper_setting));
+            });
+        };
         work.execute(() -> {
+            Wallpapers.progress.set(p);
             try {
                 job.run();
-                main.post(this::finish);
+                main.post(() -> {
+                    progress(card, 1f);
+                    main.postDelayed(this::finish, 250);
+                });
             } catch (Exception e) {
-                main.post(() -> note(getString(R.string.wallpaper_failed)));
+                android.util.Log.w("OtvWallpaper", "couldn't set the wallpaper", e);
+                main.post(() -> {
+                    busy = false;
+                    clearProgress(card);
+                    note(getString(R.string.wallpaper_failed));
+                });
+            } finally {
+                Wallpapers.progress.remove();
             }
         });
     }

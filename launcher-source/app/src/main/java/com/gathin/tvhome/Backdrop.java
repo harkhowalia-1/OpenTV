@@ -26,6 +26,8 @@ final class Backdrop {
     static final int PANEL = 1;
 
     private static final Bitmap[] frost = new Bitmap[2];
+    /** A much blurrier copy of Home's backdrop, for when focus moves down into the apps (see deep()). */
+    private static Bitmap deep;
     private static int screenW, screenH;
     private static final List<WeakReference<View>> hosts = new ArrayList<>();
     private static int[] px, tmp;
@@ -56,14 +58,35 @@ final class Backdrop {
      * New content behind the glass: small (screen / {@link #SCALE}), blurred here in place. Keeps the bitmap.
      * Call on the main thread.
      */
-    static void update(int layer, Bitmap small, int screenWidth, int screenHeight, float density) {
+    /** Returns the picture it replaces, for the caller to reuse next time (no new bitmap every frame). */
+    static Bitmap update(int layer, Bitmap small, int screenWidth, int screenHeight, float density) {
         blur(small, Math.max(1, Math.round(20f * density / SCALE * 0.9f)));
         Bitmap old = frost[layer];
         frost[layer] = small;
+        if (layer == HOME) makeDeep(small);
         screenW = screenWidth;
         screenH = screenHeight;
-        if (old != null && old != small) old.recycle();
         invalidate();
+        return old == small ? null : old;
+    }
+
+    /**
+     * Home's wallpaper blurred heavily, as tvOS does behind the app grid: half the size of the frost, blurred
+     * again. Drawn stretched over the screen, which costs one small bitmap per frame instead of blurring the
+     * full-size wallpaper on every frame.
+     */
+    static Bitmap deep() {
+        return deep;
+    }
+
+    private static void makeDeep(Bitmap from) {
+        int w = Math.max(1, from.getWidth() / 2), h = Math.max(1, from.getHeight() / 2);
+        if (deep == null || deep.getWidth() != w || deep.getHeight() != h) {
+            deep = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        }
+        new android.graphics.Canvas(deep).drawBitmap(from, null, new android.graphics.Rect(0, 0, w, h),
+                new android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG));
+        blur(deep, 3);
     }
 
     /** Nothing frosted behind the glass any more (Home went away). */

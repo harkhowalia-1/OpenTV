@@ -11,6 +11,7 @@ struct RemoteView: View {
     #if os(iOS)
     @State private var pickingWallpaper = false
     @State private var wallpaperItem: PhotosPickerItem?
+    @State private var showingSettings = false
     #endif
 
     var body: some View {
@@ -99,6 +100,15 @@ struct RemoteView: View {
             Spacer()
 
             if model.phase == .connected || model.phase == .offline {
+                #if os(iOS)
+                RoundButton(symbol: "gearshape.fill", size: compact ? 34 : 44) {
+                    showingSettings = true
+                }
+                .accessibilityLabel("TV Settings")
+                .sheet(isPresented: $showingSettings) {
+                    TVSettingsView(model: model)
+                }
+                #endif
                 RoundButton(symbol: "power", size: compact ? 34 : 44, tint: Color(red: 1, green: 0.27, blue: 0.23)) {
                     model.press(.power)
                 }

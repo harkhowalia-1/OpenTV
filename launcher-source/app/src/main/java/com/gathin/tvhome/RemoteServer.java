@@ -256,6 +256,16 @@ final class RemoteServer {
                 // A macOS dynamic wallpaper from the Mac: pictures for each time of day.
                 Wallpapers.saveDynamic(ctx, query(fullPath, "name"), raw);
                 json(out, 200, new JSONObject().put("ok", true));
+            } else if (path.startsWith("/api/tv/")) {
+                // The iPhone remote's Settings: inputs, wallpapers, Bluetooth, screensaver, updates.
+                Map<String, String> qs = new java.util.HashMap<>();
+                for (String key : new String[]{"kind"}) {
+                    String v = query(fullPath, key);
+                    if (v != null) qs.put(key, v);
+                }
+                TvApi.Reply r = TvApi.handle(ctx, path, qs, in);
+                if (r.jpeg != null) raw(out, r.code, "image/jpeg", r.jpeg);
+                else json(out, r.code, r.json);
             } else if (path.equals("/api/apps")) {
                 json(out, 200, new JSONObject().put("apps", apps()));
             } else if (path.startsWith("/api/icon/")) {

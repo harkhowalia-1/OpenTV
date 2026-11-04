@@ -221,6 +221,8 @@ final class MacOS {
         private static final int BLOCK = 1 << 20;
         private final String url;
         private final long base, size;
+        private final Wallpapers.Progress progress;
+        private long fetched;
         private final LinkedHashMap<Long, byte[]> blocks = new LinkedHashMap<Long, byte[]>(16, 0.75f, true) {
             @Override
             protected boolean removeEldestEntry(Map.Entry<Long, byte[]> e) {
@@ -228,7 +230,8 @@ final class MacOS {
             }
         };
 
-        Remote(String url, Entry e) {
+        Remote(String url, Entry e, Wallpapers.Progress progress) {
+            this.progress = progress;
             this.url = url;
             this.base = e.offset;
             this.size = e.size;
@@ -253,6 +256,9 @@ final class MacOS {
                         throw new java.io.IOException(e);
                     }
                     blocks.put(k, blk);
+                    fetched += n;
+                    // Choosing reads (nearly) the whole picture file, so bytes fetched is the progress.
+                    if (progress != null) progress.on(Math.min(0.97f, fetched / (float) size), true);
                 }
                 int in = (int) (p - k * BLOCK), n = Math.min(len - done, blk.length - in);
                 System.arraycopy(blk, in, buffer, offset + done, n);
@@ -273,18 +279,28 @@ final class MacOS {
     }
 
     /** A retriever on the wallpaper: read in place when possible, otherwise downloaded and unpacked first. */
-    private static MediaMetadataRetriever retriever(Context c, Item it, File[] temp) throws Exception {
+    private static MediaMetadataRetriever retriever(Context c, Item it, File[] temp, Wallpapers.Progress progress) throws Exception {
         Entry e = entry(it.url);
         MediaMetadataRetriever r = new MediaMetadataRetriever();
         if (e.stored) {
-            Remote src = new Remote(it.url, e);
+            Remote src = new Remote(it.url, e, progress);
             LAST_SOURCE.set(src);
             r.setDataSource(src);
             return r;
         }
         File f = new File(c.getCacheDir(), "macos-" + it.name.hashCode() + ".heic");
         HttpURLConnection h = open(it.url);
-        try (java.util.zip.ZipInputStream z = new java.util.zip.ZipInputStream(h.getInputStream())) {
+        long total = h.getContentLengthLong();
+        long[] got = {0};
+        InputStream raw = new java.io.FilterInputStream(h.getInputStream()) {
+            @Override
+            public int read(byte[] b, int off, int len) throws java.io.IOException {
+                int n = super.read(b, off, len);
+                if (n > 0 && progress != null && total > 0) progress.on(0.85f * (got[0] += n) / total, true);
+                return n;
+            }
+        };
+        try (java.util.zip.ZipInputStream z = new java.util.zip.ZipInputStream(raw)) {
             java.util.zip.ZipEntry ze;
             while ((ze = z.getNextEntry()) != null) {
                 if (!ze.getName().toLowerCase(java.util.Locale.ROOT).endsWith(".heic")) continue;
@@ -330,7 +346,7 @@ final class MacOS {
                 save(fit(b, 480, 270, true), f, 82);
                 return f;
             }
-            r = retriever(c, it, temp);
+            r = retriever(c, it, temp, null);
             int count = count(r);
             if (count > 1) new File(Wallpapers.dir(c, "macos-thumbs"), it.name + ".dynamic").createNewFile();
             Bitmap b = image(r, count > 1 ? middayIndex(r, count) : 0);
@@ -354,7 +370,8 @@ final class MacOS {
         File[] temp = new File[1];
         MediaMetadataRetriever r = null;
         try {
-            r = retriever(c, it, temp);
+            Wallpapers.Progress p = Wallpapers.progress.get();
+            r = retriever(c, it, temp, p);
             int count = count(r);
             int[] s = Wallpapers.screen(c);
             File staging = Wallpapers.dir(c, "macos-new");
@@ -542,7 +559,7 @@ final class MacOS {
     }
 
     /** A binary property list (dict, array, int, real, bool, string). */
-    private static Object bplist(byte[] b) {
+    static Object bplist(byte[] b) {
         java.nio.ByteBuffer t = java.nio.ByteBuffer.wrap(b);
         int n = b.length;
         int offSize = b[n - 26] & 0xFF, refSize = b[n - 25] & 0xFF;

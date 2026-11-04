@@ -57,9 +57,16 @@ final class Wallpapers {
     }
 
     /** The aerial video to play behind Home, or null. */
+    /**
+     * The aerial behind Home. Home is drawn at the interface's resolution (1080p on most TVs, even 4K ones), so
+     * it plays the 1080p video: the same picture for a quarter of the decoding. The screensaver, which shows
+     * video at the panel's full resolution, plays 4K.
+     */
     static String video(Context c) {
         String k = kind(c);
-        return k.startsWith("aerial:") ? prefs(c).getString("aerialUrl", null) : null;
+        if (!k.startsWith("aerial:")) return null;
+        String home = prefs(c).getString("aerialHome", null);
+        return home != null ? home : prefs(c).getString("aerialUrl", null);
     }
 
     static void set(Context c, String kind) {
@@ -69,6 +76,44 @@ final class Wallpapers {
     static void glow(Context c) {
         current(c).delete();
         set(c, "");
+    }
+
+    /**
+     * Makes a wallpaper from the library current, by kind ("", "bing", "aerial:ID", "macos:NAME",
+     * "upload:NAME"). Downloads what it needs. Call off the main thread.
+     */
+    static void apply(Context c, String kind) throws Exception {
+        if (kind.isEmpty()) {
+            glow(c);
+        } else if (kind.equals("bing")) {
+            copy(fetchBing(c), current(c));
+            set(c, "bing");
+            prefs(c).edit().putString("bingDay", today()).apply();
+        } else if (kind.startsWith("aerial:")) {
+            for (Aerials.Aerial a : Aerials.list(c)) {
+                if (!kind.equals("aerial:" + a.id)) continue;
+                Aerials.saveStill(c, a, current(c));
+                prefs(c).edit().putString("aerialUrl", Aerials.videoFor(c, a))
+                        .putString("aerialHome", a.url1080).apply();
+                set(c, kind);
+                return;
+            }
+            throw new java.io.IOException("no aerial " + kind);
+        } else if (kind.startsWith("macos:")) {
+            for (MacOS.Item it : MacOS.list(c)) {
+                if (kind.equals("macos:" + it.name)) {
+                    MacOS.choose(c, it);
+                    return;
+                }
+            }
+            throw new java.io.IOException("no macOS wallpaper " + kind);
+        } else if (kind.startsWith("upload:")) {
+            File f = new File(dir(c, "uploads"), kind.substring(7) + ".jpg");
+            copy(f, current(c));
+            set(c, kind);
+        } else {
+            throw new IllegalArgumentException(kind);
+        }
     }
 
     // ---- pictures at screen size ------------------------------------------------------------------------
@@ -335,17 +380,35 @@ final class Wallpapers {
         return new String(getBytes(url), "UTF-8");
     }
 
+    /** Where a wallpaper being set reports how far along it is (0–1, below 0 unknown; true while downloading). */
+    interface Progress {
+        void on(float fraction, boolean downloading);
+    }
+
+    /** Set by the job that's setting a wallpaper, for that thread only (previews loading meanwhile don't report). */
+    static final ThreadLocal<Progress> progress = new ThreadLocal<>();
+
+    static void report(float fraction, boolean downloading) {
+        Progress p = progress.get();
+        if (p != null) p.on(fraction, downloading);
+    }
+
     static byte[] getBytes(String url) throws Exception {
         HttpURLConnection h = (HttpURLConnection) new URL(url).openConnection();
         h.setInstanceFollowRedirects(true);
         h.setConnectTimeout(12000);
         h.setReadTimeout(30000);
         h.setRequestProperty("User-Agent", "OtvOS/" + Brand.OS_VERSION);
+        long total = h.getContentLengthLong(), got = 0;
         try (InputStream in = h.getInputStream()) {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            ByteArrayOutputStream out = new ByteArrayOutputStream(total > 0 && total < 64 << 20 ? (int) total : 65536);
             byte[] buf = new byte[65536];
             int n;
-            while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+            while ((n = in.read(buf)) > 0) {
+                out.write(buf, 0, n);
+                got += n;
+                if (total > 0) report(got / (float) total, true);
+            }
             return out.toByteArray();
         }
     }
