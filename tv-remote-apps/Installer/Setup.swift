@@ -272,6 +272,9 @@ final class Setup: ObservableObject {
                 "appops set \(p) TURN_SCREEN_ON allow",
                 "pm grant \(p) android.permission.GET_ACCOUNTS",
                 "pm grant \(p) android.permission.ACCESS_FINE_LOCATION",
+                "pm grant \(p) android.permission.BLUETOOTH_CONNECT",
+                // Lets OtvOS install its own updates from GitHub in the background.
+                "appops set \(p) REQUEST_INSTALL_PACKAGES allow",
             ] { _ = await shell(c) }
             return true
         }

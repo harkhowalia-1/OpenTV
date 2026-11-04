@@ -38,6 +38,16 @@
     <string name="dnd">Do Not Disturb</string>
     <string name="dnd_setup">Do Not Disturb needs a one-time setup: adb shell cmd notification allow_dnd com.gathin.tvhome</string>
     <string name="screen_saver">Screen Saver</string>
+    <string name="bluetooth">Bluetooth</string>
+    <string name="wallpaper">Wallpaper</string>
+    <string name="wallpaper_sub">Choose what\'s behind your apps on the Home screen.</string>
+    <string name="wallpaper_glow">Colour Glow</string>
+    <string name="wallpaper_device">Device Wallpaper</string>
+    <string name="wallpaper_none">This device has no built-in wallpapers, so the colour glow is the only choice.</string>
+    <string name="inputs_sub">Switch the TV to another HDMI device.</string>
+    <string name="inputs_none">This device can\'t switch the TV\'s inputs. Use the Input button on your TV\'s remote.</string>
+    <string name="inputs_failed">That input couldn\'t be opened.</string>
+    <string name="bluetooth_devices">%1$d devices</string>
     <string name="close_apps">Close Background Apps</string>
     <string name="close_apps_sub">Frees memory so the TV runs faster</string>
     <string name="sleep_timer">Sleep Timer</string>

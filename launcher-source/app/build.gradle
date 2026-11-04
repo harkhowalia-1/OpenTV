@@ -10,8 +10,11 @@ android {
         applicationId 'com.gathin.tvhome'
         minSdk 26
         targetSdk 34
-        versionCode 3
-        versionName '2.0'
+        // The release version (scripts/release.sh passes -PotvVersion=1.2): Software Update compares against it.
+        def v = (project.findProperty('otvVersion') ?: '1.2').toString()
+        def parts = (v.tokenize('.') + ['0', '0']).take(3).collect { it.toInteger() }
+        versionCode 100000 + parts[0] * 10000 + parts[1] * 100 + parts[2]
+        versionName v
     }
 
     buildTypes {

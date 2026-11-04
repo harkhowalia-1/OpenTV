@@ -105,8 +105,24 @@ struct RemoteView: View {
             if let np = model.nowPlaying { NowPlayingCard(np: np, compact: compact) { model.press($0) } }
 
             #if os(iOS)
-            TouchSurface { model.press($0) }
-                .aspectRatio(1, contentMode: .fit)
+            ZStack(alignment: .topTrailing) {
+                if model.trackpad {
+                    Trackpad(model: model)
+                } else {
+                    TouchSurface { model.press($0) }
+                }
+                // Swipes move the selection; the trackpad moves a cursor, for apps like games and web pages.
+                Button { model.trackpad.toggle() } label: {
+                    Image(systemName: model.trackpad ? "cursorarrow.rays" : "hand.draw")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(.white.opacity(model.trackpad ? 0.95 : 0.55))
+                        .frame(width: 40, height: 40)
+                        .background(Circle().fill(Color.white.opacity(model.trackpad ? 0.22 : 0.10)))
+                }
+                .padding(12)
+                .accessibilityLabel(model.trackpad ? "Switch to swipe" : "Switch to trackpad")
+            }
+            .aspectRatio(1, contentMode: .fit)
             #else
             ClickPad(size: 176) { model.press($0) }
                 .padding(.vertical, 4)
@@ -313,6 +329,87 @@ struct TouchSurface: View {
             )
             .frame(width: geo.size.width, height: geo.size.height)
         }
+    }
+}
+#endif
+
+#if os(iOS)
+/// The touch surface as a trackpad: one finger moves the TV's cursor (faster when you move faster), a tap
+/// clicks, two fingers scroll, and a two-finger tap is Home.
+struct Trackpad: View {
+    @ObservedObject var model: RemoteModel
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 30, style: .continuous).fill(Color.white.opacity(0.09))
+            VStack(spacing: 6) {
+                Image(systemName: "cursorarrow.rays").font(.system(size: 26, weight: .light))
+                Text("Trackpad: move, tap to click, two fingers to scroll").font(.footnote)
+                    .multilineTextAlignment(.center)
+            }
+            .foregroundStyle(.white.opacity(0.28))
+            .padding(.horizontal, 30)
+            TrackpadGestures(model: model)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+        .onDisappear { model.pointerEnded() }
+    }
+}
+
+private struct TrackpadGestures: UIViewRepresentable {
+    let model: RemoteModel
+
+    func makeCoordinator() -> Coordinator { Coordinator(model: model) }
+
+    func makeUIView(context: Context) -> UIView {
+        let v = UIView()
+        v.backgroundColor = .clear
+        let c = context.coordinator
+        let move = UIPanGestureRecognizer(target: c, action: #selector(Coordinator.move(_:)))
+        move.maximumNumberOfTouches = 1
+        let scroll = UIPanGestureRecognizer(target: c, action: #selector(Coordinator.scroll(_:)))
+        scroll.minimumNumberOfTouches = 2
+        let tap = UITapGestureRecognizer(target: c, action: #selector(Coordinator.tap))
+        let home = UITapGestureRecognizer(target: c, action: #selector(Coordinator.home))
+        home.numberOfTouchesRequired = 2
+        [move, scroll, tap, home].forEach(v.addGestureRecognizer)
+        return v
+    }
+
+    func updateUIView(_ uiView: UIView, context: Context) {}
+
+    @MainActor
+    final class Coordinator: NSObject {
+        let model: RemoteModel
+        private var last = CGPoint.zero
+        private var rest = CGPoint.zero
+        init(model: RemoteModel) { self.model = model }
+
+        @objc func move(_ g: UIPanGestureRecognizer) {
+            let t = g.translation(in: g.view)
+            if g.state == .began { last = .zero; rest = .zero }
+            let dx = t.x - last.x, dy = t.y - last.y
+            last = t
+            // Pointer acceleration: slow moves are precise, quick flicks cross the screen.
+            let v = g.velocity(in: g.view)
+            let gain = 1.6 + min(hypot(v.x, v.y) / 700, 2.4)
+            rest.x += dx * gain
+            rest.y += dy * gain
+            let ix = Int(rest.x.rounded(.towardZero)), iy = Int(rest.y.rounded(.towardZero))
+            rest.x -= CGFloat(ix)
+            rest.y -= CGFloat(iy)
+            model.pointerMove(dx: ix, dy: iy)
+        }
+
+        @objc func scroll(_ g: UIPanGestureRecognizer) {
+            let t = g.translation(in: g.view)
+            g.setTranslation(.zero, in: g.view)
+            let phase: UInt8 = g.state == .began ? 1 : (g.state == .ended || g.state == .cancelled) ? 4 : 2
+            model.pointerScroll(dx: Int(t.x * 2), dy: Int(t.y * 2), phase: phase)
+        }
+
+        @objc func tap() { model.pointerClick(0) }
+        @objc func home() { model.pointerClick(1) }
     }
 }
 #endif

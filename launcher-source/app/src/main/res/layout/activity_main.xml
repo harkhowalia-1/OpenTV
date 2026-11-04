@@ -5,6 +5,14 @@
     android:layout_height="match_parent"
     android:background="#FF000000">
 
+    <!-- The chosen wallpaper (Settings › Wallpaper), dimmed so the apps stand out. Hidden for the colour glow. -->
+    <ImageView
+        android:id="@+id/wallpaper"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:visibility="gone" />
+
     <!-- Ambient glow in the colour of the focused dock app. -->
     <View
         android:id="@+id/ambient"

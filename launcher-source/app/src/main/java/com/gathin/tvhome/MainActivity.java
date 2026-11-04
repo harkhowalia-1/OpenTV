@@ -247,11 +247,32 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                         .withEndAction(() -> root.removeView(card)));
     }
 
+    private String shownWallpaper;
+
+    /** Draws the wallpaper chosen in Settings (only when it changed), or nothing for the colour glow. */
+    private void applyWallpaper() {
+        String pref = getSharedPreferences("home", MODE_PRIVATE).getString(WallpaperActivity.PREF, "");
+        java.io.File f = WallpaperActivity.file(this);
+        String key = pref.isEmpty() || !f.exists() ? "" : pref + f.lastModified();
+        if (key.equals(shownWallpaper)) return;
+        shownWallpaper = key;
+        android.widget.ImageView wall = findViewById(R.id.wallpaper);
+        if (key.isEmpty()) {
+            wall.setImageDrawable(null);
+            wall.setVisibility(View.GONE);
+            return;
+        }
+        wall.setImageBitmap(android.graphics.BitmapFactory.decodeFile(f.getPath()));
+        wall.setColorFilter(0x66000000, android.graphics.PorterDuff.Mode.SRC_ATOP);
+        wall.setVisibility(View.VISIBLE);
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
         resumedAt = SystemClock.uptimeMillis();
         Profiles.syncAccounts(this);
+        applyWallpaper();
         glassShown = false;
         glass.setAlpha(0f);
         heroShown = false;

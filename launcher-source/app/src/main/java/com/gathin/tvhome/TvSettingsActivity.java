@@ -89,11 +89,16 @@ public class TvSettingsActivity extends Activity {
                 new Intent(Settings.ACTION_WIFI_SETTINGS));
         row(list, R.drawable.ic_person, "Users and Accounts", Profiles.active(this),
                 new Intent(Settings.ACTION_SYNC_SETTINGS));
+        row(list, R.drawable.ic_display, getString(R.string.wallpaper),
+                getSharedPreferences("home", MODE_PRIVATE).getString(WallpaperActivity.PREF, "").isEmpty()
+                        ? getString(R.string.wallpaper_glow) : getString(R.string.wallpaper_device),
+                new Intent(this, WallpaperActivity.class));
         row(list, R.drawable.ic_screensaver, "Screen Saver", getString(R.string.dream_name),
                 new Intent("com.google.android.tv.settings.ambient"));
 
         section(list, "Video and Audio");
         row(list, R.drawable.ic_display, "Display and Sound", displayMode(), new Intent(Settings.ACTION_SOUND_SETTINGS));
+        row(list, R.drawable.ic_input, getString(R.string.inputs), null, new Intent(this, InputActivity.class));
         row(list, R.drawable.ic_accessibility, "Accessibility", null, new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
         row(list, R.drawable.ic_keyboard, "Subtitles", null, new Intent(Settings.ACTION_CAPTIONING_SETTINGS));
 
@@ -116,7 +121,10 @@ public class TvSettingsActivity extends Activity {
         row(list, R.drawable.ic_timer, "Date and Time", null, new Intent(Settings.ACTION_DATE_SETTINGS));
         row(list, R.drawable.ic_keyboard, "Keyboard", null, new Intent(Settings.ACTION_INPUT_METHOD_SETTINGS));
         row(list, R.drawable.ic_storage, "Storage", null, new Intent(Settings.ACTION_INTERNAL_STORAGE_SETTINGS));
-        row(list, R.drawable.ic_update, "Software Updates", null, new Intent("android.settings.SYSTEM_UPDATE_SETTINGS"));
+        row(list, R.drawable.ic_update, "Software Update",
+                Updater.prefs(this).getBoolean("needsConfirm", false) ? "Update ready" : Brand.OS + " " + versionName(),
+                new Intent(this, UpdateActivity.class));
+        row(list, R.drawable.ic_update, "Device Software", null, new Intent("android.settings.SYSTEM_UPDATE_SETTINGS"));
         row(list, R.drawable.ic_info, "About", Brand.MODEL + " · " + Brand.OS + " " + Brand.OS_VERSION,
                 new Intent(Settings.ACTION_DEVICE_INFO_SETTINGS));
 
@@ -126,6 +134,14 @@ public class TvSettingsActivity extends Activity {
 
         setContentView(root);
         first.requestFocus();
+    }
+
+    private String versionName() {
+        try {
+            return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     /** "1080p · 60 Hz" for the current HDMI output. */

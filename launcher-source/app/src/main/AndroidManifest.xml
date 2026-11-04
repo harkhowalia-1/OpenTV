@@ -24,6 +24,11 @@
     <!-- Android 11+ package visibility: let the launcher see every app with a TV launch entry. -->
     <!-- Every app, for the Mac manager's app list (sideloaded, never on Google Play). -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <!-- Control Center's Bluetooth tile names the connected devices. -->
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <!-- Software Update installs new versions of OtvOS and IPTV (you confirm each on the TV). -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <queries>
         <intent>
@@ -45,6 +50,11 @@
         android:theme="@style/Theme.TvHome"
         android:allowBackup="false">
 
+        <receiver android:name=".Updater$Result" android:exported="false" />
+        <activity android:name=".UpdateActivity" android:exported="false" android:launchMode="singleTop"
+            android:screenOrientation="landscape" />
+        <activity android:name=".WallpaperActivity" android:exported="false" android:screenOrientation="landscape" />
+        <activity android:name=".InputActivity" android:exported="false" android:screenOrientation="landscape" />
         <activity
             android:name=".PlayerActivity"
             android:exported="false"

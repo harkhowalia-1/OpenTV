@@ -64,8 +64,6 @@ public class ControlCenterActivity extends Activity {
 
     // Control Center state
     private TextView timerValue;
-    private TextView dndValue;
-    private GradientDrawable dndBadge;
 
     // Volume state
     private View volumeFill;
@@ -214,16 +212,9 @@ public class ControlCenterActivity extends Activity {
         add(grid, wideTile(icon(R.drawable.ic_wifi, 22, ColorStateList.valueOf(0xFF3B9BFF)), getString(R.string.wifi),
                 MainActivity.networkName(this), v -> open(new Intent(Settings.ACTION_WIFI_SETTINGS))), 0, 1, 2, 2, cell, gap);
 
-        dndBadge = new GradientDrawable();
-        dndBadge.setShape(GradientDrawable.OVAL);
-        FrameLayout moon = new FrameLayout(this);
-        moon.setBackground(dndBadge);
-        moon.addView(icon(R.drawable.ic_moon, 15, ColorStateList.valueOf(0xFFFFFFFF)),
-                new FrameLayout.LayoutParams(dp(15), dp(15), Gravity.CENTER));
-        moon.setLayoutParams(new LinearLayout.LayoutParams(dp(26), dp(26)));
-        View dnd = wideTile(moon, getString(R.string.dnd), "", v -> toggleDnd());
-        dndValue = dnd.findViewWithTag("sub");
-        add(grid, dnd, 1, 1, 2, 2, cell, gap);
+        View bluetooth = wideTile(icon(R.drawable.ic_bluetooth, 22, ColorStateList.valueOf(0xFF3B9BFF)),
+                getString(R.string.bluetooth), bluetoothSummary(), v -> openBluetooth());
+        add(grid, bluetooth, 1, 1, 2, 2, cell, gap);
 
         add(grid, wideTile(icon(R.drawable.ic_screensaver, 22, glassText()), getString(R.string.screen_saver),
                 getString(R.string.dream_name), v -> startScreenSaver()), 2, 1, 0, 2, cell, gap);
@@ -237,7 +228,7 @@ public class ControlCenterActivity extends Activity {
         // Two rows of small round buttons, as in tvOS: the gear opens the tvOS-style Settings, the rest open
         // their screens (Google TV's own where there is no launcher one).
         int[] icons = {R.drawable.ic_remote, R.drawable.ic_airplay, R.drawable.ic_home, R.drawable.ic_settings,
-                R.drawable.ic_gamepad, R.drawable.ic_accessibility, R.drawable.ic_display, R.drawable.ic_search};
+                R.drawable.ic_gamepad, R.drawable.ic_accessibility, R.drawable.ic_input, R.drawable.ic_search};
         Runnable[] actions = {
                 this::pairRemote,
                 () -> openApp(AIRPLAY_PACKAGE),
@@ -245,7 +236,7 @@ public class ControlCenterActivity extends Activity {
                 () -> open(new Intent(this, TvSettingsActivity.class)),
                 () -> open(new Intent(TV_PAIR_ACCESSORY)),
                 () -> open(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)),
-                () -> open(new Intent(Settings.ACTION_SOUND_SETTINGS)),
+                () -> open(new Intent(this, InputActivity.class)),
                 () -> open(new Intent(Intent.ACTION_ASSIST)),
         };
         for (int i = 0; i < icons.length; i++) {
@@ -260,7 +251,6 @@ public class ControlCenterActivity extends Activity {
                     close();
                     HomeKeyService.closeBackgroundApps();
                 }), 6, 1, 0, 4, cell, gap);
-        updateDnd();
         updateTimer();
         updateVolume();
         return p;
@@ -428,23 +418,42 @@ public class ControlCenterActivity extends Activity {
         finish();
     }
 
-    private void toggleDnd() {
-        NotificationManager nm = getSystemService(NotificationManager.class);
-        if (nm == null || !nm.isNotificationPolicyAccessGranted()) {
-            Toast.makeText(this, R.string.dnd_setup, Toast.LENGTH_LONG).show();
-            return;
+    /**
+     * The Bluetooth tile: what's connected now ("AirPods", "2 devices"), or On / Off. Reading connected devices
+     * needs the Nearby devices permission (granted by the installer); without it the tile just says On or Off.
+     */
+    private String bluetoothSummary() {
+        try {
+            android.bluetooth.BluetoothManager bm = getSystemService(android.bluetooth.BluetoothManager.class);
+            android.bluetooth.BluetoothAdapter a = bm == null ? null : bm.getAdapter();
+            if (a == null) return getString(R.string.off);
+            if (!a.isEnabled()) return getString(R.string.off);
+            java.util.List<String> names = new java.util.ArrayList<>();
+            for (android.bluetooth.BluetoothDevice d : a.getBondedDevices()) {
+                Object c = d.getClass().getMethod("isConnected").invoke(d);
+                if (Boolean.TRUE.equals(c) && d.getName() != null) names.add(d.getName());
+            }
+            if (names.size() == 1) return names.get(0);
+            if (names.size() > 1) return getString(R.string.bluetooth_devices, names.size());
+            return getString(R.string.on);
+        } catch (Exception | Error e) {
+            return getString(R.string.on);
         }
-        boolean on = nm.getCurrentInterruptionFilter() > NotificationManager.INTERRUPTION_FILTER_ALL;
-        nm.setInterruptionFilter(on ? NotificationManager.INTERRUPTION_FILTER_ALL
-                : NotificationManager.INTERRUPTION_FILTER_PRIORITY);
-        handler.postDelayed(this::updateDnd, 150);
     }
 
-    private void updateDnd() {
-        NotificationManager nm = getSystemService(NotificationManager.class);
-        boolean on = nm != null && nm.getCurrentInterruptionFilter() > NotificationManager.INTERRUPTION_FILTER_ALL;
-        dndBadge.setColor(on ? 0xFF5E5CE6 : 0xFF3A3A3C);   // purple moon when on, as on Apple devices
-        dndValue.setText(on ? R.string.on : R.string.off);
+    /** Pairing and connected devices: the TV's own Bluetooth / Remotes & Accessories screen. */
+    private void openBluetooth() {
+        Intent[] tries = {
+                new Intent(Settings.ACTION_BLUETOOTH_SETTINGS),
+                new Intent("com.android.tv.settings.ACCESSORIES"),
+                new Intent(TV_PAIR_ACCESSORY),
+        };
+        for (Intent i : tries) {
+            if (i.resolveActivity(getPackageManager()) != null) {
+                open(i);
+                return;
+            }
+        }
     }
 
     /** Sleep Timer: OK steps through 15, 30, 60 and 90 minutes, then off. */

@@ -129,6 +129,7 @@ final class PointerOverlay {
             case "left": x = 1; y = along * height; break;
             case "right": x = width - 2; y = along * height; break;
             case "top": x = along * width; y = 1; break;
+            case "center": x = width / 2f; y = height / 2f; break;   // the iPhone's trackpad: no edge to leave by
             default: x = along * width; y = height - 2; break;   // the TV is above the Mac
         }
         if (layer == null) {

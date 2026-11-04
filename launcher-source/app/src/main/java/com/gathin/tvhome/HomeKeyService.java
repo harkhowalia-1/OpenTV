@@ -52,6 +52,14 @@ public class HomeKeyService extends AccessibilityService implements RemoteServer
     private View codeCard;
     private final android.accounts.OnAccountsUpdateListener accountsChanged = accounts -> Profiles.syncAccounts(this);
 
+    private final Runnable autoUpdate = new Runnable() {
+        @Override
+        public void run() {
+            Updater.autoUpdate(HomeKeyService.this);
+            handler.postDelayed(this, Updater.EVERY_MS);
+        }
+    };
+
     private final Runnable longPress = () -> {
         homeDown = false;
         ControlCenterActivity.toggle(this);
@@ -69,6 +77,8 @@ public class HomeKeyService extends AccessibilityService implements RemoteServer
         control.start();
         screen = new ScreenReceiver(this);
         screen.start();
+        // New releases from GitHub install themselves: a few minutes after start, then every six hours.
+        handler.postDelayed(autoUpdate, 3 * 60 * 1000);
         // The Mac's two-finger click is the Home button.
         pointer = new PointerOverlay(this, () -> handler.post(this::goHome));
         // A Google account added or removed anywhere on the TV gets (or loses) its profile straight away.
@@ -82,6 +92,7 @@ public class HomeKeyService extends AccessibilityService implements RemoteServer
 
     @Override
     public void onDestroy() {
+        handler.removeCallbacks(autoUpdate);
         if (current == this) current = null;
         if (remote != null) remote.stop();
         if (appleHome != null) appleHome.stop();
@@ -127,6 +138,7 @@ public class HomeKeyService extends AccessibilityService implements RemoteServer
         String c = cls.toString();
         String p = pkg.toString();
         if (!p.equals(getPackageName())) AppCloser.opened.add(p);
+        if (!p.contains("inputmethod") && !p.equals("com.android.systemui")) foreground = p;
         boolean stockHome = (p.equals("com.google.android.tungsten.setupwraith") && c.endsWith("RecoveryActivity"))
                 || (p.equals("com.android.tv.settings") && c.endsWith("FallbackHome"))
                 || p.equals("com.google.android.apps.tv.launcherx");
@@ -264,6 +276,10 @@ public class HomeKeyService extends AccessibilityService implements RemoteServer
         handler.post(() -> {
             wakeIfAsleep("pointer");
             pointerOwner = from;
+            if (toApp()) {
+                toPointerApp("show", 0, 0);
+                return;
+            }
             pointer.enter(along, edge, at -> {
                 ControlServer.Client owner = pointerOwner;
                 pointerOwner = null;
@@ -274,17 +290,64 @@ public class HomeKeyService extends AccessibilityService implements RemoteServer
 
     @Override
     public void pointerMove(int dx, int dy) {
+        if (toApp()) {
+            handler.post(() -> {
+                appDx += dx;
+                appDy += dy;
+                if (!appFlush) {
+                    appFlush = true;
+                    handler.postDelayed(flushAppMove, 12);
+                }
+            });
+            return;
+        }
         pointer.move(dx, dy);
     }
 
     @Override
     public void pointerButton(int button, boolean down) {
+        if (toApp()) {
+            if (button == 0) toPointerApp("button", down ? 1 : 0, 0);
+            else if (down && (button == 1 || button == 2)) handler.post(this::goHome);
+            else if (down && button == 3) performGlobalAction(GLOBAL_ACTION_BACK);
+            return;
+        }
         pointer.button(button, down);
     }
 
     @Override
     public void pointerScroll(int dx, int dy, int phase) {
+        if (toApp()) {
+            toPointerApp("scroll", dx, dy);
+            return;
+        }
         pointer.scroll(dx, dy, phase);
+    }
+
+    // ---- apps with their own cursor ---------------------------------------------------------------------
+
+    /**
+     * Apps that draw their own mouse cursor (Cloud Gaming's game streams need real pointer clicks at a
+     * position): while one is in front, the Mac's or iPhone's pointer drives that cursor directly instead of
+     * OtvOS's, so it moves and clicks exactly like a trackpad.
+     */
+    static final String POINTER_APP = "local.cloudgaming";
+    private volatile String foreground = "";
+    private int appDx, appDy;
+    private boolean appFlush;
+    private final Runnable flushAppMove = () -> {
+        appFlush = false;
+        if (appDx != 0 || appDy != 0) toPointerApp("move", appDx, appDy);
+        appDx = appDy = 0;
+    };
+
+    private boolean toApp() {
+        return POINTER_APP.equals(foreground);
+    }
+
+    private void toPointerApp(String what, int a, int b) {
+        sendBroadcast(new Intent(POINTER_APP + ".POINTER").setPackage(POINTER_APP)
+                .putExtra("what", what).putExtra("a", a).putExtra("b", b));
     }
 
     @Override

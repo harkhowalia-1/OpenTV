@@ -202,6 +202,46 @@ public class MainActivity extends Activity {
         cursor.moveTo(Math.max(0, Math.min(w - 1, x)), Math.max(0, Math.min(h - 1, y)));
     }
 
+    /**
+     * OpenTV's pointer (a Mac's trackpad or the iPhone remote's trackpad), forwarded by OtvOS while this app is in
+     * front: moves this cursor smoothly, clicks where it is, and scrolls under it.
+     */
+    private final android.content.BroadcastReceiver pointer = new android.content.BroadcastReceiver() {
+        private float accX, accY;
+
+        @Override
+        public void onReceive(Context c, android.content.Intent i) {
+            int a = i.getIntExtra("a", 0), b = i.getIntExtra("b", 0);
+            switch (String.valueOf(i.getStringExtra("what"))) {
+                case "show":
+                    cursor.show();
+                    break;
+                case "move": {
+                    if (!cursor.visible) cursor.show();
+                    int w = root.getWidth(), h = root.getHeight();
+                    float x = cursor.x < 0 ? w / 2f : cursor.x, y = cursor.y < 0 ? h / 2f : cursor.y;
+                    cursor.moveTo(Math.max(0, Math.min(w - 1, x + a * 1.4f)), Math.max(0, Math.min(h - 1, y + b * 1.4f)));
+                    break;
+                }
+                case "button":
+                    if (a == 1) {
+                        if (!cursor.visible) cursor.show();
+                        tap(cursor.x, cursor.y);
+                    }
+                    break;
+                case "scroll":
+                    accY += b;
+                    if (Math.abs(accY) >= 30) {
+                        scroll(accY > 0 ? 1 : -1);
+                        accY = 0;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
+
     private void tap(float x, float y) {
         long t = SystemClock.uptimeMillis();
         MotionEvent down = MotionEvent.obtain(t, t, MotionEvent.ACTION_DOWN, x, y, 0);
@@ -259,6 +299,10 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+        try {
+            unregisterReceiver(pointer);
+        } catch (IllegalArgumentException ignored) {
+        }
         web.onPause();
         CookieManager.getInstance().flush();   // keep the sign-in across restarts
     }
@@ -267,6 +311,9 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         web.onResume();
+        android.content.IntentFilter f = new android.content.IntentFilter("local.cloudgaming.POINTER");
+        if (android.os.Build.VERSION.SDK_INT >= 33) registerReceiver(pointer, f, Context.RECEIVER_EXPORTED);
+        else registerReceiver(pointer, f);
     }
 
     @Override

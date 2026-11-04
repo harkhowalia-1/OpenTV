@@ -19,6 +19,14 @@ final class RemoteModel: ObservableObject {
     @Published private(set) var phase: Phase = .searching
     @Published private(set) var nowPlaying: NowPlaying?
     @Published var error: String?
+    /// The iPhone's touch surface as a trackpad (a cursor on the TV) instead of swipes that move the selection.
+    @Published var trackpad = UserDefaults.standard.bool(forKey: "trackpad") {
+        didSet {
+            UserDefaults.standard.set(trackpad, forKey: "trackpad")
+            if !trackpad { pointerEnded() }
+        }
+    }
+    private var pointerOn = false
 
     /// The live connection; the Mac's cursor bridge uses it too.
     let channel = ControlChannel()
@@ -182,6 +190,40 @@ final class RemoteModel: ObservableObject {
     private func update(_ tv: TV) {
         self.tv = tv
         TVStore.tv = tv
+    }
+
+    // MARK: Trackpad
+
+    /// Moves the TV's cursor (bringing it up in the middle of the screen the first time).
+    func pointerMove(dx: Int, dy: Int) {
+        guard channel.isReady else { return }
+        if !pointerOn {
+            pointerOn = true
+            channel.pointerEnter(along: 0.5, edge: "center")
+        }
+        if dx != 0 || dy != 0 { channel.pointerMove(dx: dx, dy: dy) }
+    }
+
+    /// A click (button 0), or Home (1).
+    func pointerClick(_ button: Int = 0) {
+        guard channel.isReady else { return }
+        pointerMove(dx: 0, dy: 0)
+        Haptics.tap()
+        channel.pointerButton(button, down: true)
+        channel.pointerButton(button, down: false)
+    }
+
+    func pointerScroll(dx: Int, dy: Int, phase: UInt8) {
+        guard channel.isReady else { return }
+        pointerMove(dx: 0, dy: 0)
+        channel.pointerScroll(dx: dx, dy: dy, phase: phase)
+    }
+
+    /// Hides the TV's cursor.
+    func pointerEnded() {
+        guard pointerOn else { return }
+        pointerOn = false
+        channel.pointerExit()
     }
 
     // MARK: Buttons
