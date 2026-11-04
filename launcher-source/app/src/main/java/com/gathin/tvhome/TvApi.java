@@ -337,6 +337,7 @@ final class TvApi {
         if (in.has("music")) e.putBoolean("music", in.getBoolean("music"));
         e.apply();
         if (in.has("startAfter") && ScreenSaver.canSetStartAfter(c)) ScreenSaver.setStartAfter(c, in.getInt("startAfter"));
+        if (in.has("type") || in.has("theme")) AerialCache.update(c);   // the screensaver's aerials, on the TV
         JSONArray themes = new JSONArray().put(ScreenSaver.ALL);
         for (String t : Aerials.THEMES) themes.put(t);
         JSONArray after = new JSONArray();

@@ -64,7 +64,12 @@ public class HomeKeyService extends AccessibilityService implements RemoteServer
     private final Runnable wallpapers = new Runnable() {
         @Override
         public void run() {
-            new Thread(() -> Wallpapers.refresh(HomeKeyService.this), "otv-wallpaper").start();
+            new Thread(() -> {
+                Wallpapers.refresh(HomeKeyService.this);
+                Cleanup.run(HomeKeyService.this);
+                Previews.prefetch(HomeKeyService.this);   // every wallpaper's preview, ready before it's needed
+            }, "otv-wallpaper").start();
+            AerialCache.update(HomeKeyService.this);   // aerials for Home and the screensaver, on the TV
             handler.postDelayed(this, 60 * 60 * 1000);
         }
     };
@@ -348,7 +353,20 @@ public class HomeKeyService extends AccessibilityService implements RemoteServer
      * OtvOS's, so it moves and clicks exactly like a trackpad.
      */
     static final String POINTER_APP = "local.cloudgaming";
+    /** Apps with their own cursor: Cloud Gaming, and Browser (web pages are made for a pointer). */
+    static final java.util.Set<String> POINTER_APPS = new java.util.HashSet<>(java.util.Arrays.asList(
+            POINTER_APP, "com.gathin.otvbrowser"));
+    /** Web browsers: while one is in front, the iPhone remote switches to its trackpad by itself. */
+    private static final java.util.Set<String> BROWSERS = new java.util.HashSet<>(java.util.Arrays.asList(
+            "com.gathin.otvbrowser", "com.android.chrome", "org.mozilla.firefox", "org.mozilla.tv.firefox",
+            "com.opera.browser", "com.tvwebbrowser.v22", "com.cloudmosa.puffinTV", "com.amazon.cloud9"));
     private volatile String foreground = "";
+
+    /** Is a web browser in front (so the iPhone remote should be a trackpad)? */
+    static boolean wantsPointer() {
+        HomeKeyService s = current;
+        return s != null && BROWSERS.contains(s.foreground);
+    }
     private int appDx, appDy;
     private boolean appFlush;
     private final Runnable flushAppMove = () -> {
@@ -358,11 +376,12 @@ public class HomeKeyService extends AccessibilityService implements RemoteServer
     };
 
     private boolean toApp() {
-        return POINTER_APP.equals(foreground);
+        return POINTER_APPS.contains(foreground);
     }
 
     private void toPointerApp(String what, int a, int b) {
-        sendBroadcast(new Intent(POINTER_APP + ".POINTER").setPackage(POINTER_APP)
+        String app = foreground;
+        sendBroadcast(new Intent(app + ".POINTER").setPackage(app)
                 .putExtra("what", what).putExtra("a", a).putExtra("b", b));
     }
 

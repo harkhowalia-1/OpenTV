@@ -30,6 +30,8 @@ final class ControlChannel: @unchecked Sendable {
     /// Called on the main actor.
     var onState: (@MainActor (State) -> Void)?
     var onNowPlaying: (@MainActor (NowPlaying?) -> Void)?
+    /// Whether what's on the TV wants a pointer (a web page): the remote switches to its trackpad.
+    var onPointerWanted: (@MainActor (Bool) -> Void)?
     var onPointerLeft: (@MainActor (Double) -> Void)?
     var onWelcome: (@MainActor (_ name: String, _ id: String?) -> Void)?
     /// The connection was lost (it reconnects by itself).
@@ -189,7 +191,11 @@ final class ControlChannel: @unchecked Sendable {
             if let title = o?["title"] as? String, !title.isEmpty {
                 np = NowPlaying(title: title, artist: o?["artist"] as? String ?? "", playing: o?["playing"] as? Bool ?? false)
             }
-            Task { @MainActor in self.onNowPlaying?(np) }
+            let wantsPointer = o?["pointer"] as? Bool ?? false
+            Task { @MainActor in
+                self.onNowPlaying?(np)
+                self.onPointerWanted?(wantsPointer)
+            }
         case .pointerLeft:
             guard payload.count >= 2 else { return }
             let v = Double(Int(payload[payload.startIndex]) << 8 | Int(payload[payload.startIndex + 1])) / 65535

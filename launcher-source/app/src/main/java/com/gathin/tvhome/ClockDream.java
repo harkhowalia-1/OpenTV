@@ -199,15 +199,17 @@ public class ClockDream extends DreamService {
                 String theme = ScreenSaver.theme(this);
                 java.util.List<Aerials.Aerial> all = Aerials.list(this);
                 java.util.List<Aerials.Aerial> pick = new java.util.ArrayList<>();
+                // The aerials on the TV (streamed only when it's short on space).
                 for (Aerials.Aerial a : all) {
-                    if (theme.equals(ScreenSaver.ALL) || theme.equals(a.category)) pick.add(a);
+                    boolean inTheme = theme.equals(ScreenSaver.ALL) || theme.equals(a.category);
+                    if (inTheme && AerialCache.source(this, a, true) != null) pick.add(a);
                 }
-                if (pick.isEmpty()) pick.addAll(all);
+                AerialCache.update(this);
                 java.util.Collections.shuffle(pick, random);
                 handler.post(() -> {
                     playlist.addAll(pick);
                     if (playlist.isEmpty()) {
-                        finish();
+                        fallBackToClock();   // none downloaded yet: the clock, until they are
                     } else if (surfaceReady) {
                         play(0);
                     }
@@ -240,7 +242,9 @@ public class ClockDream extends DreamService {
                 android.media.MediaPlayer mp = new android.media.MediaPlayer();
                 player = mp;
                 mp.setDisplay(surface.getHolder());
-                mp.setDataSource(Aerials.videoFor(this, a));
+                String src = AerialCache.source(this, a, true);
+                if (src == null) throw new java.io.IOException("not on the TV");
+                mp.setDataSource(src);
                 mp.setVolume(0f, 0f);
                 mp.setOnPreparedListener(android.media.MediaPlayer::start);
                 mp.setOnInfoListener((p, what, extra) -> {

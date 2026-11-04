@@ -28,7 +28,7 @@ final class Aerials {
     private static final long WEEK = 7L * 24 * 3600 * 1000;
 
     static final class Aerial {
-        String id, name, url1080, url4k;
+        String id, name, url1080, url4k, url1080hevc;
         /** tvOS's theme: Landscape, Cityscape, Earth or Underwater. */
         String category;
         /** Where the camera is, by second of the video (Apple's captions: "Over Midtown Manhattan…"). */
@@ -121,6 +121,7 @@ final class Aerials {
                 x.name = e.optString("accessibilityLabel", "Aerial");
                 x.url1080 = plain(e.optString("url-1080-H264", null));
                 x.url4k = plain(e.optString("url-4K-SDR", null));
+                x.url1080hevc = plain(e.optString("url-1080-SDR", null));
                 JSONArray ec = e.optJSONArray("categories");
                 x.category = theme(ec != null && ec.length() > 0 ? cats.getOrDefault(ec.getString(0), "") : "");
                 JSONObject poi = e.optJSONObject("pointsOfInterest");
@@ -151,9 +152,19 @@ final class Aerials {
         return a.url1080;
     }
 
-    private static boolean canPlay4kHevc() {
+    static boolean canPlay4kHevc() {
         MediaFormat f = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_HEVC, 3840, 2160);
         return new MediaCodecList(MediaCodecList.REGULAR_CODECS).findDecoderForFormat(f) != null;
+    }
+
+    static boolean canPlayHevc() {
+        MediaFormat f = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_HEVC, 1920, 1080);
+        return new MediaCodecList(MediaCodecList.REGULAR_CODECS).findDecoderForFormat(f) != null;
+    }
+
+    static Aerial byId(Context c, String id) {
+        for (Aerial a : list(c)) if (a.id.equals(id)) return a;
+        return null;
     }
 
     /** A small preview picture (cached), taken from the video a few seconds in. Call off the main thread. */

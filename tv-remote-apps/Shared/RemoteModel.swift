@@ -18,6 +18,7 @@ final class RemoteModel: ObservableObject {
     @Published private(set) var tv: TV? = TVStore.tv
     @Published private(set) var phase: Phase = .searching
     @Published private(set) var nowPlaying: NowPlaying?
+    private var pointerWanted: Bool?
     @Published var error: String?
     /// The iPhone's touch surface as a trackpad (a cursor on the TV) instead of swipes that move the selection.
     @Published var trackpad = UserDefaults.standard.bool(forKey: "trackpad") {
@@ -43,6 +44,15 @@ final class RemoteModel: ObservableObject {
         if let tv { phase = TVStore.token(for: tv) == nil ? .pairing : .offline }
         channel.onState = { [weak self] s in self?.channelState(s) }
         channel.onNowPlaying = { [weak self] np in self?.nowPlaying = np }
+        // A web page on the TV: the touch surface becomes a trackpad; back to swipes when it closes. Only on a
+        // change, so switching by hand in between still sticks.
+        channel.onPointerWanted = { [weak self] wanted in
+            guard let self, wanted != self.pointerWanted else { return }
+            let first = self.pointerWanted == nil
+            self.pointerWanted = wanted
+            if first && !wanted { return }   // just connected, no page open: keep how you left it
+            if self.trackpad != wanted { self.trackpad = wanted }
+        }
         channel.onWelcome = { [weak self] name, id in self?.welcomed(name: name, id: id) }
     }
 

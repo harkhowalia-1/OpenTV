@@ -41,6 +41,52 @@ final class Browser {
             {"https://github.com/", "GitHub"},
     };
 
+    /** Well-known sites for the start page's Popular Sites (the ones already in Favorites are left out). */
+    static final String[][] POPULAR = {
+            {"https://www.google.com/", "Google"},
+            {"https://www.youtube.com/", "YouTube"},
+            {"https://www.twitch.tv/", "Twitch"},
+            {"https://www.netflix.com/", "Netflix"},
+            {"https://www.primevideo.com/", "Prime Video"},
+            {"https://www.disneyplus.com/", "Disney+"},
+            {"https://tv.apple.com/", "Apple TV"},
+            {"https://open.spotify.com/", "Spotify"},
+            {"https://music.youtube.com/", "YouTube Music"},
+            {"https://soundcloud.com/", "SoundCloud"},
+            {"https://www.crunchyroll.com/", "Crunchyroll"},
+            {"https://pluto.tv/", "Pluto TV"},
+            {"https://tubitv.com/", "Tubi"},
+            {"https://vimeo.com/", "Vimeo"},
+            {"https://kick.com/", "Kick"},
+            {"https://www.instagram.com/", "Instagram"},
+            {"https://www.tiktok.com/", "TikTok"},
+            {"https://x.com/", "X"},
+            {"https://www.facebook.com/", "Facebook"},
+            {"https://www.pinterest.com/", "Pinterest"},
+            {"https://www.reddit.com/", "Reddit"},
+            {"https://www.wikipedia.org/", "Wikipedia"},
+            {"https://www.imdb.com/", "IMDb"},
+            {"https://www.espn.com/", "ESPN"},
+            {"https://www.bbc.com/", "BBC"},
+            {"https://www.cnn.com/", "CNN"},
+            {"https://news.google.com/", "Google News"},
+            {"https://weather.com/", "Weather"},
+            {"https://www.google.com/maps", "Maps"},
+            {"https://www.amazon.com/", "Amazon"},
+            {"https://www.ebay.com/", "eBay"},
+            {"https://github.com/", "GitHub"},
+            {"https://chatgpt.com/", "ChatGPT"},
+            {"https://claude.ai/", "Claude"},
+            {"https://www.speedtest.net/", "Speedtest"},
+    };
+
+    /** Popular Sites not already in Favorites. */
+    List<Site> popular() {
+        List<Site> out = new ArrayList<>();
+        for (String[] p : POPULAR) if (!isFavorite(p[0])) out.add(new Site(p[0], p[1]));
+        return out;
+    }
+
     private final File dir;
     final List<Site> favorites = new ArrayList<>();
     final Map<String, Site> history = new LinkedHashMap<>();

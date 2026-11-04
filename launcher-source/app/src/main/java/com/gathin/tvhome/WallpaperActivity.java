@@ -40,9 +40,9 @@ public class WallpaperActivity extends ChoiceScreen {
     }
 
     private static final int PHOTOS = 7;
-    private final ExecutorService previews = Executors.newFixedThreadPool(2);
+    private final ExecutorService previews = Executors.newFixedThreadPool(4);
     private final ExecutorService work = Executors.newSingleThreadExecutor();
-    private final ExecutorService macPreviews = Executors.newFixedThreadPool(2);
+    private final ExecutorService macPreviews = Executors.newFixedThreadPool(3);
     private final Handler main = new Handler(Looper.getMainLooper());
     private String current;
 
@@ -134,13 +134,8 @@ public class WallpaperActivity extends ChoiceScreen {
                         }
                     });
                 }
-                loadMacPreviews(0);
+                loadMacPreviews(list.size());   // every preview, top to bottom (each is kept once made)
             });
-        });
-        // Previews load as you move through the rows (each reads one picture from Apple).
-        getWindow().getDecorView().getViewTreeObserver().addOnGlobalFocusChangeListener((was, now) -> {
-            Integer i = now == null ? null : macCards.get(now);
-            if (i != null) loadMacPreviews(i + PER_ROW * 2);
         });
         note(getString(R.string.wallpaper_macos_note));
     }

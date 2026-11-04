@@ -65,8 +65,13 @@ final class Wallpapers {
     static String video(Context c) {
         String k = kind(c);
         if (!k.startsWith("aerial:")) return null;
-        String home = prefs(c).getString("aerialHome", null);
-        return home != null ? home : prefs(c).getString("aerialUrl", null);
+        // Played from the TV's storage (streamed only when the TV is short on space): until it has
+        // downloaded, Home shows its still.
+        String id = k.substring(7);
+        String local = AerialCache.local(c, id);
+        if (local != null) return local;
+        AerialCache.update(c);
+        return AerialCache.streams(c, id) ? prefs(c).getString("aerialHome", prefs(c).getString("aerialUrl", null)) : null;
     }
 
     static void set(Context c, String kind) {
@@ -96,6 +101,7 @@ final class Wallpapers {
                 prefs(c).edit().putString("aerialUrl", Aerials.videoFor(c, a))
                         .putString("aerialHome", a.url1080).apply();
                 set(c, kind);
+                AerialCache.update(c);   // download it, to play from the TV
                 return;
             }
             throw new java.io.IOException("no aerial " + kind);

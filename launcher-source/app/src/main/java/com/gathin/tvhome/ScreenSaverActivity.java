@@ -32,6 +32,7 @@ public class ScreenSaverActivity extends TvSettingsActivity {
             String id = ids[i];
             types[i] = row(list, icons[i], getString(names[i]), "", () -> {
                 ScreenSaver.prefs(this).edit().putString("type", id).apply();
+                AerialCache.update(this);
                 refresh();
             });
         }
@@ -45,6 +46,7 @@ public class ScreenSaverActivity extends TvSettingsActivity {
             int i = 0;
             while (i < all.length && !all[i].equals(now)) i++;
             ScreenSaver.prefs(this).edit().putString("theme", all[(i + 1) % all.length]).apply();
+            AerialCache.update(this);
             refresh();
         });
         View clock = row(list, R.drawable.ic_timer, getString(R.string.ss_show_clock), "", () -> {

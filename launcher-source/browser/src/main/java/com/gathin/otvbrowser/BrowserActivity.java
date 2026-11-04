@@ -166,9 +166,46 @@ public class BrowserActivity extends Activity {
         return true;
     }
 
+    /**
+     * The iPhone remote's (or a Mac's) trackpad, forwarded by OtvOS while Browser is in front: it moves this
+     * pointer directly, clicks where it is and scrolls under it, like a real trackpad.
+     */
+    private final android.content.BroadcastReceiver trackpad = new android.content.BroadcastReceiver() {
+        @Override
+        public void onReceive(Context c, Intent i) {
+            int a = i.getIntExtra("a", 0), b = i.getIntExtra("b", 0);
+            switch (String.valueOf(i.getStringExtra("what"))) {
+                case "move":
+                    if (overlay != null || !currentHasPage()) return;
+                    if (!webMode) enterWebMode();
+                    cursor.show();
+                    cursor.moveTo(Math.max(0, Math.min(root.getWidth() - 1, cursor.x + a * 1.4f)),
+                            Math.max(0, Math.min(root.getHeight() - 1, cursor.y + b * 1.4f)));
+                    if (cursor.y < bar.getBottom() + dp(24)) showBar(true);
+                    else {
+                        main.removeCallbacks(tuckBar);
+                        main.postDelayed(tuckBar, 1200);
+                    }
+                    break;
+                case "button":
+                    if (a == 1 && webMode) tap(cursor.x, cursor.y);
+                    break;
+                case "scroll":
+                    if (webMode) scroll(-a / 30f, b / 30f);
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
+
     @Override
     protected void onPause() {
         super.onPause();
+        try {
+            unregisterReceiver(trackpad);
+        } catch (IllegalArgumentException ignored) {
+        }
         List<String> urls = new ArrayList<>();
         for (Tab t : tabs) urls.add(t.web != null && t.web.getUrl() != null ? t.web.getUrl() : t.url);
         data.saveTabs(urls, cur);
@@ -179,6 +216,9 @@ public class BrowserActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        android.content.IntentFilter f = new android.content.IntentFilter("com.gathin.otvbrowser.POINTER");
+        if (android.os.Build.VERSION.SDK_INT >= 33) registerReceiver(trackpad, f, Context.RECEIVER_EXPORTED);
+        else registerReceiver(trackpad, f);
         if (!tabs.isEmpty() && tabs.get(cur).web != null) tabs.get(cur).web.onResume();
     }
 
@@ -195,7 +235,10 @@ public class BrowserActivity extends Activity {
         bar = new LinearLayout(this);
         bar.setOrientation(LinearLayout.HORIZONTAL);
         bar.setGravity(Gravity.CENTER_VERTICAL);
-        bar.setPadding(dp(8), dp(6), dp(8), dp(6));
+        bar.setPadding(dp(10), dp(8), dp(10), dp(8));
+        // A focused button grows a little: let it, without the bar cutting its edge.
+        bar.setClipChildren(false);
+        bar.setClipToPadding(false);
         GradientDrawable glass = new GradientDrawable();
         glass.setColor(0xE6262629);
         glass.setCornerRadius(dp(30));
@@ -276,10 +319,10 @@ public class BrowserActivity extends Activity {
             ((GradientDrawable) v.getBackground()).setColor(f ? 0xFFFFFFFF : 0x00000000);
             tabCount.setTextColor(f ? 0xFF1C1C1E : 0xFFFFFFFF);
             box.setStroke(dp(2), f ? 0xFF1C1C1E : 0xFFFFFFFF);
-            v.animate().scaleX(f ? 1.1f : 1f).scaleY(f ? 1.1f : 1f).setDuration(150).start();
+            v.animate().scaleX(f ? 1.08f : 1f).scaleY(f ? 1.08f : 1f).setDuration(150).start();
         });
         tabsBtn.setContentDescription("Tabs");
-        bar.addView(tabsBtn, new LinearLayout.LayoutParams(dp(44), dp(44)));
+        bar.addView(tabsBtn, new LinearLayout.LayoutParams(dp(40), dp(40)));
         return bar;
     }
 
@@ -308,9 +351,9 @@ public class BrowserActivity extends Activity {
         b.setOnFocusChangeListener((v, f) -> {
             ((GradientDrawable) v.getBackground()).setColor(f ? 0xFFFFFFFF : 0x00000000);
             b.setImageTintList(ColorStateList.valueOf(f ? 0xFF1C1C1E : (v.isEnabled() ? 0xFFFFFFFF : 0x59FFFFFF)));
-            v.animate().scaleX(f ? 1.1f : 1f).scaleY(f ? 1.1f : 1f).setDuration(150).start();
+            v.animate().scaleX(f ? 1.08f : 1f).scaleY(f ? 1.08f : 1f).setDuration(150).start();
         });
-        b.setLayoutParams(new LinearLayout.LayoutParams(dp(44), dp(44)));
+        b.setLayoutParams(new LinearLayout.LayoutParams(dp(40), dp(40)));
         return b;
     }
 
@@ -744,6 +787,7 @@ public class BrowserActivity extends Activity {
         View first = section(col, getString(R.string.favorites), data.favorites, true);
         List<Browser.Site> freq = data.frequent(12);
         if (!freq.isEmpty()) section(col, getString(R.string.frequent), freq, false);
+        section(col, getString(R.string.popular), data.popular(), false);
         TextView hint = new TextView(this);
         hint.setText(R.string.favorite_hint);
         hint.setTextColor(0x59FFFFFF);
@@ -835,8 +879,11 @@ public class BrowserActivity extends Activity {
         });
         box.setOnClickListener(v -> load(s.url));
         box.setOnKeyListener((v, code, e) -> {
-            if (favorite && code == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE && e.getAction() == KeyEvent.ACTION_DOWN) {
-                data.removeFavorite(s);
+            // Play/Pause: a favorite leaves Favorites; any other site joins them.
+            if (code == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE && e.getAction() == KeyEvent.ACTION_DOWN) {
+                if (favorite) data.removeFavorite(s);
+                else data.toggleFavorite(s.url, s.title);
+                Toast.makeText(this, favorite ? R.string.removed_favorite : R.string.added_favorite, Toast.LENGTH_SHORT).show();
                 showStart();
                 return true;
             }

@@ -95,12 +95,19 @@ final class ControlServer {
         t.start();
         Thread push = new Thread(() -> {
             String last = "";
+            int lastClients = 0;
             while (running) {
                 try {
                     Thread.sleep(1000);
-                    if (clients.isEmpty()) continue;
+                    if (clients.isEmpty()) {
+                        lastClients = 0;
+                        continue;
+                    }
                     String now = RemoteServer.nowPlaying(ctx).toString();
-                    if (!now.equals(last)) {
+                    // Changed, or someone new connected (they get the current state straight away).
+                    boolean joined = clients.size() > lastClients;
+                    lastClients = clients.size();
+                    if (!now.equals(last) || joined) {
                         last = now;
                         broadcastState(new JSONObject(now));
                     }

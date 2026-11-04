@@ -8,7 +8,8 @@
     <string name="new_tab">New Tab</string>
     <string name="start_page">Start Page</string>
     <string name="tab_hint">OK opens a tab · Play/Pause closes it</string>
-    <string name="favorite_hint">Play/Pause on a favorite removes it</string>
+    <string name="favorite_hint">Play/Pause on a site adds it to Favorites, or removes a favorite</string>
+    <string name="popular">Popular Sites</string>
     <string name="added_favorite">Added to Favorites</string>
     <string name="removed_favorite">Removed from Favorites</string>
 </resources>

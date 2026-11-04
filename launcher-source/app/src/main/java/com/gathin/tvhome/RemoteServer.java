@@ -425,6 +425,7 @@ final class RemoteServer {
     /** What's playing, for the remote's Now Playing strip. */
     static JSONObject nowPlaying(Context ctx) throws Exception {
         JSONObject o = new JSONObject();
+        o.put("pointer", HomeKeyService.wantsPointer());   // a web page is in front: the remote becomes a trackpad
         MediaController mc = MediaListener.current(ctx);
         if (mc != null && mc.getMetadata() != null) {
             MediaMetadata md = mc.getMetadata();
