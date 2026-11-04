@@ -441,11 +441,13 @@ public class ControlCenterActivity extends Activity {
         }
     }
 
-    /** Pairing and connected devices: the TV's own Bluetooth / Remotes & Accessories screen. */
+    /** Android's own Bluetooth settings (Remotes & Accessories on Google TV). */
     private void openBluetooth() {
         Intent[] tries = {
-                new Intent(Settings.ACTION_BLUETOOTH_SETTINGS),
-                new Intent("com.android.tv.settings.ACCESSORIES"),
+                // Google TV: Settings' Remotes & Accessories page (its Bluetooth menu), opened as a settings slice.
+                new Intent("android.settings.SLICE_SETTINGS")
+                        .putExtra("slice_uri", "content://com.google.android.tv.btservices.settings.sliceprovider/general"),
+                new Intent(Settings.ACTION_BLUETOOTH_SETTINGS),   // other Android TVs
                 new Intent(TV_PAIR_ACCESSORY),
         };
         for (Intent i : tries) {
