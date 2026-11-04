@@ -10,12 +10,32 @@ android {
         applicationId 'local.cloudgaming'
         minSdk 26
         targetSdk 34
-        versionCode 2
-        versionName '1.0'
+        // OpenTV's release version (scripts/release.sh passes -PotvVersion=1.3): Software Update compares against it.
+        def v = (project.findProperty('otvVersion') ?: '1.3').toString()
+        def parts = (v.tokenize('.') + ['0', '0']).take(3).collect { it.toInteger() }
+        versionCode 100000 + parts[0] * 10000 + parts[1] * 100 + parts[2]
+        versionName v
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            // Fast (not debuggable), and signed with the same key as before so it updates in place: you stay signed in.
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    lint {
+        disable 'ExpiredTargetSdkVersion'
     }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+}
+
+dependencies {
+    implementation 'androidx.recyclerview:recyclerview:1.3.2'
+    implementation 'androidx.webkit:webkit:1.11.0'   // the remote-as-controller script runs before Xbox's own
 }

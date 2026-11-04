@@ -1,370 +1,490 @@
 package local.cloudgaming;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
+import android.content.Intent;
+import android.graphics.Outline;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
-import android.os.SystemClock;
-import android.view.InputDevice;
-import android.view.KeyEvent;
-import android.view.MotionEvent;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.TextUtils;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowInsets;
-import android.view.WindowInsetsController;
-import android.view.WindowManager;
-import android.webkit.CookieManager;
-import android.webkit.PermissionRequest;
-import android.webkit.WebChromeClient;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
+import android.view.ViewOutlineProvider;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
- * Full-screen cloud gaming on a TV: one WebView on the cloud gaming site, presented as a desktop
- * browser so the site serves its controller-friendly UI.
- *
- * Input: controller buttons and sticks go straight to the page (the Gamepad API), and are always
- * consumed so B never turns into Back. The TV remote drives an on-screen cursor instead: D-pad
- * moves it, OK taps, pushing past the top or bottom edge scrolls, and Back goes back / exits.
+ * Cloud Gaming's home, as an Apple TV app would look: the focused game's art fills the screen behind its title
+ * and description, with rows of games below (Jump Back In, then Xbox Cloud Gaming's own rows, live from
+ * Microsoft). Everything works with the remote's arrows and OK; the pointer is never needed.
  */
 public class MainActivity extends Activity {
 
-    private static final int CURSOR_STEP = 14;       // px per key event, before acceleration
-    private static final int CURSOR_MAX_STEP = 60;
-    private static final float SCROLL_AMOUNT = 3f;  // mouse-wheel notches per edge push
+    private final Handler main = new Handler(Looper.getMainLooper());
+    private final ExecutorService work = Executors.newSingleThreadExecutor();
+    private float density;
 
-    private FrameLayout root;
-    private WebView web;
-    private CursorView cursor;
-    private View customView;
-    private WebChromeClient.CustomViewCallback customViewCallback;
+    private ImageView heroA, heroB;
+    private View dim;
+    private LinearLayout info;
+    private TextView brand;
+    private View chip;
+    private TextView title, meta, description, profileName;
+    private ImageView profilePic;
+    private RecyclerView rows;
+    private final List<Row> data = new ArrayList<>();
+    private RowsAdapter rowsAdapter;
+    private String shownHero;
 
-    @SuppressLint("SetJavaScriptEnabled")
+    static final class Row {
+        String title;
+        final List<Xbox.Game> games = new ArrayList<>();
+    }
+
+    private int dp(float v) {
+        return Math.round(v * density);
+    }
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    protected void onCreate(Bundle b) {
+        super.onCreate(b);
+        density = getResources().getDisplayMetrics().density;
+        FrameLayout root = new FrameLayout(this);
+        root.setBackgroundColor(0xFF000000);
 
-        root = new FrameLayout(this);
-        root.setBackgroundColor(Color.BLACK);
-        web = new WebView(this);
-        cursor = new CursorView(this);
-        root.addView(web, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        root.addView(cursor, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        heroA = hero();
+        heroB = hero();
+        root.addView(heroA, full());
+        root.addView(heroB, full());
+
+        // Apple's legibility gradients: dark at the left (behind the text) and the bottom (behind the rows).
+        View side = new View(this);
+        side.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{0xE6000000, 0x99000000, 0x00000000}));
+        root.addView(side, full());
+        View bottom = new View(this);
+        bottom.setBackground(new GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP,
+                new int[]{0xFF000000, 0xCC000000, 0x00000000}));
+        FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(-1, (int) (getResources().getDisplayMetrics().heightPixels * 0.72f), Gravity.BOTTOM);
+        root.addView(bottom, blp);
+
+        // Dims the art once you move past the first row, as tvOS does.
+        dim = new View(this);
+        dim.setBackgroundColor(0xB3000000);
+        dim.setAlpha(0f);
+        root.addView(dim, full());
+
+        // The focused game: title, publisher, a line or two about it.
+        info = new LinearLayout(this);
+        info.setOrientation(LinearLayout.VERTICAL);
+        title = text(40, 0xFFFFFFFF, "sans-serif-medium");
+        title.setMaxLines(2);
+        title.setEllipsize(TextUtils.TruncateAt.END);
+        meta = text(15, 0xB3FFFFFF, "sans-serif-medium");
+        meta.setPadding(0, dp(8), 0, 0);
+        description = text(16, 0xCCFFFFFF, "sans-serif");
+        description.setMaxLines(2);
+        description.setEllipsize(TextUtils.TruncateAt.END);
+        description.setLineSpacing(0, 1.15f);
+        description.setPadding(0, dp(10), 0, 0);
+        info.addView(title);
+        info.addView(meta);
+        info.addView(description);
+        FrameLayout.LayoutParams ilp = new FrameLayout.LayoutParams((int) (getResources().getDisplayMetrics().widthPixels * 0.5f), -2);
+        ilp.setMargins(dp(64), dp(84), 0, 0);
+        root.addView(info, ilp);
+
+
+        // The rows, from just under the middle of the screen.
+        rows = new RecyclerView(this);
+        rows.setLayoutManager(new LinearLayoutManager(this));
+        rows.setClipToPadding(false);
+        rows.setClipChildren(false);
+        rows.setPadding(0, (int) (getResources().getDisplayMetrics().heightPixels * 0.50f), 0, dp(40));
+        rows.setItemAnimator(null);
+        rowsAdapter = new RowsAdapter();
+        rows.setAdapter(rowsAdapter);
+        root.addView(rows, full());
+
+        // Top bar, above the rows: the app's name, and who's signed in.
+        brand = text(15, 0x99FFFFFF, "sans-serif-medium");
+        brand.setText(R.string.brand);
+        brand.setLetterSpacing(0.04f);
+        FrameLayout.LayoutParams brlp = new FrameLayout.LayoutParams(-2, -2);
+        brlp.setMargins(dp(64), dp(40), 0, 0);
+        root.addView(brand, brlp);
+        chip = profileChip();
+        root.addView(chip, chipParams());
         setContentView(root);
 
-        WebSettings s = web.getSettings();
-        s.setJavaScriptEnabled(true);
-        s.setDomStorageEnabled(true);
-        s.setDatabaseEnabled(true);
-        s.setMediaPlaybackRequiresUserGesture(false);
-        s.setLoadWithOverviewMode(true);
-        s.setUseWideViewPort(true);
-        s.setSupportZoom(false);
-        s.setUserAgentString(desktopUserAgent(s.getUserAgentString()));
-
-        CookieManager cookies = CookieManager.getInstance();
-        cookies.setAcceptCookie(true);
-        cookies.setAcceptThirdPartyCookies(web, true);   // Microsoft sign-in hops across domains
-
-        web.setWebViewClient(new WebViewClient());
-        web.setWebChromeClient(new WebChromeClient() {
-            @Override
-            public void onPermissionRequest(PermissionRequest request) {
-                // Only DRM-protected media; never camera or microphone.
-                for (String r : request.getResources()) {
-                    if (PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID.equals(r)) {
-                        request.grant(new String[]{r});
-                        return;
-                    }
-                }
-                request.deny();
-            }
-
-            @Override
-            public void onShowCustomView(View view, CustomViewCallback callback) {
-                // The stream asks for element fullscreen; show it above the page.
-                if (customView != null) callback.onCustomViewHidden();
-                customView = view;
-                customViewCallback = callback;
-                root.addView(view, 1, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-            }
-
-            @Override
-            public void onHideCustomView() {
-                exitCustomView();
-            }
-        });
-
-        web.setFocusable(true);
-        web.requestFocus();
-        if (savedInstanceState != null) web.restoreState(savedInstanceState);
-        else web.loadUrl(getString(R.string.start_url));
-    }
-
-    /** The site's own browser check only lets desktop browsers into the full controller UI. */
-    private static String desktopUserAgent(String webViewUa) {
-        String chrome = "155.0.0.0";
-        Matcher m = Pattern.compile("Chrome/([0-9.]+)").matcher(webViewUa);
-        if (m.find()) chrome = m.group(1);
-        String major = chrome.split("\\.")[0];
-        return "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/"
-                + chrome + " Safari/537.36 Edg/" + major + ".0.0.0";
-    }
-
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-        if (hasFocus) hideSystemBars();
-    }
-
-    private void hideSystemBars() {
-        WindowInsetsController c = getWindow().getInsetsController();
-        if (c == null) return;
-        c.hide(WindowInsets.Type.systemBars());
-        c.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-    }
-
-    private static boolean fromController(int src) {
-        return (src & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD
-                || (src & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK;
-    }
-
-    @Override
-    public boolean dispatchKeyEvent(KeyEvent event) {
-        int code = event.getKeyCode();
-        boolean controller = fromController(event.getSource()) && code != KeyEvent.KEYCODE_BACK
-                && (KeyEvent.isGamepadButton(code) || isDpad(code));
-        if (controller) {
-            cursor.hide();
-            web.dispatchKeyEvent(event);
-            return true;   // swallow even if unhandled, so B / Select never fall back to Back
-        }
-        // The on-screen keyboard sees keys before the activity, so typing is unaffected.
-        if (isDpad(code) || code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER) {
-            if (event.getAction() == KeyEvent.ACTION_DOWN) onRemoteKey(code, event.getRepeatCount());
-            return true;
-        }
-        if (code == KeyEvent.KEYCODE_BACK) {
-            if (event.getAction() == KeyEvent.ACTION_UP) onBack();
-            return true;
-        }
-        return super.dispatchKeyEvent(event);
-    }
-
-    @Override
-    public boolean dispatchGenericMotionEvent(MotionEvent event) {
-        if (fromController(event.getSource())) {
-            cursor.hide();
-            web.dispatchGenericMotionEvent(event);
-            return true;
-        }
-        return super.dispatchGenericMotionEvent(event);
-    }
-
-    private static boolean isDpad(int code) {
-        return code == KeyEvent.KEYCODE_DPAD_UP || code == KeyEvent.KEYCODE_DPAD_DOWN
-                || code == KeyEvent.KEYCODE_DPAD_LEFT || code == KeyEvent.KEYCODE_DPAD_RIGHT;
-    }
-
-    private void onRemoteKey(int code, int repeat) {
-        if (!cursor.visible) {
-            cursor.show();
-            return;
-        }
-        if (code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER) {
-            tap(cursor.x, cursor.y);
-            return;
-        }
-        int step = Math.min(CURSOR_MAX_STEP, CURSOR_STEP + repeat * 4);
-        int w = root.getWidth(), h = root.getHeight();
-        float x = cursor.x, y = cursor.y;
-        switch (code) {
-            case KeyEvent.KEYCODE_DPAD_LEFT: x -= step; break;
-            case KeyEvent.KEYCODE_DPAD_RIGHT: x += step; break;
-            case KeyEvent.KEYCODE_DPAD_UP:
-                if (y <= 0) scroll(SCROLL_AMOUNT);
-                y -= step;
-                break;
-            case KeyEvent.KEYCODE_DPAD_DOWN:
-                if (y >= h - 1) scroll(-SCROLL_AMOUNT);
-                y += step;
-                break;
-        }
-        cursor.moveTo(Math.max(0, Math.min(w - 1, x)), Math.max(0, Math.min(h - 1, y)));
-    }
-
-    /**
-     * OpenTV's pointer (a Mac's trackpad or the iPhone remote's trackpad), forwarded by OtvOS while this app is in
-     * front: moves this cursor smoothly, clicks where it is, and scrolls under it.
-     */
-    private final android.content.BroadcastReceiver pointer = new android.content.BroadcastReceiver() {
-        private float accX, accY;
-
-        @Override
-        public void onReceive(Context c, android.content.Intent i) {
-            int a = i.getIntExtra("a", 0), b = i.getIntExtra("b", 0);
-            switch (String.valueOf(i.getStringExtra("what"))) {
-                case "show":
-                    cursor.show();
-                    break;
-                case "move": {
-                    if (!cursor.visible) cursor.show();
-                    int w = root.getWidth(), h = root.getHeight();
-                    float x = cursor.x < 0 ? w / 2f : cursor.x, y = cursor.y < 0 ? h / 2f : cursor.y;
-                    cursor.moveTo(Math.max(0, Math.min(w - 1, x + a * 1.4f)), Math.max(0, Math.min(h - 1, y + b * 1.4f)));
-                    break;
-                }
-                case "button":
-                    if (a == 1) {
-                        if (!cursor.visible) cursor.show();
-                        tap(cursor.x, cursor.y);
-                    }
-                    break;
-                case "scroll":
-                    accY += b;
-                    if (Math.abs(accY) >= 30) {
-                        scroll(accY > 0 ? 1 : -1);
-                        accY = 0;
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
-
-    private void tap(float x, float y) {
-        long t = SystemClock.uptimeMillis();
-        MotionEvent down = MotionEvent.obtain(t, t, MotionEvent.ACTION_DOWN, x, y, 0);
-        MotionEvent up = MotionEvent.obtain(t, t + 40, MotionEvent.ACTION_UP, x, y, 0);
-        down.setSource(InputDevice.SOURCE_TOUCHSCREEN);
-        up.setSource(InputDevice.SOURCE_TOUCHSCREEN);
-        View target = customView != null ? customView : web;
-        target.dispatchTouchEvent(down);
-        target.dispatchTouchEvent(up);
-        down.recycle();
-        up.recycle();
-    }
-
-    /** A mouse-wheel event at the cursor, so whichever panel is under it scrolls. */
-    private void scroll(float notches) {
-        MotionEvent.PointerProperties[] props = {new MotionEvent.PointerProperties()};
-        props[0].id = 0;
-        props[0].toolType = MotionEvent.TOOL_TYPE_MOUSE;
-        MotionEvent.PointerCoords[] coords = {new MotionEvent.PointerCoords()};
-        coords[0].x = cursor.x;
-        coords[0].y = cursor.y;
-        coords[0].setAxisValue(MotionEvent.AXIS_VSCROLL, notches);
-        long t = SystemClock.uptimeMillis();
-        MotionEvent e = MotionEvent.obtain(t, t, MotionEvent.ACTION_SCROLL, 1, props, coords,
-                0, 0, 1f, 1f, 0, 0, InputDevice.SOURCE_MOUSE, 0);
-        web.dispatchGenericMotionEvent(e);
-        e.recycle();
-    }
-
-    private void onBack() {
-        if (customView != null) {
-            exitCustomView();
-        } else if (web.canGoBack()) {
-            web.goBack();
-        } else {
-            finish();
-        }
-    }
-
-    private void exitCustomView() {
-        if (customView == null) return;
-        root.removeView(customView);
-        customView = null;
-        if (customViewCallback != null) customViewCallback.onCustomViewHidden();
-        customViewCallback = null;
-        hideSystemBars();
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        web.saveState(outState);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        try {
-            unregisterReceiver(pointer);
-        } catch (IllegalArgumentException ignored) {
-        }
-        web.onPause();
-        CookieManager.getInstance().flush();   // keep the sign-in across restarts
+        load(false);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        web.onResume();
-        android.content.IntentFilter f = new android.content.IntentFilter("local.cloudgaming.POINTER");
-        if (android.os.Build.VERSION.SDK_INT >= 33) registerReceiver(pointer, f, Context.RECEIVER_EXPORTED);
-        else registerReceiver(pointer, f);
+        updateProfile();
+        refreshRecent();
     }
 
     @Override
     protected void onDestroy() {
-        root.removeAllViews();
-        web.destroy();
+        work.shutdownNow();
         super.onDestroy();
     }
 
-    /** A soft white pointer with a dark ring, drawn above the page. Hidden while a controller is in use. */
-    private static final class CursorView extends View {
-        float x = -1, y = -1;
-        boolean visible = true;
-        private final Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
-        private final Paint ring = new Paint(Paint.ANTI_ALIAS_FLAG);
+    // ---- data ---------------------------------------------------------------------------------------------
 
-        CursorView(Context ctx) {
-            super(ctx);
-            fill.setColor(0xEEFFFFFF);
-            ring.setColor(0x99000000);
-            ring.setStyle(Paint.Style.STROKE);
-            ring.setStrokeWidth(4f);
-            setFocusable(false);
+    /** The rows: shown from the TV's copy at once, then brought up to date from Microsoft. */
+    private void load(boolean refresh) {
+        work.execute(() -> {
+            for (String[] r : Xbox.ROWS) {
+                List<String> ids = Xbox.list(this, r[0], refresh);
+                if (ids.isEmpty()) continue;
+                // Long rows: the first screenfuls now, the rest after the other rows have appeared.
+                List<String> first = ids.subList(0, Math.min(ids.size(), 24));
+                Map<String, Xbox.Game> games = Xbox.details(this, first);
+                Row row = new Row();
+                row.title = r[1];
+                row.games.addAll(games.values());
+                main.post(() -> addRow(row));
+            }
+            for (String[] r : Xbox.ROWS) {
+                List<String> ids = Xbox.list(this, r[0], false);
+                if (ids.size() <= 24) continue;
+                Map<String, Xbox.Game> games = Xbox.details(this, ids);
+                main.post(() -> {
+                    for (int i = 0; i < data.size(); i++) {
+                        if (!data.get(i).title.equals(r[1])) continue;
+                        data.get(i).games.clear();
+                        data.get(i).games.addAll(games.values());
+                        rowsAdapter.notifyItemChanged(i);
+                    }
+                });
+            }
+        });
+    }
+
+    private void addRow(Row row) {
+        int at = data.size();
+        data.add(row);
+        rowsAdapter.notifyItemInserted(at);
+        if (shownHero == null && !row.games.isEmpty()) {
+            show(row.games.get(0));
+            rows.post(() -> focusFirst());
         }
+    }
 
-        void moveTo(float nx, float ny) {
-            x = nx;
-            y = ny;
-            invalidate();
+    private void focusFirst() {
+        RecyclerView.ViewHolder h = rows.findViewHolderForAdapterPosition(0);
+        if (h instanceof RowHolder) {
+            View card = ((RowHolder) h).list.getChildAt(0);
+            if (card != null) card.requestFocus();
         }
+    }
 
-        void show() {
-            visible = true;
-            invalidate();
+    /** Jump Back In: the games played on this TV, newest first. */
+    private void refreshRecent() {
+        List<String> ids = Xbox.recent(this);
+        boolean has = !data.isEmpty() && data.get(0).title.equals(getString(R.string.jump_back_in));
+        if (ids.isEmpty()) return;
+        work.execute(() -> {
+            Map<String, Xbox.Game> games = Xbox.details(this, ids);
+            main.post(() -> {
+                Row row = has ? data.get(0) : new Row();
+                row.title = getString(R.string.jump_back_in);
+                row.games.clear();
+                row.games.addAll(games.values());
+                if (has) {
+                    rowsAdapter.notifyItemChanged(0);
+                } else {
+                    data.add(0, row);
+                    rowsAdapter.notifyItemInserted(0);
+                }
+            });
+        });
+    }
+
+    // ---- hero ---------------------------------------------------------------------------------------------
+
+    private final Runnable showPending = () -> { };
+    private Xbox.Game pending;
+
+    /** The focused game, shown big behind everything (after a moment, so quick moves don't flicker). */
+    private void focusGame(Xbox.Game g) {
+        pending = g;
+        main.removeCallbacksAndMessages(showPending);
+        main.postAtTime(() -> {
+            if (pending == g) show(g);
+        }, showPending, android.os.SystemClock.uptimeMillis() + 220);
+        title.setText(g.title);
+        meta.setText(g.publisher);
+        description.setText(clean(g.description));
+    }
+
+    private static String clean(String s) {
+        return s == null ? "" : s.replaceAll("\\s+", " ").trim();
+    }
+
+    /** First row: the game's name and art; further down: the rows take over and the art dims. */
+    private void onRowFocused(int position) {
+        boolean first = position <= 0;
+        info.animate().alpha(first ? 1f : 0f).setDuration(250).start();
+        brand.animate().alpha(first ? 1f : 0f).setDuration(250).start();
+        dim.animate().alpha(first ? 0f : 1f).setDuration(300).start();
+    }
+
+    private void show(Xbox.Game g) {
+        title.setText(g.title);
+        meta.setText(g.publisher);
+        description.setText(clean(g.description));
+        String url = Xbox.sized(g.hero != null ? g.hero : g.poster, getResources().getDisplayMetrics().widthPixels);
+        if (url == null || url.equals(shownHero)) return;
+        shownHero = url;
+        Images.load(this, url, bmp -> {
+            if (!url.equals(shownHero)) return;
+            // heroA sits under heroB: the new picture goes under, the old one on top fades away.
+            heroB.animate().cancel();
+            heroA.setImageBitmap(bmp);
+            heroA.setAlpha(1f);
+            heroB.animate().alpha(0f).setDuration(450).withEndAction(() -> {
+                heroB.setImageBitmap(bmp);
+                heroB.setAlpha(1f);
+                heroA.setImageDrawable(null);
+            }).start();
+        });
+    }
+
+    private ImageView hero() {
+        ImageView v = new ImageView(this);
+        v.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        return v;
+    }
+
+    // ---- profile -----------------------------------------------------------------------------------------
+
+    private View profileChip() {
+        LinearLayout chip = new LinearLayout(this);
+        chip.setOrientation(LinearLayout.HORIZONTAL);
+        chip.setGravity(Gravity.CENTER_VERTICAL);
+        chip.setPadding(dp(6), dp(6), dp(16), dp(6));
+        chip.setFocusable(true);
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(dp(24));
+        bg.setColor(0x33FFFFFF);
+        chip.setBackground(bg);
+        profilePic = new ImageView(this);
+        profilePic.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        profilePic.setOutlineProvider(new ViewOutlineProvider() {
+            @Override
+            public void getOutline(View v, Outline o) {
+                o.setOval(0, 0, v.getWidth(), v.getHeight());
+            }
+        });
+        profilePic.setClipToOutline(true);
+        GradientDrawable dot = new GradientDrawable();
+        dot.setShape(GradientDrawable.OVAL);
+        dot.setColor(0xFF107C10);   // Xbox green until the gamerpic loads
+        profilePic.setBackground(dot);
+        chip.addView(profilePic, new LinearLayout.LayoutParams(dp(32), dp(32)));
+        profileName = text(15, 0xFFFFFFFF, "sans-serif-medium");
+        profileName.setPadding(dp(10), 0, 0, 0);
+        chip.addView(profileName);
+        chip.setOnFocusChangeListener((v, f) -> {
+            bg.setColor(f ? 0xFFFFFFFF : 0x33FFFFFF);
+            profileName.setTextColor(f ? 0xFF000000 : 0xFFFFFFFF);
+            v.animate().scaleX(f ? 1.08f : 1f).scaleY(f ? 1.08f : 1f).setDuration(160).start();
+        });
+        chip.setOnClickListener(v -> onProfile());
+        return chip;
+    }
+
+    private FrameLayout.LayoutParams chipParams() {
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.END);
+        lp.setMargins(0, dp(32), dp(56), 0);
+        return lp;
+    }
+
+    private void updateProfile() {
+        String tag = Account.gamertag(this);
+        profileName.setText(tag != null ? tag : getString(R.string.sign_in));
+        String pic = Account.gamerpic(this);
+        if (pic != null) Images.into(profilePic, pic);
+        else profilePic.setImageDrawable(null);
+    }
+
+    private void onProfile() {
+        if (Account.gamertag(this) == null) {
+            startActivity(new Intent(this, StreamActivity.class)
+                    .putExtra(StreamActivity.EXTRA_URL, "https://www.xbox.com/" + Xbox.language() + "/play"));
+            return;
         }
+        new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                .setTitle(Account.gamertag(this))
+                .setItems(new CharSequence[]{getString(R.string.open_xbox), getString(R.string.sign_out)}, (d, which) -> {
+                    if (which == 0) {
+                        startActivity(new Intent(this, StreamActivity.class)
+                                .putExtra(StreamActivity.EXTRA_URL, "https://www.xbox.com/" + Xbox.language() + "/play"));
+                    } else {
+                        Account.signedOut(this);
+                        updateProfile();
+                    }
+                })
+                .show();
+    }
 
-        void hide() {
-            if (!visible) return;
-            visible = false;
-            invalidate();
+    // ---- rows ---------------------------------------------------------------------------------------------
+
+    private final class RowsAdapter extends RecyclerView.Adapter<RowHolder> {
+        @NonNull
+        @Override
+        public RowHolder onCreateViewHolder(@NonNull ViewGroup parent, int type) {
+            return new RowHolder(parent.getContext());
         }
 
         @Override
-        protected void onDraw(Canvas c) {
-            if (x < 0) {   // first layout: start in the middle
-                x = getWidth() / 2f;
-                y = getHeight() / 2f;
-            }
-            if (!visible) return;
-            c.drawCircle(x, y, 14f, fill);
-            c.drawCircle(x, y, 14f, ring);
+        public void onBindViewHolder(@NonNull RowHolder h, int position) {
+            Row r = data.get(position);
+            h.heading.setText(r.title);
+            h.cards.games = r.games;
+            h.cards.notifyDataSetChanged();
         }
+
+        @Override
+        public int getItemCount() {
+            return data.size();
+        }
+    }
+
+    private final class RowHolder extends RecyclerView.ViewHolder {
+        final TextView heading;
+        final RecyclerView list;
+        final CardsAdapter cards = new CardsAdapter();
+
+        RowHolder(Context c) {
+            super(new LinearLayout(c));
+            LinearLayout box = (LinearLayout) itemView;
+            box.setOrientation(LinearLayout.VERTICAL);
+            box.setClipChildren(false);
+            box.setLayoutParams(new RecyclerView.LayoutParams(-1, -2));
+            heading = text(19, 0xE6FFFFFF, "sans-serif-medium");
+            heading.setPadding(dp(64), dp(14), 0, dp(10));
+            box.addView(heading);
+            list = new RecyclerView(c);
+            list.setLayoutManager(new LinearLayoutManager(c, LinearLayoutManager.HORIZONTAL, false));
+            list.setClipToPadding(false);
+            list.setClipChildren(false);
+            list.setPadding(dp(64), dp(10), dp(64), dp(18));
+            list.setItemAnimator(null);
+            list.setAdapter(cards);
+            box.addView(list, new LinearLayout.LayoutParams(-1, -2));
+        }
+    }
+
+    private final class CardsAdapter extends RecyclerView.Adapter<CardHolder> {
+        List<Xbox.Game> games = new ArrayList<>();
+
+        @NonNull
+        @Override
+        public CardHolder onCreateViewHolder(@NonNull ViewGroup parent, int type) {
+            return new CardHolder(parent.getContext());
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull CardHolder h, int position) {
+            Xbox.Game g = games.get(position);
+            h.game = g;
+            h.poster.setContentDescription(g.title);
+            Images.into(h.poster, Xbox.sized(g.poster, dp(132)));
+        }
+
+        @Override
+        public int getItemCount() {
+            return games.size();
+        }
+    }
+
+    /** A game's poster: lifts and grows when focused, with a soft shadow, as on tvOS. */
+    private final class CardHolder extends RecyclerView.ViewHolder {
+        final ImageView poster;
+        Xbox.Game game;
+
+        CardHolder(Context c) {
+            super(new ImageView(c));
+            poster = (ImageView) itemView;
+            RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(dp(132), dp(198));
+            lp.setMarginEnd(dp(22));
+            poster.setLayoutParams(lp);
+            poster.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            GradientDrawable ph = new GradientDrawable();
+            ph.setColor(0xFF1C1C1E);
+            ph.setCornerRadius(dp(12));
+            poster.setBackground(ph);
+            poster.setOutlineProvider(new ViewOutlineProvider() {
+                @Override
+                public void getOutline(View v, Outline o) {
+                    o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), dp(12));
+                }
+            });
+            poster.setClipToOutline(true);
+            poster.setFocusable(true);
+            poster.setOnFocusChangeListener((v, f) -> {
+                v.animate().scaleX(f ? 1.14f : 1f).scaleY(f ? 1.14f : 1f).translationZ(f ? dp(18) : 0)
+                        .setInterpolator(new DecelerateInterpolator(1.6f)).setDuration(f ? 220 : 160).start();
+                if (f && game != null) {
+                    focusGame(game);
+                    // Keep the focused row in view as you move down (rows scroll; the hero stays).
+                    View row = (View) v.getParent().getParent();
+                    int pos = rows.getChildAdapterPosition(row);
+                    onRowFocused(pos);
+                    // The first row sits under the game's name; later rows rise to the top of the screen.
+                    int target = pos <= 0 ? rows.getPaddingTop() : dp(96);
+                    rows.smoothScrollBy(0, row.getTop() - target);
+                }
+            });
+            // Up from the first row reaches the profile (focus search alone can't find it across the screen).
+            poster.setOnKeyListener((v, code, e) -> {
+                if (code != android.view.KeyEvent.KEYCODE_DPAD_UP || e.getAction() != android.view.KeyEvent.ACTION_DOWN) return false;
+                View row = (View) v.getParent().getParent();
+                if (rows.getChildAdapterPosition(row) != 0 || chip == null) return false;
+                chip.requestFocus();
+                return true;
+            });
+            poster.setOnClickListener(v -> {
+                if (game != null) startActivity(new Intent(MainActivity.this, GameActivity.class).putExtra("id", game.id));
+            });
+        }
+    }
+
+    // ---- helpers ------------------------------------------------------------------------------------------
+
+    private TextView text(float sp, int color, String family) {
+        TextView t = new TextView(this);
+        t.setTextSize(sp);
+        t.setTextColor(color);
+        t.setTypeface(Typeface.create(family, Typeface.NORMAL));
+        t.setShadowLayer(dp(8), 0, dp(1), 0x66000000);
+        return t;
+    }
+
+    private static FrameLayout.LayoutParams full() {
+        return new FrameLayout.LayoutParams(-1, -1);
     }
 }
