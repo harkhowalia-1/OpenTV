@@ -91,6 +91,7 @@ public class HomeKeyService extends AccessibilityService implements RemoteServer
     @Override
     protected void onServiceConnected() {
         super.onServiceConnected();
+        BtState.start(this);   // keeps track of which Bluetooth devices are connected, from now on
         ScreenSaver.enforce(this);   // OtvOS's screensaver, never Android's
         current = this;
         remote = new RemoteServer(this, this);

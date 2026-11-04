@@ -422,6 +422,7 @@ private struct ScreenSaverView: View {
         Form {
             Section("Type") {
                 Picker("Type", selection: $type) {
+                    Text("Same as Wallpaper").tag("wallpaper")
                     Text("Aerials").tag("aerials")
                     Text("Wallpapers").tag("wallpapers")
                     Text("Clock").tag("clock")

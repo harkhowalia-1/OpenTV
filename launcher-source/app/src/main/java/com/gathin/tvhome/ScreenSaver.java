@@ -14,7 +14,7 @@ import android.provider.Settings;
  */
 final class ScreenSaver {
 
-    static final String AERIALS = "aerials", WALLPAPERS = "wallpapers", CLOCK = "clock";
+    static final String AERIALS = "aerials", WALLPAPERS = "wallpapers", CLOCK = "clock", SAME = "wallpaper";
     static final String ALL = "All";
     /** Start After, in minutes (0: never), as tvOS offers. */
     static final int[] START_AFTER = {2, 5, 10, 15, 30, 0};
@@ -34,6 +34,7 @@ final class ScreenSaver {
         switch (type(c)) {
             case WALLPAPERS: return c.getString(R.string.ss_wallpapers);
             case CLOCK: return c.getString(R.string.ss_clock);
+            case SAME: return c.getString(R.string.ss_same);
             default: return c.getString(R.string.ss_aerials);
         }
     }

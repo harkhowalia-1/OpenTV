@@ -48,12 +48,20 @@ public class ClockDream extends DreamService {
     };
 
     private String mode;
+    private boolean sameAsWallpaper;
 
     @Override
     public void onAttachedToWindow() {
         super.onAttachedToWindow();
         setFullscreen(true);
         mode = ScreenSaver.type(this);
+        // Same as Wallpaper: what's on Home. Its aerial, its picture (slowly drifting), or the clock for the glow.
+        sameAsWallpaper = mode.equals(ScreenSaver.SAME);
+        if (sameAsWallpaper) {
+            String k = Wallpapers.kind(this);
+            mode = k.startsWith("aerial:") ? ScreenSaver.AERIALS
+                    : k.isEmpty() || !Wallpapers.current(this).exists() ? ScreenSaver.CLOCK : ScreenSaver.WALLPAPERS;
+        }
         if (!mode.equals(ScreenSaver.CLOCK)) {
             setInteractive(true);   // OK shows the place, left/right change the aerial; other keys wake (below)
             setScreenBright(true);
@@ -200,9 +208,11 @@ public class ClockDream extends DreamService {
                 java.util.List<Aerials.Aerial> all = Aerials.list(this);
                 java.util.List<Aerials.Aerial> pick = new java.util.ArrayList<>();
                 // The aerials on the TV (streamed only when it's short on space).
+                String home = sameAsWallpaper ? Wallpapers.kind(this).substring(7) : null;
                 for (Aerials.Aerial a : all) {
-                    boolean inTheme = theme.equals(ScreenSaver.ALL) || theme.equals(a.category);
-                    if (inTheme && AerialCache.source(this, a, true) != null) pick.add(a);
+                    boolean wanted = home != null ? a.id.equals(home)   // Home's aerial, over and over
+                            : theme.equals(ScreenSaver.ALL) || theme.equals(a.category);
+                    if (wanted && AerialCache.source(this, a, true) != null) pick.add(a);
                 }
                 AerialCache.update(this);
                 java.util.Collections.shuffle(pick, random);
@@ -215,7 +225,9 @@ public class ClockDream extends DreamService {
                     }
                 });
             } else {
-                java.util.List<java.io.File> found = wallpaperPictures();
+                java.util.List<java.io.File> found = sameAsWallpaper
+                        ? new java.util.ArrayList<>(java.util.Collections.singletonList(Wallpapers.current(this)))
+                        : wallpaperPictures();
                 java.util.Collections.shuffle(found, random);
                 handler.post(() -> {
                     pictures.addAll(found);

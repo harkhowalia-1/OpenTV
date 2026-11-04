@@ -67,8 +67,6 @@
         <activity android:name=".UpdateActivity" android:exported="false" android:launchMode="singleTop"
             android:screenOrientation="landscape" />
         <activity android:name=".WallpaperActivity" android:exported="false" android:screenOrientation="landscape" />
-        <activity android:name=".BluetoothActivity" android:exported="false" android:screenOrientation="landscape"
-            android:theme="@style/Theme.TvHome" />
         <activity android:name=".WallpaperSettingsActivity" android:exported="false" android:screenOrientation="landscape"
             android:theme="@style/Theme.TvHome" />
         <activity android:name=".ScreenSaverActivity" android:exported="false" android:screenOrientation="landscape"

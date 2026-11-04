@@ -151,7 +151,7 @@ public class TvSettingsActivity extends Activity {
 
         section(list, "Remotes and Devices");
         bluetoothRow = (ViewGroup) row(list, R.drawable.ic_bluetooth, getString(R.string.bluetooth), bluetoothSummary(),
-                new Intent(this, BluetoothActivity.class));
+                () -> ControlCenterActivity.openBluetoothSettings(this));   // Android's own Bluetooth settings
         row(list, R.drawable.ic_toggles, "Remote Buttons", "Power and volume",
                 new Intent("com.google.android.tv.IR_WIZARD"));
         AppleHome home = AppleHome.current;

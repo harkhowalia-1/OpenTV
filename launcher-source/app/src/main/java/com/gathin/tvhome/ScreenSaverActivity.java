@@ -14,7 +14,7 @@ import java.io.File;
  */
 public class ScreenSaverActivity extends TvSettingsActivity {
 
-    private final View[] types = new View[3];
+    private final View[] types = new View[4];
     private View themeRow;
 
     @Override
@@ -25,10 +25,10 @@ public class ScreenSaverActivity extends TvSettingsActivity {
     @Override
     protected View fill(LinearLayout list) {
         section(list, getString(R.string.ss_type));
-        String[] ids = {ScreenSaver.AERIALS, ScreenSaver.WALLPAPERS, ScreenSaver.CLOCK};
-        int[] names = {R.string.ss_aerials, R.string.ss_wallpapers, R.string.ss_clock};
-        int[] icons = {R.drawable.ic_screensaver, R.drawable.ic_display, R.drawable.ic_timer};
-        for (int i = 0; i < 3; i++) {
+        String[] ids = {ScreenSaver.SAME, ScreenSaver.AERIALS, ScreenSaver.WALLPAPERS, ScreenSaver.CLOCK};
+        int[] names = {R.string.ss_same, R.string.ss_aerials, R.string.ss_wallpapers, R.string.ss_clock};
+        int[] icons = {R.drawable.ic_display, R.drawable.ic_screensaver, R.drawable.ic_display, R.drawable.ic_timer};
+        for (int i = 0; i < 4; i++) {
             String id = ids[i];
             types[i] = row(list, icons[i], getString(names[i]), "", () -> {
                 ScreenSaver.prefs(this).edit().putString("type", id).apply();
@@ -90,8 +90,8 @@ public class ScreenSaverActivity extends TvSettingsActivity {
 
     private void refresh() {
         String type = ScreenSaver.type(this);
-        String[] ids = {ScreenSaver.AERIALS, ScreenSaver.WALLPAPERS, ScreenSaver.CLOCK};
-        for (int i = 0; i < 3; i++) set(types[i], ids[i].equals(type) ? "✓" : "");
+        String[] ids = {ScreenSaver.SAME, ScreenSaver.AERIALS, ScreenSaver.WALLPAPERS, ScreenSaver.CLOCK};
+        for (int i = 0; i < 4; i++) set(types[i], ids[i].equals(type) ? "✓" : "");
         set(themeRow, ScreenSaver.theme(this).equals(ScreenSaver.ALL) ? getString(R.string.ss_all) : ScreenSaver.theme(this));
         themeRow.setVisibility(type.equals(ScreenSaver.AERIALS) ? View.VISIBLE : View.GONE);
         View root = types[0].getRootView();

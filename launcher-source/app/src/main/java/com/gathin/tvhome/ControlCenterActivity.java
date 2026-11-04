@@ -265,9 +265,6 @@ public class ControlCenterActivity extends Activity {
             labelOnFocus(t, names[i]);
             add(grid, t, 4 + i / 4, 1, i % 4, 1, cell, gap);
         }
-        add(grid, wideTile(icon(R.drawable.ic_accessibility, 22, glassText()), getString(R.string.cc_accessibility),
-                getString(R.string.cc_accessibility_sub), v -> open(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))),
-                6, 1, 0, 4, cell, gap);
         updateTimer();
         updateVolume();
         return p;
@@ -496,6 +493,11 @@ public class ControlCenterActivity extends Activity {
 
     /** Android's own Bluetooth settings (Remotes & Accessories on Google TV). */
     private void openBluetooth() {
+        if (openBluetoothSettings(this)) finish();
+    }
+
+    /** Android's own Bluetooth settings (Google TV: Settings › Remotes & Accessories). True if one opened. */
+    static boolean openBluetoothSettings(android.content.Context c) {
         Intent[] tries = {
                 // Google TV: Settings' Remotes & Accessories page (its Bluetooth menu), opened as a settings slice.
                 new Intent("android.settings.SLICE_SETTINGS")
@@ -504,11 +506,15 @@ public class ControlCenterActivity extends Activity {
                 new Intent(TV_PAIR_ACCESSORY),
         };
         for (Intent i : tries) {
-            if (i.resolveActivity(getPackageManager()) != null) {
-                open(i);
-                return;
+            if (i.resolveActivity(c.getPackageManager()) != null) {
+                try {
+                    c.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                    return true;
+                } catch (Exception ignored) {
+                }
             }
         }
+        return false;
     }
 
     /** Sleep Timer: OK steps through 15, 30, 60 and 90 minutes, then off. */

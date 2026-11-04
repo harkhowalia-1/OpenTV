@@ -18,6 +18,8 @@ final class BtState {
 
     private static final int HID_HOST = 4;   // BluetoothProfile.HID_HOST (input devices: keyboards, controllers)
     private static final List<BluetoothProfile> proxies = new CopyOnWriteArrayList<>();
+    /** Devices with a live link right now, kept up to date by OtvOS from Android's connect/disconnect events. */
+    private static final java.util.Set<String> links = java.util.concurrent.ConcurrentHashMap.newKeySet();
     private static boolean started;
 
     private BtState() {
@@ -28,6 +30,22 @@ final class BtState {
         if (started) return;
         started = true;
         Context c = ctx.getApplicationContext();
+        android.content.IntentFilter f = new android.content.IntentFilter(BluetoothDevice.ACTION_ACL_CONNECTED);
+        f.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+        f.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
+        c.registerReceiver(new android.content.BroadcastReceiver() {
+            @Override
+            public void onReceive(Context cx, android.content.Intent i) {
+                if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(i.getAction())) {
+                    if (i.getIntExtra(BluetoothAdapter.EXTRA_STATE, 0) != BluetoothAdapter.STATE_ON) links.clear();
+                    return;
+                }
+                BluetoothDevice d = i.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                if (d == null) return;
+                if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(i.getAction())) links.add(d.getAddress());
+                else links.remove(d.getAddress());
+            }
+        }, f);
         BluetoothManager bm = c.getSystemService(BluetoothManager.class);
         BluetoothAdapter a = bm == null ? null : bm.getAdapter();
         if (a == null) return;
@@ -57,26 +75,8 @@ final class BtState {
             if (bm != null && bm.getConnectedDevices(BluetoothProfile.GATT).contains(d)) return true;
         } catch (Exception ignored) {
         }
-        // Remotes, keyboards and controllers over Bluetooth LE work through Android's input system: one that's
-        // there as an input device right now is connected.
-        try {
-            String name = d.getName();
-            android.hardware.input.InputManager im = c.getSystemService(android.hardware.input.InputManager.class);
-            if (name != null && im != null) {
-                for (int id : im.getInputDeviceIds()) {
-                    android.view.InputDevice in = im.getInputDevice(id);
-                    if (in == null || in.isVirtual()) continue;
-                    if (name.equals(in.getName())) return true;
-                    // A TV's own Bluetooth remote often comes through the TV's remote driver (Chromecast:
-                    // "input_btrcu") rather than under its own name: while that's active, the paired remote is connected.
-                    String n = in.getName() == null ? "" : in.getName().toLowerCase(java.util.Locale.ROOT);
-                    if ((n.contains("btrcu") || n.contains("rcu")) && name.toLowerCase(java.util.Locale.ROOT).contains("remote")) {
-                        return true;
-                    }
-                }
-            }
-        } catch (Exception ignored) {
-        }
+        // The live Bluetooth link itself (remotes and other LE devices), from connect and disconnect events.
+        if (links.contains(d.getAddress())) return true;
         try {   // older Android still answers directly
             return (Boolean) d.getClass().getMethod("isConnected").invoke(d);
         } catch (Exception e) {
