@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Browser</string>
+    <string name="search_hint">Search or enter website name</string>
+    <string name="favorites">Favorites</string>
+    <string name="frequent">Frequently Visited</string>
+    <string name="tabs_title">%1$d Tabs</string>
+    <string name="new_tab">New Tab</string>
+    <string name="start_page">Start Page</string>
+    <string name="tab_hint">OK opens a tab · Play/Pause closes it</string>
+    <string name="favorite_hint">Play/Pause on a favorite removes it</string>
+    <string name="added_favorite">Added to Favorites</string>
+    <string name="removed_favorite">Removed from Favorites</string>
+</resources>

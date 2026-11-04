@@ -17,6 +17,7 @@ echo "▸ TV apps"
 (cd launcher-source && ./gradlew -q assembleRelease -PotvVersion="$VERSION")
 cp launcher-source/app/build/outputs/apk/release/app-release.apk "$OUT/OtvOS.apk"
 cp launcher-source/otvlive/build/outputs/apk/release/otvlive-release.apk "$OUT/IPTV.apk"
+cp launcher-source/browser/build/outputs/apk/release/browser-release.apk "$OUT/Browser.apk"
 (cd cloud-gaming && ./gradlew -q assembleRelease -PotvVersion="$VERSION")
 cp cloud-gaming/app/build/outputs/apk/release/app-release.apk "$OUT/CloudGaming.apk"
 
@@ -40,5 +41,5 @@ cp -R "$DD/Build/Products/Release-iphoneos/TVRemote.app" "$OUT/ipa/Payload/"
 
 echo "▸ Release v$VERSION"
 gh release create "v$VERSION" --title "OpenTV $VERSION" --notes "$NOTES" \
-  "$OUT/OpenTV-Installer.zip" "$OUT/OpenTV-Companion.zip" "$OUT/OtvOS.apk" "$OUT/IPTV.apk" "$OUT/CloudGaming.apk" "$OUT/Otv-Remote.ipa"
+  "$OUT/OpenTV-Installer.zip" "$OUT/OpenTV-Companion.zip" "$OUT/OtvOS.apk" "$OUT/IPTV.apk" "$OUT/Browser.apk" "$OUT/CloudGaming.apk" "$OUT/Otv-Remote.ipa"
 echo "Done: https://github.com/harkhowalia-1/OpenTV/releases/tag/v$VERSION"

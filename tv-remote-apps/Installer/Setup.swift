@@ -242,6 +242,7 @@ final class Setup: ObservableObject {
         finished = false
         log = ""
         var plan = ["Download OpenTV", "Install OtvOS", "Set up OtvOS", "Make OtvOS the home screen"]
+        plan.append("Install Browser")
         if installIPTV { plan.append("Install IPTV") }
         if installAirPlay { plan.append("Install the AirPlay receiver") }
         if speedUp { plan.append("Turn off Google TV extras") }
@@ -251,6 +252,7 @@ final class Setup: ObservableObject {
         var files: [String: URL] = [:]
         await job("Download OpenTV") {
             files["OtvOS.apk"] = try await download("OtvOS.apk")
+            files["Browser.apk"] = try await download("Browser.apk")
             if installIPTV { files["IPTV.apk"] = try await download("IPTV.apk") }
             if installCompanion { files["OpenTV-Companion.zip"] = try await download("OpenTV-Companion.zip") }
             return true
@@ -288,6 +290,10 @@ final class Setup: ObservableObject {
                 _ = await shell("pm disable-user --user 0 \(home)")
             }
             _ = await shell("input keyevent KEYCODE_HOME")
+            return true
+        }
+        await job("Install Browser") {
+            try await installAPK(files["Browser.apk"]!)
             return true
         }
         if installIPTV {

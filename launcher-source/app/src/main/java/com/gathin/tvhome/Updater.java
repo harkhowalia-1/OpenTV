@@ -34,7 +34,7 @@ final class Updater {
 
     static final String LATEST = "https://api.github.com/repos/harkhowalia-1/OpenTV/releases/latest";
     /** Release file, package, name. OtvOS last: installing it restarts this app. */
-    static final String[][] APPS = {{"IPTV.apk", "com.gathin.otvlive", "IPTV"},
+    static final String[][] APPS = {{"IPTV.apk", "com.gathin.otvlive", "IPTV"}, {"Browser.apk", "com.gathin.otvbrowser", "Browser"},
             {"CloudGaming.apk", "local.cloudgaming", "Cloud Gaming"}, {"OtvOS.apk", "com.gathin.tvhome", "OtvOS"}};
     private static final String TAG = "OtvUpdate";
     static final long EVERY_MS = 6L * 3600 * 1000;

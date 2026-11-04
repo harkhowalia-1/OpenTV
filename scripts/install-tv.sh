@@ -13,6 +13,7 @@ export ANDROID_HOME="${ANDROID_HOME:-$([ -d ~/Library/Android/sdk ] && echo ~/Li
 P=com.gathin.tvhome
 a install -r -g launcher-source/app/build/outputs/apk/release/app-release.apk
 a install -r -g launcher-source/otvlive/build/outputs/apk/release/otvlive-release.apk
+a install -r -g launcher-source/browser/build/outputs/apk/release/browser-release.apk
 for c in \
   "settings put secure enabled_accessibility_services $P/$P.HomeKeyService" \
   "settings put secure accessibility_enabled 1" \
