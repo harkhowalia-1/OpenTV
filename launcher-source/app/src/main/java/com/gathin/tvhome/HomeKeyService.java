@@ -61,6 +61,15 @@ public class HomeKeyService extends AccessibilityService implements RemoteServer
     };
 
     /** Hourly: Bing's new picture each day, old downloads tidied away, dynamic wallpapers kept on time. */
+    /** Every two minutes: tidy other apps' caches if the TV is idle on Home and it's time (StorageOptimizer). */
+    private final Runnable storage = new Runnable() {
+        @Override
+        public void run() {
+            StorageOptimizer.maybeRun(HomeKeyService.this, foreground);
+            handler.postDelayed(this, 2 * 60_000);
+        }
+    };
+
     private final Runnable wallpapers = new Runnable() {
         @Override
         public void run() {
@@ -95,6 +104,7 @@ public class HomeKeyService extends AccessibilityService implements RemoteServer
         // New releases from GitHub install themselves: a few minutes after start, then every six hours.
         handler.postDelayed(autoUpdate, 3 * 60 * 1000);
         handler.postDelayed(wallpapers, 60 * 1000);
+        handler.postDelayed(storage, 5 * 60 * 1000);
         // The Mac's two-finger click is the Home button.
         pointer = new PointerOverlay(this, () -> handler.post(this::goHome));
         // A Google account added or removed anywhere on the TV gets (or loses) its profile straight away.
@@ -110,6 +120,7 @@ public class HomeKeyService extends AccessibilityService implements RemoteServer
     public void onDestroy() {
         handler.removeCallbacks(autoUpdate);
         handler.removeCallbacks(wallpapers);
+        handler.removeCallbacks(storage);
         if (current == this) current = null;
         if (remote != null) remote.stop();
         if (appleHome != null) appleHome.stop();
@@ -128,6 +139,9 @@ public class HomeKeyService extends AccessibilityService implements RemoteServer
 
     @Override
     protected boolean onKeyEvent(KeyEvent event) {
+        // Someone's using the TV: storage tidying waits (and stops if it had started).
+        StorageOptimizer.lastInput = android.os.SystemClock.uptimeMillis();
+        AppCloser.cancelTidying();
         // Back closes the pairing code.
         if (event.getKeyCode() == KeyEvent.KEYCODE_BACK && codeCard != null) {
             if (event.getAction() == KeyEvent.ACTION_UP) hideCodeNow();
@@ -180,6 +194,8 @@ public class HomeKeyService extends AccessibilityService implements RemoteServer
 
     @Override
     public void key(String name) {
+        StorageOptimizer.lastInput = android.os.SystemClock.uptimeMillis();
+        AppCloser.cancelTidying();
         handler.post(() -> {
             boolean wasDreaming = ClockDream.active != null;
             wakeIfAsleep(name);

@@ -43,7 +43,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -126,7 +125,12 @@ public class BrowserActivity extends Activity {
         root.addView(pages, full());
         startPage = new ScrollView(this);
         startPage.setFillViewport(true);
-        startPage.setClipToPadding(false);
+        // Content scrolls below the bar, not under it, fading softly at the edge.
+        startPage.setPadding(0, dp(88), 0, 0);
+        startPage.setClipToPadding(true);
+        startPage.setVerticalFadingEdgeEnabled(true);
+        startPage.setFadingEdgeLength(dp(36));
+        startPage.setVerticalScrollBarEnabled(false);
         root.addView(startPage, full());
         cursor = new Cursor(this);
         root.addView(cursor, full());
@@ -377,8 +381,12 @@ public class BrowserActivity extends Activity {
         lock.setVisibility(page && url.startsWith("https") ? View.VISIBLE : View.GONE);
         star.setImageResource(page && data.isFavorite(url) ? R.drawable.ic_star_filled : R.drawable.ic_star);
         boolean canBack = w != null && (w.canGoBack() || page);
+        boolean canForward = w != null && w.canGoForward();
         backBtn.setAlpha(canBack ? 1f : 0.35f);
-        forwardBtn.setAlpha(w != null && w.canGoForward() ? 1f : 0.35f);
+        forwardBtn.setAlpha(canForward ? 1f : 0.35f);
+        // Nothing to go back or forward to: the button rests, and focus passes over it.
+        backBtn.setFocusable(canBack);
+        forwardBtn.setFocusable(canForward);
         tabCount.setText(String.valueOf(tabs.size()));
     }
 
@@ -607,7 +615,7 @@ public class BrowserActivity extends Activity {
         if (url == null) return;
         boolean was = data.isFavorite(url);
         data.toggleFavorite(url, t.title);
-        Toast.makeText(this, was ? R.string.removed_favorite : R.string.added_favorite, Toast.LENGTH_SHORT).show();
+        banner(getString(was ? R.string.removed_favorite : R.string.added_favorite));
         updateBar();
     }
 
@@ -781,13 +789,15 @@ public class BrowserActivity extends Activity {
         showBar(true);
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
-        col.setPadding(dp(80), dp(110), dp(80), dp(60));
-        GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{0xFF2B2B33, 0xFF1C1C1E, 0xFF151517});
-        col.setBackground(bg);
-        View first = section(col, getString(R.string.favorites), data.favorites, true);
+        col.setPadding(dp(80), dp(18), dp(80), dp(60));
+        col.setClipChildren(false);
+        col.setClipToPadding(false);
+        startPage.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{0xFF2B2B33, 0xFF1C1C1E, 0xFF151517}));
+        View first = section(col, getString(R.string.popular), data.popular(), false);
+        if (!data.favorites.isEmpty()) section(col, getString(R.string.favorites), data.favorites, true);
         List<Browser.Site> freq = data.frequent(12);
         if (!freq.isEmpty()) section(col, getString(R.string.frequent), freq, false);
-        section(col, getString(R.string.popular), data.popular(), false);
         TextView hint = new TextView(this);
         hint.setText(R.string.favorite_hint);
         hint.setTextColor(0x59FFFFFF);
@@ -862,29 +872,44 @@ public class BrowserActivity extends Activity {
         ImageView icon = new ImageView(this);
         icon.setScaleType(ImageView.ScaleType.CENTER_CROP);
         card.addView(icon, new FrameLayout.LayoutParams(-1, -1));
-        loadIcon(s.url, icon);
+        loadIcon(s.url, icon, letter);
+        // The focus ring: a crisp white edge, as clear on a dark page as on a bright icon.
+        View ring = new View(this);
+        GradientDrawable rb = new GradientDrawable();
+        rb.setCornerRadius(dp(18));
+        rb.setStroke(dp(3), 0xFFFFFFFF);
+        ring.setBackground(rb);
+        ring.setAlpha(0f);
+        card.addView(ring, new FrameLayout.LayoutParams(-1, -1));
         box.addView(card, new LinearLayout.LayoutParams(dp(92), dp(92)));
         TextView name = new TextView(this);
         name.setText(s.title == null || s.title.isEmpty() ? dom : s.title);
-        name.setTextColor(0xB3FFFFFF);
+        name.setTextColor(0x99FFFFFF);
         name.setTextSize(13);
         name.setSingleLine(true);
         name.setEllipsize(TextUtils.TruncateAt.END);
         name.setGravity(Gravity.CENTER);
-        name.setPadding(0, dp(8), 0, 0);
+        name.setPadding(0, dp(10), 0, 0);
         box.addView(name, new LinearLayout.LayoutParams(dp(104), -2));
         box.setOnFocusChangeListener((v, f) -> {
-            card.animate().scaleX(f ? 1.12f : 1f).scaleY(f ? 1.12f : 1f).translationZ(f ? dp(14) : 0).setDuration(170).start();
-            name.setTextColor(f ? 0xFFFFFFFF : 0xB3FFFFFF);
+            card.animate().scaleX(f ? 1.14f : 1f).scaleY(f ? 1.14f : 1f)
+                    .setInterpolator(new android.view.animation.DecelerateInterpolator(1.6f)).setDuration(f ? 200 : 150).start();
+            ring.animate().alpha(f ? 1f : 0f).setDuration(150).start();
+            name.animate().translationY(f ? dp(6) : 0).setDuration(200).start();
+            name.setTextColor(f ? 0xFFFFFFFF : 0x99FFFFFF);
+            name.setTypeface(Typeface.create(f ? "sans-serif-medium" : "sans-serif", Typeface.NORMAL));
         });
+        box.setTag(s.url);
         box.setOnClickListener(v -> load(s.url));
         box.setOnKeyListener((v, code, e) -> {
             // Play/Pause: a favorite leaves Favorites; any other site joins them.
             if (code == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE && e.getAction() == KeyEvent.ACTION_DOWN) {
                 if (favorite) data.removeFavorite(s);
                 else data.toggleFavorite(s.url, s.title);
-                Toast.makeText(this, favorite ? R.string.removed_favorite : R.string.added_favorite, Toast.LENGTH_SHORT).show();
+                banner(getString(favorite ? R.string.removed_favorite : R.string.added_favorite));
                 showStart();
+                View same = startPage.findViewWithTag(s.url);   // stay on the same site
+                if (same != null) same.requestFocus();
                 return true;
             }
             return false;
@@ -895,13 +920,41 @@ public class BrowserActivity extends Activity {
         return box;
     }
 
+    private TextView bannerView;
+
+    /** A short message in a glass pill at the bottom, as tvOS shows confirmations. */
+    private void banner(String text) {
+        if (bannerView == null) {
+            bannerView = new TextView(this);
+            bannerView.setTextColor(0xFFFFFFFF);
+            bannerView.setTextSize(16);
+            bannerView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+            bannerView.setPadding(dp(22), dp(12), dp(22), dp(12));
+            GradientDrawable g = new GradientDrawable();
+            g.setColor(0xF0303034);
+            g.setCornerRadius(dp(24));
+            g.setStroke(Math.max(1, dp(0.75f)), 0x26FFFFFF);
+            bannerView.setBackground(g);
+            bannerView.setElevation(dp(40));
+            FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+            lp.bottomMargin = dp(40);
+            root.addView(bannerView, lp);
+        }
+        bannerView.setText(text);
+        bannerView.animate().cancel();
+        bannerView.setAlpha(0f);
+        bannerView.setTranslationY(dp(16));
+        bannerView.animate().alpha(1f).translationY(0).setDuration(220).withEndAction(() ->
+                bannerView.animate().alpha(0f).setStartDelay(1600).setDuration(300).start()).start();
+    }
+
     private static int monoColor(String domain) {
         int[] c = {0xFF0A84FF, 0xFF5E5CE6, 0xFFBF5AF2, 0xFFFF375F, 0xFFFF9F0A, 0xFF30D158, 0xFF64D2FF};
         return c[Math.abs(domain.hashCode()) % c.length];
     }
 
     /** A site's own touch icon (as Safari's Favorites show), downloaded once and kept. */
-    private void loadIcon(String url, ImageView into) {
+    private void loadIcon(String url, ImageView into, View placeholder) {
         String dom = Browser.domain(url);
         File f = new File(getCacheDir(), "icon-" + Integer.toHexString(dom.hashCode()) + ".png");
         File none = new File(getCacheDir(), "icon-" + Integer.toHexString(dom.hashCode()) + ".none");
@@ -919,7 +972,14 @@ public class BrowserActivity extends Activity {
                     none.createNewFile();
                     return;
                 }
-                main.post(() -> into.setImageBitmap(b));
+                main.post(() -> {
+                    // Site icons sit on white, as Safari shows them (many are transparent).
+                    into.setBackgroundColor(0xFFFFFFFF);
+                    into.setImageBitmap(b);
+                    placeholder.setVisibility(View.GONE);
+                    into.setAlpha(0f);
+                    into.animate().alpha(1f).setDuration(200).start();
+                });
             } catch (Exception ignored) {
             }
         });
@@ -1163,7 +1223,9 @@ public class BrowserActivity extends Activity {
         name.setPadding(dp(2), dp(8), 0, 0);
         box.addView(name, new LinearLayout.LayoutParams(dp(220), -2));
         box.setOnFocusChangeListener((v, f) -> {
-            pic.animate().scaleX(f ? 1.08f : 1f).scaleY(f ? 1.08f : 1f).translationZ(f ? dp(14) : 0).setDuration(170).start();
+            pic.animate().scaleX(f ? 1.08f : 1f).scaleY(f ? 1.08f : 1f)
+                    .setInterpolator(new android.view.animation.DecelerateInterpolator(1.6f)).setDuration(f ? 200 : 150).start();
+            pic.setForeground(f ? focusRing(14) : null);
             name.setTextColor(f ? 0xFFFFFFFF : 0xB3FFFFFF);
         });
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, -2);
@@ -1194,6 +1256,13 @@ public class BrowserActivity extends Activity {
         root.removeView(v);
         if (currentHasPage()) enterWebMode();
         else showStart();
+    }
+
+    private GradientDrawable focusRing(int radius) {
+        GradientDrawable r = new GradientDrawable();
+        r.setCornerRadius(dp(radius));
+        r.setStroke(dp(3), 0xFFFFFFFF);
+        return r;
     }
 
     private static FrameLayout.LayoutParams full() {

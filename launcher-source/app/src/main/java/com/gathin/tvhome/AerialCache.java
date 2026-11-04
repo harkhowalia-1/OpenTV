@@ -24,17 +24,18 @@ import java.util.concurrent.Executors;
  *
  * <p>Which: the aerial behind Home (first), and a few for the screensaver from the chosen themes, one new one a
  * day while an old one makes room. Which version: 4K on 4K TVs that play it, otherwise 1080p HEVC (smaller), or
- * 1080p H.264. How much: never more than half the free space, and at most 1.6 GB. Downloads resume where they
+ * 1080p H.264. How much: at most 1.6 GB, and never so much that less than 2 GB stays free. Downloads resume where they
  * stopped and run one at a time in the background.
  *
- * <p>A TV short on space (under 1.5 GB to work with) streams instead: nothing is downloaded and what was is
- * deleted. An aerial too big for the space left streams too, while the rest play from storage.
+ * <p>A TV short on space (under 3 GB to work with; 2 GB always stays free) streams instead: nothing is
+ * downloaded and what was is deleted. An aerial too big for the space left streams too, while the rest play from storage.
  */
 final class AerialCache {
 
     private static final String TAG = "OtvAerialCache";
     private static final long MAX_BYTES = 1600L << 20;
-    private static final long LOW_SPACE = 1500L << 20;
+    /** Downloading needs 3 GB to work with, and always leaves 2 GB free for everything else. */
+    private static final long LOW_SPACE = 3L << 30, KEEP_FREE = 2L << 30;
     private static final int SCREENSAVER_TARGET = 4;
     private static final long DAY = 24L * 3600 * 1000;
     private static final ExecutorService worker = Executors.newSingleThreadExecutor();
@@ -189,7 +190,7 @@ final class AerialCache {
         long used = 0;
         File[] files = dir(c).listFiles();
         if (files != null) for (File f : files) if (f.getName().endsWith(".mov")) used += f.length();
-        long budget = Math.min(MAX_BYTES, (dir(c).getUsableSpace() + used) / 2);
+        long budget = Math.min(MAX_BYTES, dir(c).getUsableSpace() + used - KEEP_FREE);
         return budget - used;
     }
 

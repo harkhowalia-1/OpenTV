@@ -80,10 +80,10 @@ final class Browser {
             {"https://www.speedtest.net/", "Speedtest"},
     };
 
-    /** Popular Sites not already in Favorites. */
+    /** Popular Sites, always the whole list in order (Google first), whatever is in Favorites. */
     List<Site> popular() {
         List<Site> out = new ArrayList<>();
-        for (String[] p : POPULAR) if (!isFavorite(p[0])) out.add(new Site(p[0], p[1]));
+        for (String[] p : POPULAR) out.add(new Site(p[0], p[1]));
         return out;
     }
 

@@ -171,7 +171,7 @@ private struct WallpapersView: View {
         .navigationTitle("Wallpaper")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button { picking = true } label: { Label("Upload from iPhone", systemImage: "square.and.arrow.up") }
+                Button { picking = true } label: { Label("Import from iPhone", systemImage: "square.and.arrow.down") }
                     .disabled(model.sendingWallpaper)
             }
         }

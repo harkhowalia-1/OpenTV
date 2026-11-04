@@ -371,6 +371,16 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (aerialView != null) aerialView.setAlpha(0f);
     }
 
+    /**
+     * A new wallpaper (set from the iPhone or Mac, or an aerial that just finished downloading) shows the moment
+     * it changes, not only when Home next comes back.
+     */
+    private final android.content.SharedPreferences.OnSharedPreferenceChangeListener wallpaperChanged = (p, key) -> {
+        if (Wallpapers.PREF.equals(key) || "changed".equals(key) || "dynamicShown".equals(key)) {
+            runOnUiThread(this::applyWallpaper);
+        }
+    };
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -421,6 +431,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onStart() {
         super.onStart();
+        Wallpapers.prefs(this).registerOnSharedPreferenceChangeListener(wallpaperChanged);
         handler.removeCallbacks(frostTick);
         handler.post(frostTick);
     }
@@ -428,6 +439,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onStop() {
         super.onStop();
+        Wallpapers.prefs(this).unregisterOnSharedPreferenceChangeListener(wallpaperChanged);
         handler.removeCallbacks(frostTick);
         Backdrop.clear(Backdrop.PANEL);   // panels over an app don't see Home
         // An app covers Home (Control Center and other see-through panels only pause it, so the aerial keeps

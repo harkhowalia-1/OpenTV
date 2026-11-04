@@ -56,6 +56,31 @@ final class AppCloser {
         new AppCloser(service).start();
     }
 
+    /** What's pressed on each app's page: Force stop, or (tidying storage) Clear cache. */
+    private String button = "Force stop";
+    private String title;
+    private static volatile AppCloser active;
+
+    /** Storage tidying: clears these apps' caches, behind the card, then back to Home. */
+    static void clearCaches(AccessibilityService service, List<String> apps) {
+        if (running || service == null || apps.isEmpty()) return;
+        AppCloser c = new AppCloser(service);
+        c.button = "Clear cache";
+        c.title = "Tidying up storage";
+        running = true;
+        active = c;
+        c.queue.addAll(apps);
+        c.total = apps.size();
+        c.showCard();
+        c.handler.postDelayed(c::next, 150);
+    }
+
+    /** Stops tidying after the current app (someone pressed a key: the TV is theirs again). */
+    static void cancelTidying() {
+        AppCloser c = active;
+        if (c != null && "Clear cache".equals(c.button)) c.queue.clear();
+    }
+
     /** Game Mode: the game in front gets the TV's memory and processor; only these come back afterwards. */
     private String returnTo;
     private static long lastGameMode;
@@ -139,7 +164,7 @@ final class AppCloser {
         }
         long until = System.currentTimeMillis() + TIMEOUT_MS;
         // The page must be this app's (its name showing): the previous app's page lingers while this one opens.
-        waitFor("Force stop", name, until, node -> {
+        waitFor(button, name, until, node -> {
             if (node == null || !node.isEnabled()) {      // not running (or no page): nothing to do
                 next();
                 return;
@@ -214,7 +239,12 @@ final class AppCloser {
         if (back == null) back = new Intent(service, MainActivity.class);
         service.startActivity(back.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
                 | Intent.FLAG_ACTIVITY_NO_ANIMATION));
-        setStatus(closed == 0 ? "Nothing was running" : closed == 1 ? "Closed 1 app" : "Closed " + closed + " apps");
+        if ("Clear cache".equals(button)) {
+            setStatus(closed == 0 ? "Nothing to tidy" : closed == 1 ? "Cleared 1 app's cache" : "Cleared " + closed + " apps' caches");
+        } else {
+            setStatus(closed == 0 ? "Nothing was running" : closed == 1 ? "Closed 1 app" : "Closed " + closed + " apps");
+        }
+        active = null;
         synchronized (opened) {
             opened.clear();
         }
@@ -233,7 +263,8 @@ final class AppCloser {
         box.setOrientation(LinearLayout.VERTICAL);
         box.setGravity(Gravity.CENTER_HORIZONTAL);
         TextView title = new TextView(service);
-        title.setText(returnTo != null ? "Game Mode: freeing up the TV for your game" : "Closing Background Apps");
+        title.setText(this.title != null ? this.title
+                : returnTo != null ? "Game Mode: freeing up the TV for your game" : "Closing Background Apps");
         title.setTextColor(0xFFFFFFFF);
         title.setTextSize(30);
         title.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL));

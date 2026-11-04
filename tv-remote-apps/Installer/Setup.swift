@@ -278,6 +278,7 @@ final class Setup: ObservableObject {
                 // Lets OtvOS install its own updates from GitHub in the background.
                 "appops set \(p) REQUEST_INSTALL_PACKAGES allow",
                 "appops set \(p) WRITE_SETTINGS allow",
+                "appops set \(p) GET_USAGE_STATS allow",
                 "pm grant \(p) android.permission.WRITE_SECURE_SETTINGS",
                 "pm grant \(p) android.permission.BLUETOOTH_SCAN",
             ] { _ = await shell(c) }

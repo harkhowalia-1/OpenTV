@@ -33,6 +33,8 @@
     <uses-permission android:name="local.cloudgaming.permission.SESSION" />
     <!-- Screen Saver: Start After (granted with appops by the installer) and making OtvOS's screensaver the TV's. -->
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <!-- Storage upkeep: seeing which apps hold big caches (granted by the installer). -->
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
     <!-- Pairing Bluetooth accessories from the phone remote. -->
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
