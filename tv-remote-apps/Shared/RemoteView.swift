@@ -9,26 +9,12 @@ struct RemoteView: View {
     @ObservedObject var model: RemoteModel
     var compact = false            // the Mac menu bar popover
     #if os(iOS)
-    @State private var pickingWallpaper = false
-    @State private var wallpaperItem: PhotosPickerItem?
     @State private var showingSettings = false
     #endif
 
     var body: some View {
         VStack(spacing: compact ? 14 : 20) {
             header
-                #if os(iOS)
-                .photosPicker(isPresented: $pickingWallpaper, selection: $wallpaperItem, matching: .images)
-                .onChange(of: wallpaperItem) { _, item in
-                    guard let item else { return }
-                    Task {
-                        if let data = try? await item.loadTransferable(type: Data.self) {
-                            model.sendWallpaper(data, name: "iPhone \(Date().formatted(.dateTime.month(.abbreviated).day().hour().minute()))")
-                        }
-                        wallpaperItem = nil
-                    }
-                }
-                #endif
             switch model.phase {
             case .searching:
                 SearchingView(model: model)
@@ -61,13 +47,6 @@ struct RemoteView: View {
                     }
                 }
                 if model.tv != nil {
-                    #if os(iOS)
-                    Divider()
-                    Button { pickingWallpaper = true } label: {
-                        Label(model.sendingWallpaper ? "Sending Wallpaper…" : "Set TV Wallpaper…", systemImage: "photo.on.rectangle")
-                    }
-                    .disabled(model.sendingWallpaper || model.phase != .connected)
-                    #endif
                     Divider()
                     Button("Forget This TV", role: .destructive) { model.forget() }
                 }

@@ -101,6 +101,7 @@ public class ControlCenterActivity extends Activity {
         }
 
         FrameLayout root = new FrameLayout(this);
+        overlay = root;
         root.setBackgroundColor(0x33000000);
         root.setClipChildren(false);
         root.setOnClickListener(v -> close());
@@ -238,14 +239,20 @@ public class ControlCenterActivity extends Activity {
         // Two rows of small round buttons, as in tvOS: the gear opens the tvOS-style Settings, the rest open
         // their screens (Google TV's own where there is no launcher one).
         int[] icons = {R.drawable.ic_remote, R.drawable.ic_airplay, R.drawable.ic_home, R.drawable.ic_settings,
-                R.drawable.ic_gamepad, R.drawable.ic_accessibility, R.drawable.ic_input, R.drawable.ic_search};
+                R.drawable.ic_gamepad, R.drawable.ic_close_apps, R.drawable.ic_input, R.drawable.ic_search};
+        String[] names = {getString(R.string.cc_remote), getString(R.string.cc_airplay), getString(R.string.apple_home),
+                getString(R.string.settings), getString(R.string.cc_accessory), getString(R.string.close_apps),
+                getString(R.string.inputs), getString(R.string.cc_search)};
         Runnable[] actions = {
                 this::pairRemote,
                 () -> openApp(AIRPLAY_PACKAGE),
                 () -> open(new Intent(this, AppleHomeActivity.class)),
                 () -> open(new Intent(this, TvSettingsActivity.class)),
                 () -> open(new Intent(TV_PAIR_ACCESSORY)),
-                () -> open(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)),
+                () -> {
+                    close();
+                    HomeKeyService.closeBackgroundApps();
+                },
                 () -> open(new Intent(this, InputActivity.class)),
                 () -> open(new Intent(Intent.ACTION_ASSIST)),
         };
@@ -254,13 +261,13 @@ public class ControlCenterActivity extends Activity {
             FrameLayout t = new FrameLayout(this);
             tile(t, v -> action.run());
             t.addView(icon(icons[i], 22, glassText()), new FrameLayout.LayoutParams(dp(22), dp(22), Gravity.CENTER));
+            t.setContentDescription(names[i]);
+            labelOnFocus(t, names[i]);
             add(grid, t, 4 + i / 4, 1, i % 4, 1, cell, gap);
         }
-        add(grid, wideTile(icon(R.drawable.ic_close_apps, 22, glassText()), getString(R.string.close_apps),
-                getString(R.string.close_apps_sub), v -> {
-                    close();
-                    HomeKeyService.closeBackgroundApps();
-                }), 6, 1, 0, 4, cell, gap);
+        add(grid, wideTile(icon(R.drawable.ic_accessibility, 22, glassText()), getString(R.string.cc_accessibility),
+                getString(R.string.cc_accessibility_sub), v -> open(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))),
+                6, 1, 0, 4, cell, gap);
         updateTimer();
         updateVolume();
         return p;
@@ -299,6 +306,42 @@ public class ControlCenterActivity extends Activity {
         t.setTypeface(android.graphics.Typeface.create(bold ? "sans-serif-medium" : "sans-serif",
                 android.graphics.Typeface.NORMAL));
         return t;
+    }
+
+    private FrameLayout overlay;
+    private TextView label;
+
+    /** A small button's name, shown in a little pill above it while it's focused (as tvOS does). */
+    private void labelOnFocus(View t, String name) {
+        View.OnFocusChangeListener scale = t.getOnFocusChangeListener();
+        t.setOnFocusChangeListener((v, f) -> {
+            if (scale != null) scale.onFocusChange(v, f);
+            if (label == null) {
+                label = text("", 12, true, ColorStateList.valueOf(0xFFFFFFFF));
+                GradientDrawable bg = new GradientDrawable();
+                bg.setColor(0xF0262629);
+                bg.setCornerRadius(dp(10));
+                label.setBackground(bg);
+                label.setPadding(dp(10), dp(5), dp(10), dp(5));
+                label.setElevation(dp(8));
+                label.setAlpha(0f);
+                overlay.addView(label, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            }
+            if (!f) {
+                label.animate().alpha(0f).setDuration(120).start();
+                return;
+            }
+            label.setText(name);
+            label.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+            int[] at = new int[2], base = new int[2];
+            v.getLocationInWindow(at);
+            overlay.getLocationInWindow(base);
+            float x = at[0] - base[0] + v.getWidth() / 2f - label.getMeasuredWidth() / 2f;
+            float y = at[1] - base[1] - label.getMeasuredHeight() - dp(8);
+            label.setTranslationX(x);
+            label.setTranslationY(y);
+            label.animate().alpha(1f).setDuration(150).start();
+        });
     }
 
     /** A Control Center tile: near-black, white when focused, lifting slightly (tvOS). */

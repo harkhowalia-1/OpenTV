@@ -119,7 +119,7 @@ public class TvSettingsActivity extends Activity {
                 new Intent(Settings.ACTION_SYNC_SETTINGS));
         wallpaperRow = (ViewGroup) row(list, R.drawable.ic_display, getString(R.string.wallpaper),
                 wallpaperName(),
-                new Intent(this, WallpaperActivity.class));
+                new Intent(this, WallpaperSettingsActivity.class));
         screenSaverRow = (ViewGroup) row(list, R.drawable.ic_screensaver, getString(R.string.screen_saver),
                 ScreenSaver.typeName(this), new Intent(this, ScreenSaverActivity.class));
 

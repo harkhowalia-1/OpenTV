@@ -46,117 +46,136 @@ public class WallpaperActivity extends ChoiceScreen {
     private final Handler main = new Handler(Looper.getMainLooper());
     private String current;
 
+    static final String CATEGORY = "category";
+    static final String AERIALS = "aerials", MACOS = "macos", YOURS = "yours", PHOTOS_CAT = "photos";
+    private static final int PER_ROW = 5;
+
+    /**
+     * One collection, as its own page (Settings › Wallpaper lists them, tvOS style): Apple TV aerials by theme,
+     * macOS wallpapers, your pictures, or the photos on this TV, in rows of cards.
+     */
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
-        build(getString(R.string.wallpaper), getString(R.string.wallpaper_sub));
         Wallpapers.migrate(this);
         current = Wallpapers.kind(this);
-
-        // Default
-        GradientDrawable glow = new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[]{0xFF7A0A14, 0xFF14060A, 0xFF000000});
-        View first = card(glow, 0xFF000000, getString(R.string.wallpaper_glow), current.isEmpty(),
-                () -> pick(() -> Wallpapers.glow(this)));
-        List<Drawable> device = deviceWallpapers();
-        for (int i = 0; i < device.size(); i++) {
-            Drawable d = device.get(i);
-            String kind = "device#" + i;
-            card(d, 0xFF1C1C21, getString(R.string.wallpaper_device) + (device.size() > 1 ? " " + (i + 1) : ""),
-                    current.equals(kind), () -> pick(() -> {
-                        Wallpapers.saveDrawable(this, d, Wallpapers.current(this));
-                        Wallpapers.set(this, kind);
-                    }));
+        String cat = getIntent().getStringExtra(CATEGORY);
+        if (cat == null) cat = AERIALS;
+        switch (cat) {
+            case MACOS: buildMacOS(); break;
+            case YOURS: buildYours(); break;
+            case PHOTOS_CAT: buildPhotos(); break;
+            default: buildAerials(); break;
         }
+    }
 
-        // Bing
-        View bing = card(null, 0xFF0F3A63, getString(R.string.wallpaper_bing), current.equals("bing"), () -> pick(() -> {
-            Wallpapers.copy(Wallpapers.fetchBing(this), Wallpapers.current(this));
-            Wallpapers.set(this, "bing");
-            Wallpapers.prefs(this).edit().putString("bingDay", Wallpapers.today()).apply();
-        }));
-        previews.execute(() -> {
-            try {
-                show(bing, Wallpapers.fetchBing(this));
-            } catch (Exception ignored) {
-            }
-        });
+    /** Puts focus on the first card once there is one. */
+    private boolean focused;
 
-        // Apple TV aerials, from Apple (the list loads in the background).
-        LinearLayout aerialRow = section(getString(R.string.wallpaper_aerials));
+    private void focusFirst(View v) {
+        if (focused || v == null) return;
+        focused = true;
+        v.requestFocus();
+    }
+
+    private void buildAerials() {
+        build(getString(R.string.wallpaper_aerials), getString(R.string.wallpaper_aerials_sub));
         work.execute(() -> {
             List<Aerials.Aerial> list = Aerials.list(this);
             main.post(() -> {
-                for (Aerials.Aerial a : list) {
-                    String kind = "aerial:" + a.id;
-                    View v = cardIn(aerialRow, null, 0xFF101826, a.name, current.equals(kind), () -> pick(() -> {
-                        Aerials.saveStill(this, a, Wallpapers.current(this));
-                        Wallpapers.prefs(this).edit().putString("aerialUrl", Aerials.videoFor(this, a))
-                                .putString("aerialHome", a.url1080).apply();
-                        Wallpapers.set(this, kind);
-                    }));
-                    previews.execute(() -> show(v, Aerials.thumbnail(this, a)));
+                // By theme, as tvOS groups them.
+                for (String theme : Aerials.THEMES) {
+                    LinearLayout row = null;
+                    for (Aerials.Aerial a : list) {
+                        if (!theme.equals(a.category)) continue;
+                        if (row == null) row = section(theme);
+                        String kind = "aerial:" + a.id;
+                        View v = cardIn(row, null, 0xFF101826, a.name, current.equals(kind), () -> pick(() -> Wallpapers.apply(this, kind)));
+                        if (current.equals(kind)) focusFirst(v);
+                        previews.execute(() -> show(v, Aerials.thumbnail(this, a)));
+                    }
+                }
+                if (!focused) {
+                    View any = findViewWithCardTag();
+                    focusFirst(any);
                 }
             });
         });
+        note(getString(R.string.wallpaper_aerials_note));
+    }
 
-        // macOS wallpapers, from Apple's catalog. Previews load as you move along the row (each reads a picture
-        // from Apple), and a wallpaper downloads only when it's chosen.
-        if (MacOS.supported()) {
-            LinearLayout macRow = section(getString(R.string.wallpaper_macos));
-            work.execute(() -> {
-                List<MacOS.Item> list = MacOS.list(this);
-                main.post(() -> {
-                    for (int i = 0; i < list.size(); i++) {
-                        MacOS.Item it = list.get(i);
-                        String kind = "macos:" + it.name;
-                        String label = MacOS.isDynamic(this, it.name)
-                                ? it.name + " · " + getString(R.string.wallpaper_dynamic) : it.name;
-                        View v = cardIn(macRow, null, 0xFF1C1C21, label, current.equals(kind), () -> pick(() -> MacOS.choose(this, it)));
-                        macCards.put(v, i);
-                        macLoads.add(() -> {
-                            File f = MacOS.thumbnail(this, it);
-                            show(v, f);
-                            if (MacOS.isDynamic(this, it.name) && !label.endsWith(getString(R.string.wallpaper_dynamic))) {
-                                main.post(() -> relabel(v, it.name + " · " + getString(R.string.wallpaper_dynamic)));
-                            }
-                        });
+    private void buildMacOS() {
+        build(getString(R.string.wallpaper_macos), getString(R.string.wallpaper_macos_sub));
+        if (!MacOS.supported()) {
+            note(getString(R.string.wallpaper_failed));
+            return;
+        }
+        work.execute(() -> {
+            List<MacOS.Item> list = MacOS.list(this);
+            main.post(() -> {
+                LinearLayout row = null;
+                for (int i = 0; i < list.size(); i++) {
+                    if (i % PER_ROW == 0) row = section(null);
+                    MacOS.Item it = list.get(i);
+                    String kind = "macos:" + it.name;
+                    String label = MacOS.isDynamic(this, it.name)
+                            ? it.name + " · " + getString(R.string.wallpaper_dynamic) : it.name;
+                    View v = cardIn(row, null, 0xFF1C1C21, label, current.equals(kind), () -> pick(() -> MacOS.choose(this, it)));
+                    if (i == 0 || current.equals(kind)) {
+                        if (current.equals(kind)) focused = false;
+                        focusFirst(v);
                     }
-                    loadMacPreviews(0);
-                });
+                    macCards.put(v, i);
+                    macLoads.add(() -> {
+                        File f = MacOS.thumbnail(this, it);
+                        show(v, f);
+                        if (MacOS.isDynamic(this, it.name) && !label.endsWith(getString(R.string.wallpaper_dynamic))) {
+                            main.post(() -> relabel(v, it.name + " · " + getString(R.string.wallpaper_dynamic)));
+                        }
+                    });
+                }
+                loadMacPreviews(0);
             });
-            getWindow().getDecorView().getViewTreeObserver().addOnGlobalFocusChangeListener((was, now) -> {
-                Integer i = now == null ? null : macCards.get(now);
-                if (i != null) loadMacPreviews(i);
-            });
-        }
+        });
+        // Previews load as you move through the rows (each reads one picture from Apple).
+        getWindow().getDecorView().getViewTreeObserver().addOnGlobalFocusChangeListener((was, now) -> {
+            Integer i = now == null ? null : macCards.get(now);
+            if (i != null) loadMacPreviews(i + PER_ROW * 2);
+        });
+        note(getString(R.string.wallpaper_macos_note));
+    }
 
-        // Your pictures: sent from the iPhone or Mac, or picked from the TV's photos.
+    private void buildYours() {
+        build(getString(R.string.wallpaper_yours), getString(R.string.wallpaper_yours_sub));
         List<File> uploads = Wallpapers.uploads(this);
-        if (!uploads.isEmpty()) {
-            section(getString(R.string.wallpaper_yours));
-            for (File f : uploads) {
-                String name = f.getName().replaceFirst("\\.jpg$", "");
-                String kind = "upload:" + name;
-                View v = card(null, 0xFF1C1C21, name, current.equals(kind), () -> pick(() -> {
-                    Wallpapers.copy(f, Wallpapers.current(this));
-                    Wallpapers.set(this, kind);
-                }));
-                previews.execute(() -> show(v, f));
-            }
+        LinearLayout row = null;
+        for (int i = 0; i < uploads.size(); i++) {
+            if (i % PER_ROW == 0) row = section(null);
+            File f = uploads.get(i);
+            String name = f.getName().replaceFirst("\\.jpg$", "");
+            String kind = "upload:" + name;
+            View v = cardIn(row, null, 0xFF1C1C21, name, current.equals(kind), () -> pick(() -> Wallpapers.apply(this, kind)));
+            focusFirst(v);
+            previews.execute(() -> show(v, f));
         }
+        note(getString(R.string.wallpaper_send));
+    }
 
-        // Photos stored on this TV.
-        section(getString(R.string.wallpaper_photos));
+    private void buildPhotos() {
+        build(getString(R.string.wallpaper_photos), getString(R.string.wallpaper_photos_sub));
         if (canReadPhotos()) {
             addPhotos();
         } else {
-            card(null, 0xFF1C1C21, getString(R.string.wallpaper_photos_allow), false, () -> requestPermissions(
+            focusFirst(card(null, 0xFF1C1C21, getString(R.string.wallpaper_photos_allow), false, () -> requestPermissions(
                     new String[]{Build.VERSION.SDK_INT >= 33 ? Manifest.permission.READ_MEDIA_IMAGES
-                            : Manifest.permission.READ_EXTERNAL_STORAGE}, PHOTOS));
+                            : Manifest.permission.READ_EXTERNAL_STORAGE}, PHOTOS)));
         }
+    }
 
-        note(getString(R.string.wallpaper_send));
-        first.requestFocus();
+    private View findViewWithCardTag() {
+        View root = getWindow().getDecorView();
+        View pic = root.findViewWithTag("pic");
+        return pic == null ? null : (View) pic.getParent().getParent();
     }
 
     private final java.util.Map<View, Integer> macCards = new java.util.HashMap<>();
@@ -297,6 +316,7 @@ public class WallpaperActivity extends ChoiceScreen {
             while (c != null && c.moveToNext() && added < 40) {
                 Uri uri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, String.valueOf(c.getLong(0)));
                 String name = c.getString(1) == null ? "Photo" : c.getString(1).replaceFirst("\\.[^.]+$", "");
+                if (added > 0 && added % PER_ROW == 0) section(null);
                 View v = card(null, 0xFF1C1C21, name, false, () -> pick(() -> {
                     try (InputStream in = getContentResolver().openInputStream(uri)) {
                         java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
@@ -325,6 +345,7 @@ public class WallpaperActivity extends ChoiceScreen {
                     } catch (Exception ignored) {
                     }
                 });
+                if (added == 0) focusFirst(v);
                 added++;
             }
         } catch (Exception ignored) {

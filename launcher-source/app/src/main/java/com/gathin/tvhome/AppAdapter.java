@@ -111,6 +111,7 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
         CUSTOM_BANNERS.put("com.android.tv.settings", R.drawable.banner_settings);
         CUSTOM_BANNERS.put("com.android.vending", R.drawable.banner_appstore);
         CUSTOM_BANNERS.put("com.spotify.tv.android", R.drawable.banner_spotify);
+        CUSTOM_BANNERS.put("local.cloudgaming", R.drawable.banner_cloudgaming);
         CUSTOM_LABELS.put("com.android.vending", "App Store");
     }
     static final float FOCUS_SCALE = 1.10f;

@@ -65,6 +65,8 @@ abstract class ChoiceScreen extends Activity {
 
     /** Starts a new row of cards under a heading; later cards go into it (or into a row given to cardIn). */
     LinearLayout section(String heading) {
+        // A row that never got a card (the first one, before a heading) would only leave a gap.
+        if (cards != null && cards.getChildCount() == 0) rows.removeView((View) cards.getParent());
         newRow(heading);
         return cards;
     }

@@ -430,9 +430,22 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         super.onStop();
         handler.removeCallbacks(frostTick);
         Backdrop.clear(Backdrop.PANEL);   // panels over an app don't see Home
-        // No video while an app covers Home. Control Center and other see-through panels only pause Home,
-        // so the aerial keeps playing behind them.
-        if (aerial != null && aerial.isPlaying()) aerial.pause();
+        // An app covers Home (Control Center and other see-through panels only pause it, so the aerial keeps
+        // playing behind them): give its memory back to the app. The video player, the wallpaper picture and the
+        // frosted copies are let go, and come back in a moment when Home returns.
+        stopAerial();
+        aerialUrl = null;
+        android.widget.ImageView wall = findViewById(R.id.wallpaper);
+        android.graphics.drawable.Drawable d = wall.getDrawable();
+        wall.setImageDrawable(null);
+        if (d instanceof android.graphics.drawable.BitmapDrawable) ((android.graphics.drawable.BitmapDrawable) d).getBitmap().recycle();
+        shownWallpaper = null;
+        frostedStill = null;
+        Backdrop.clear(Backdrop.HOME);
+        if (spareHome != null) {
+            spareHome.recycle();
+            spareHome = null;
+        }
     }
 
     @Override

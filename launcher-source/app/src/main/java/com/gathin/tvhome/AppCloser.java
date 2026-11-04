@@ -56,6 +56,32 @@ final class AppCloser {
         new AppCloser(service).start();
     }
 
+    /** Game Mode: the game in front gets the TV's memory and processor; only these come back afterwards. */
+    private String returnTo;
+    private static long lastGameMode;
+
+    /**
+     * Game Mode, when a game starts (Cloud Gaming): closes the apps opened since the TV started (the ones still
+     * in memory), quickly, then returns to the game. At most once every few minutes.
+     */
+    static void gameMode(AccessibilityService service, String game) {
+        if (running || service == null || android.os.SystemClock.uptimeMillis() - lastGameMode < 3 * 60_000) return;
+        AppCloser c = new AppCloser(service);
+        c.returnTo = game;
+        List<String> apps = c.candidates();
+        synchronized (opened) {
+            apps.retainAll(opened);
+        }
+        apps.remove(game);
+        if (apps.isEmpty()) return;
+        lastGameMode = android.os.SystemClock.uptimeMillis();
+        running = true;
+        c.queue.addAll(apps);
+        c.total = apps.size();
+        c.showCard();
+        c.handler.postDelayed(c::next, 150);
+    }
+
     private void start() {
         running = true;
         queue.addAll(candidates());
@@ -184,9 +210,10 @@ final class AppCloser {
     }
 
     private void finish() {
-        service.startActivity(new Intent(service, MainActivity.class)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
-                        | Intent.FLAG_ACTIVITY_NO_ANIMATION));
+        Intent back = returnTo != null ? service.getPackageManager().getLeanbackLaunchIntentForPackage(returnTo) : null;
+        if (back == null) back = new Intent(service, MainActivity.class);
+        service.startActivity(back.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                | Intent.FLAG_ACTIVITY_NO_ANIMATION));
         setStatus(closed == 0 ? "Nothing was running" : closed == 1 ? "Closed 1 app" : "Closed " + closed + " apps");
         synchronized (opened) {
             opened.clear();
@@ -206,7 +233,7 @@ final class AppCloser {
         box.setOrientation(LinearLayout.VERTICAL);
         box.setGravity(Gravity.CENTER_HORIZONTAL);
         TextView title = new TextView(service);
-        title.setText("Closing Background Apps");
+        title.setText(returnTo != null ? "Game Mode: freeing up the TV for your game" : "Closing Background Apps");
         title.setTextColor(0xFFFFFFFF);
         title.setTextSize(30);
         title.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL));

@@ -150,7 +150,11 @@ public class HomeKeyService extends AccessibilityService implements RemoteServer
         String c = cls.toString();
         String p = pkg.toString();
         if (!p.equals(getPackageName())) AppCloser.opened.add(p);
-        if (!p.contains("inputmethod") && !p.equals("com.android.systemui")) foreground = p;
+        if (!p.contains("inputmethod") && !p.equals("com.android.systemui")) {
+            // Game Mode: a game coming to the front gets the TV to itself (other apps are closed first).
+            if (p.equals(POINTER_APP) && !POINTER_APP.equals(foreground)) AppCloser.gameMode(this, POINTER_APP);
+            foreground = p;
+        }
         boolean stockHome = (p.equals("com.google.android.tungsten.setupwraith") && c.endsWith("RecoveryActivity"))
                 || (p.equals("com.android.tv.settings") && c.endsWith("FallbackHome"))
                 || p.equals("com.google.android.apps.tv.launcherx");

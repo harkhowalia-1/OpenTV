@@ -51,6 +51,12 @@
     <string name="wallpaper_photos_none">No photos on this TV yet</string>
     <string name="wallpaper_aerials">Apple TV Aerials</string>
     <string name="wallpaper_macos">macOS Wallpapers</string>
+    <string name="cc_remote">Pair Remote</string>
+    <string name="cc_airplay">AirPlay</string>
+    <string name="cc_accessory">Game Controllers</string>
+    <string name="cc_search">Search</string>
+    <string name="cc_accessibility">Accessibility</string>
+    <string name="cc_accessibility_sub">Screen reader, captions, zoom and more</string>
     <string name="edit_hint">OK picks an app up and drops it · Play/Pause for options · Back when done</string>
     <string name="ss_type">Type</string>
     <string name="ss_aerials">Aerials</string>
@@ -71,6 +77,15 @@
         <item quantity="one">%d Minute</item>
         <item quantity="other">%d Minutes</item>
     </plurals>
+    <string name="wallpaper_now">Wallpaper</string>
+    <string name="wallpaper_collections">Collections</string>
+    <string name="wallpaper_bing_sub">New every day</string>
+    <string name="wallpaper_aerials_sub">Apple TV\'s aerial films, playing behind your apps.</string>
+    <string name="wallpaper_aerials_note">Aerials stream from Apple; 4K on 4K TVs.</string>
+    <string name="wallpaper_macos_sub">Every macOS wallpaper. Dynamic ones change with the time of day.</string>
+    <string name="wallpaper_macos_note">Downloaded from Apple when you choose one.</string>
+    <string name="wallpaper_yours_sub">Pictures sent from your iPhone or Mac.</string>
+    <string name="wallpaper_photos_sub">Pictures stored on this TV and USB drives.</string>
     <string name="wallpaper_downloading">Downloading %1$s… %2$d%%</string>
     <string name="wallpaper_send">Send a photo from Otv Remote on your iPhone, or macOS wallpapers from OpenTV Companion on your Mac.</string>
     <string name="wallpaper_setting">Setting wallpaper…</string>
