@@ -29,7 +29,24 @@ import android.widget.Toast;
 public class TvSettingsActivity extends Activity {
 
     private float density;
-    private ViewGroup wallpaperRow, screenSaverRow;
+    private ViewGroup wallpaperRow, screenSaverRow, bluetoothRow;
+
+    /** "2 Connected", "On" or "Off" for the Bluetooth row. */
+    @android.annotation.SuppressLint("MissingPermission")
+    private String bluetoothSummary() {
+        android.bluetooth.BluetoothManager bm = getSystemService(android.bluetooth.BluetoothManager.class);
+        android.bluetooth.BluetoothAdapter a = bm == null ? null : bm.getAdapter();
+        if (a == null) return "";
+        if (!a.isEnabled()) return getString(R.string.bt_off_short);
+        int n = 0;
+        try {
+            for (android.bluetooth.BluetoothDevice d : a.getBondedDevices()) {
+                if (BtState.connected(this, d)) n++;
+            }
+        } catch (SecurityException ignored) {
+        }
+        return n > 0 ? getResources().getQuantityString(R.plurals.bt_connected_count, n, n) : getString(R.string.bt_on_short);
+    }
 
     @Override
     protected void onResume() {
@@ -37,6 +54,9 @@ public class TvSettingsActivity extends Activity {
         // The wallpaper may have just been changed (here, or from the iPhone or Mac): show its current name.
         if (wallpaperRow != null && wallpaperRow.getChildAt(2) instanceof TextView) {
             ((TextView) wallpaperRow.getChildAt(2)).setText(wallpaperName());
+        }
+        if (bluetoothRow != null && bluetoothRow.getChildAt(2) instanceof TextView) {
+            ((TextView) bluetoothRow.getChildAt(2)).setText(bluetoothSummary());
         }
         if (screenSaverRow != null && screenSaverRow.getChildAt(2) instanceof TextView) {
             ((TextView) screenSaverRow.getChildAt(2)).setText(ScreenSaver.typeName(this));
@@ -130,8 +150,8 @@ public class TvSettingsActivity extends Activity {
         row(list, R.drawable.ic_keyboard, "Subtitles", null, new Intent(Settings.ACTION_CAPTIONING_SETTINGS));
 
         section(list, "Remotes and Devices");
-        row(list, R.drawable.ic_gamepad, "Pair Accessory", "Controllers, keyboards",
-                new Intent("com.google.android.intent.action.CONNECT_INPUT"));
+        bluetoothRow = (ViewGroup) row(list, R.drawable.ic_bluetooth, getString(R.string.bluetooth), bluetoothSummary(),
+                new Intent(this, BluetoothActivity.class));
         row(list, R.drawable.ic_toggles, "Remote Buttons", "Power and volume",
                 new Intent("com.google.android.tv.IR_WIZARD"));
         AppleHome home = AppleHome.current;

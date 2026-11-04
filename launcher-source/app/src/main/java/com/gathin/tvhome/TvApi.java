@@ -243,10 +243,10 @@ final class TvApi {
         o.put("available", true).put("enabled", a.isEnabled());
         try {
             o.put("scanning", a.isDiscovering());
-            for (BluetoothDevice d : a.getBondedDevices()) devices.put(device(d, true));
+            for (BluetoothDevice d : a.getBondedDevices()) devices.put(device(c, d, true));
             synchronized (found) {
                 for (BluetoothDevice d : found.values()) {
-                    if (d.getBondState() != BluetoothDevice.BOND_BONDED) devices.put(device(d, false));
+                    if (d.getBondState() != BluetoothDevice.BOND_BONDED) devices.put(device(c, d, false));
                 }
             }
         } catch (SecurityException e) {
@@ -256,13 +256,9 @@ final class TvApi {
     }
 
     @SuppressLint("MissingPermission")
-    private static JSONObject device(BluetoothDevice d, boolean paired) throws Exception {
+    private static JSONObject device(Context ctx, BluetoothDevice d, boolean paired) throws Exception {
         String name = d.getName();
-        boolean connected = false;
-        try {
-            connected = (Boolean) d.getClass().getMethod("isConnected").invoke(d);
-        } catch (Exception ignored) {
-        }
+        boolean connected = BtState.connected(ctx, d);
         int major = d.getBluetoothClass() != null ? d.getBluetoothClass().getMajorDeviceClass() : 0;
         String type = major == android.bluetooth.BluetoothClass.Device.Major.AUDIO_VIDEO ? "audio"
                 : major == android.bluetooth.BluetoothClass.Device.Major.PERIPHERAL ? "input"
