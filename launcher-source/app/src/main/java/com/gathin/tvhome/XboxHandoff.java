@@ -79,10 +79,13 @@ final class XboxHandoff {
         cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(aes, "AES"), new GCMParameterSpec(128, sealed, 0, 12));
         String session = new String(cipher.doFinal(sealed, 12, sealed.length - 12), "UTF-8");
         JSONObject parsed = new JSONObject(session);
-        if (parsed.optBoolean("test")) return "test-ok";   // a check that the encryption works, nothing handed over
         String tag = parsed.optString("gamertag", "");
-        c.sendBroadcast(new Intent("local.cloudgaming.SESSION").setPackage("local.cloudgaming").putExtra("session", session),
-                "local.cloudgaming.permission.SESSION");
+        // To Cloud Gaming only (by package); its receiver accepts it only from apps signed like it (OtvOS).
+        // A "test" session checks the whole path without signing anything in.
+        c.sendBroadcast(new Intent("local.cloudgaming.SESSION").setPackage("local.cloudgaming")
+                .addFlags(Intent.FLAG_RECEIVER_FOREGROUND).putExtra("session", session)
+                .putExtra("test", parsed.optBoolean("test")));
+        if (parsed.optBoolean("test")) return "test-ok";
         Log.i(TAG, "Xbox sign-in handed to Cloud Gaming");
         return tag;
     }

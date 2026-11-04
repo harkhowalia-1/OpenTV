@@ -137,9 +137,29 @@ public class MainActivity extends Activity {
         load(false);
     }
 
+    /** A sign-in from the iPhone while this screen is open: the profile button updates at once. */
+    private final android.content.BroadcastReceiver signedIn = new android.content.BroadcastReceiver() {
+        @Override
+        public void onReceive(android.content.Context c, Intent i) {
+            updateProfile();
+        }
+    };
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        try {
+            unregisterReceiver(signedIn);
+        } catch (IllegalArgumentException ignored) {
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
+        android.content.IntentFilter f = new android.content.IntentFilter(SessionReceiver.IMPORTED);
+        if (android.os.Build.VERSION.SDK_INT >= 33) registerReceiver(signedIn, f, android.content.Context.RECEIVER_NOT_EXPORTED);
+        else registerReceiver(signedIn, f);
         updateProfile();
         refreshRecent();
     }
@@ -183,8 +203,9 @@ public class MainActivity extends Activity {
     }
 
     private void addRow(Row row) {
-        int at = data.size();
-        data.add(row);
+        // Most Popular always leads (Jump Back In may have arrived first); the rest follow in order.
+        int at = row.title.equals(Xbox.ROWS[0][1]) ? 0 : data.size();
+        data.add(at, row);
         rowsAdapter.notifyItemInserted(at);
         if (shownHero == null && !row.games.isEmpty()) {
             show(row.games.get(0));
@@ -200,23 +221,26 @@ public class MainActivity extends Activity {
         }
     }
 
-    /** Jump Back In: the games played on this TV, newest first. */
+    /** Jump Back In: the games played on this TV, newest first, right below Most Popular. */
     private void refreshRecent() {
         List<String> ids = Xbox.recent(this);
-        boolean has = !data.isEmpty() && data.get(0).title.equals(getString(R.string.jump_back_in));
         if (ids.isEmpty()) return;
         work.execute(() -> {
             Map<String, Xbox.Game> games = Xbox.details(this, ids);
             main.post(() -> {
-                Row row = has ? data.get(0) : new Row();
-                row.title = getString(R.string.jump_back_in);
+                String title = getString(R.string.jump_back_in);
+                int at = -1;
+                for (int i = 0; i < data.size(); i++) if (data.get(i).title.equals(title)) at = i;
+                Row row = at >= 0 ? data.get(at) : new Row();
+                row.title = title;
                 row.games.clear();
                 row.games.addAll(games.values());
-                if (has) {
-                    rowsAdapter.notifyItemChanged(0);
+                if (at >= 0) {
+                    rowsAdapter.notifyItemChanged(at);
                 } else {
-                    data.add(0, row);
-                    rowsAdapter.notifyItemInserted(0);
+                    int pos = !data.isEmpty() && data.get(0).title.equals(Xbox.ROWS[0][1]) ? 1 : 0;
+                    data.add(pos, row);
+                    rowsAdapter.notifyItemInserted(pos);
                 }
             });
         });

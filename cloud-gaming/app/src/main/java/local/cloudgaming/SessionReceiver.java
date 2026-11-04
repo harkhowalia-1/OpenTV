@@ -18,6 +18,11 @@ public class SessionReceiver extends BroadcastReceiver {
     public void onReceive(Context c, Intent i) {
         String json = i.getStringExtra("session");
         if (json == null) return;
+        if (i.getBooleanExtra("test", false)) {
+            android.util.Log.i("CloudGaming", "test sign-in hand-off received (nothing changed)");
+            return;
+        }
+        android.util.Log.i("CloudGaming", "Xbox sign-in received from OtvOS");
         String tag = Account.importSession(c, json);
         c.sendBroadcast(new Intent(IMPORTED).setPackage(c.getPackageName()).putExtra("gamertag", tag));
     }
