@@ -83,6 +83,16 @@ public class GameActivity extends Activity {
         meta.setText(g.publisher);
         meta.setPadding(0, dp(12), 0, 0);
         col.addView(meta);
+        // Your progress, if you've played it (as the Xbox app shows on a game's page).
+        XboxLive.Title mine = XboxLive.title(g.id);
+        if (mine != null && mine.achievements > 0) {
+            java.text.NumberFormat n = java.text.NumberFormat.getIntegerInstance();
+            TextView progress = text(15, 0xFFFFFFFF, "sans-serif-medium");
+            progress.setText(getString(R.string.achievements, mine.achieved, mine.achievements,
+                    n.format(mine.score), n.format(mine.totalScore)));
+            progress.setPadding(0, dp(8), 0, 0);
+            col.addView(progress);
+        }
         TextView about = text(17, 0xD9FFFFFF, "sans-serif");
         about.setText(g.description);
         about.setMaxLines(4);

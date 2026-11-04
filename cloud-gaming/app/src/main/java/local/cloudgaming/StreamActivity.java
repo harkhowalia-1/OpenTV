@@ -105,6 +105,7 @@ public class StreamActivity extends Activity {
                 Account.saveCookies();
                 if (isXbox(url)) {
                     Account.probe(StreamActivity.this, v);
+                    XboxLive.capture(StreamActivity.this, v, null);   // xbox.com renews its session; keep the new one
                     if (sessionPending) {
                         sessionPending = false;
                         Account.storageApplied(StreamActivity.this);
@@ -269,7 +270,7 @@ public class StreamActivity extends Activity {
     }
 
     /** The site's own browser check only lets desktop browsers into the full controller UI. */
-    private static String desktopUserAgent(String webViewUa) {
+    static String desktopUserAgent(String webViewUa) {
         String chrome = "155.0.0.0";
         Matcher m = Pattern.compile("Chrome/([0-9.]+)").matcher(webViewUa);
         if (m.find()) chrome = m.group(1);

@@ -113,6 +113,7 @@ final class XboxBrowser: NSObject, ObservableObject, WKNavigationDelegate {
         hint = "Signed in. Sending to your TV…"
         for _ in 0..<8 {
             await probeProfile()
+            if gamertag.isEmpty { await fetchProfile() }
             if !gamertag.isEmpty { break }
             try? await Task.sleep(for: .seconds(1))
         }
@@ -132,6 +133,31 @@ final class XboxBrowser: NSObject, ObservableObject, WKNavigationDelegate {
               let o = try? JSONSerialization.jsonObject(with: Data(s.utf8)) as? [String: String] else { return }
         gamertag = o["gamertag"] ?? gamertag
         gamerpic = o["pic"] ?? gamerpic
+    }
+
+    /// The gamertag and gamerpic from Xbox Live, with the session the Xbox site just saved (its Xbox Live token).
+    private func fetchProfile() async {
+        let js = "(function(){for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k.indexOf('Auth.User')===0)return localStorage.getItem(k);}return '';})()"
+        guard let s = try? await webView.evaluateJavaScript(js) as? String,
+              let o = try? JSONSerialization.jsonObject(with: Data(s.utf8)) as? [String: Any],
+              let tokens = o["tokens"] as? [[String: Any]],
+              let data = tokens.first(where: { $0["relyingParty"] as? String == "http://xboxlive.com" })?["tokenData"] as? [String: Any],
+              let token = data["token"] as? String, let uhs = data["userHash"] as? String,
+              let url = URL(string: "https://profile.xboxlive.com/users/me/profile/settings?settings=GameDisplayPicRaw,Gamertag,ModernGamertag")
+        else { return }
+        var request = URLRequest(url: url)
+        request.setValue("XBL3.0 x=\(uhs);\(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("3", forHTTPHeaderField: "x-xbl-contract-version")
+        guard let (body, _) = try? await URLSession.shared.data(for: request),
+              let j = try? JSONSerialization.jsonObject(with: body) as? [String: Any],
+              let settings = (j["profileUsers"] as? [[String: Any]])?.first?["settings"] as? [[String: Any]]
+        else { return }
+        var values: [String: String] = [:]
+        for item in settings {
+            if let id = item["id"] as? String, let v = item["value"] as? String { values[id] = v }
+        }
+        if let modern = values["ModernGamertag"], !modern.isEmpty { gamertag = modern } else if let tag = values["Gamertag"] { gamertag = tag }
+        if let pic = values["GameDisplayPicRaw"] { gamerpic = pic }
     }
 
     /// Microsoft's and Xbox's cookies and the Xbox site's saved session, sealed for the TV only.

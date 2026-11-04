@@ -106,6 +106,7 @@ final class Account {
             JSONObject storage = o.optJSONObject("storage");
             SharedPreferences.Editor e = prefs(c).edit();
             if (storage != null && storage.length() > 0) e.putString("pendingStorage", storage.toString());
+            XboxLive.keepFromStorage(c, storage);   // the Xbox Live sign-in in it: your profile and games, at once
             String tag = o.optString("gamertag", "");
             if (!tag.isEmpty()) e.putString("gamertag", tag);
             String pic = o.optString("gamerpic", "");
@@ -140,6 +141,7 @@ final class Account {
     }
 
     static void signedOut(Context c) {
+        XboxLive.forget(c);
         prefs(c).edit().remove("gamertag").remove("gamerpic").remove("signedIn").remove("pendingStorage").apply();
         CookieManager.getInstance().removeAllCookies(null);
         SharedPreferences.Editor e = prefs(c).edit();

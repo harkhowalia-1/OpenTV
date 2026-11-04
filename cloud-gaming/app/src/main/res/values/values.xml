@@ -3,6 +3,12 @@
     <string name="app_name">Cloud Gaming</string>
     <string name="brand">Xbox Cloud Gaming</string>
     <string name="jump_back_in">Jump Back In</string>
+    <string name="friends">Friends</string>
+    <string name="friends_online">Friends · %1$d Online</string>
+    <string name="gamerscore">%1$s G</string>
+    <string name="progress">%1$d%% complete</string>
+    <string name="achievements">%1$d of %2$d achievements · %3$s of %4$s G</string>
+    <string name="done">Done</string>
     <string name="sign_in">Sign In</string>
     <string name="sign_out">Sign Out</string>
     <string name="open_xbox">Open Xbox Cloud Gaming</string>
