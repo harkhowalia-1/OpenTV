@@ -16,6 +16,7 @@ import android.os.Looper;
 import android.provider.MediaStore;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import java.io.File;
 import java.io.InputStream;
@@ -41,6 +42,7 @@ public class WallpaperActivity extends ChoiceScreen {
     private static final int PHOTOS = 7;
     private final ExecutorService previews = Executors.newFixedThreadPool(2);
     private final ExecutorService work = Executors.newSingleThreadExecutor();
+    private final ExecutorService macPreviews = Executors.newFixedThreadPool(2);
     private final Handler main = new Handler(Looper.getMainLooper());
     private String current;
 
@@ -48,6 +50,7 @@ public class WallpaperActivity extends ChoiceScreen {
     protected void onCreate(Bundle b) {
         super.onCreate(b);
         build(getString(R.string.wallpaper), getString(R.string.wallpaper_sub));
+        Wallpapers.migrate(this);
         current = Wallpapers.kind(this);
 
         // Default
@@ -78,21 +81,58 @@ public class WallpaperActivity extends ChoiceScreen {
             }
         });
 
-        // Your pictures: sent from the iPhone or Mac, and macOS dynamic wallpapers.
+        // Apple TV aerials, from Apple (the list loads in the background).
+        LinearLayout aerialRow = section(getString(R.string.wallpaper_aerials));
+        work.execute(() -> {
+            List<Aerials.Aerial> list = Aerials.list(this);
+            main.post(() -> {
+                for (Aerials.Aerial a : list) {
+                    String kind = "aerial:" + a.id;
+                    View v = cardIn(aerialRow, null, 0xFF101826, a.name, current.equals(kind), () -> pick(() -> {
+                        Aerials.saveStill(this, a, Wallpapers.current(this));
+                        Wallpapers.prefs(this).edit().putString("aerialUrl", Aerials.videoFor(this, a)).apply();
+                        Wallpapers.set(this, kind);
+                    }));
+                    previews.execute(() -> show(v, Aerials.thumbnail(this, a)));
+                }
+            });
+        });
+
+        // macOS wallpapers, from Apple's catalog. Previews load as you move along the row (each reads a picture
+        // from Apple), and a wallpaper downloads only when it's chosen.
+        if (MacOS.supported()) {
+            LinearLayout macRow = section(getString(R.string.wallpaper_macos));
+            work.execute(() -> {
+                List<MacOS.Item> list = MacOS.list(this);
+                main.post(() -> {
+                    for (int i = 0; i < list.size(); i++) {
+                        MacOS.Item it = list.get(i);
+                        String kind = "macos:" + it.name;
+                        String label = MacOS.isDynamic(this, it.name)
+                                ? it.name + " · " + getString(R.string.wallpaper_dynamic) : it.name;
+                        View v = cardIn(macRow, null, 0xFF1C1C21, label, current.equals(kind), () -> pick(() -> MacOS.choose(this, it)));
+                        macCards.put(v, i);
+                        macLoads.add(() -> {
+                            File f = MacOS.thumbnail(this, it);
+                            show(v, f);
+                            if (MacOS.isDynamic(this, it.name) && !label.endsWith(getString(R.string.wallpaper_dynamic))) {
+                                main.post(() -> relabel(v, it.name + " · " + getString(R.string.wallpaper_dynamic)));
+                            }
+                        });
+                    }
+                    loadMacPreviews(0);
+                });
+            });
+            getWindow().getDecorView().getViewTreeObserver().addOnGlobalFocusChangeListener((was, now) -> {
+                Integer i = now == null ? null : macCards.get(now);
+                if (i != null) loadMacPreviews(i);
+            });
+        }
+
+        // Your pictures: sent from the iPhone or Mac, or picked from the TV's photos.
         List<File> uploads = Wallpapers.uploads(this);
-        List<String> dynamics = Wallpapers.dynamics(this);
-        if (!uploads.isEmpty() || !dynamics.isEmpty()) {
+        if (!uploads.isEmpty()) {
             section(getString(R.string.wallpaper_yours));
-            for (String name : dynamics) {
-                String kind = "dynamic:" + name;
-                View v = card(null, 0xFF1C1C21, name + " · " + getString(R.string.wallpaper_dynamic), current.equals(kind),
-                        () -> pick(() -> {
-                            Wallpapers.set(this, kind);
-                            Wallpapers.prefs(this).edit().remove("dynamicShown").apply();
-                            Wallpapers.refreshDynamic(this);
-                        }));
-                previews.execute(() -> show(v, Wallpapers.dynamicPreview(this, name)));
-            }
             for (File f : uploads) {
                 String name = f.getName().replaceFirst("\\.jpg$", "");
                 String kind = "upload:" + name;
@@ -114,29 +154,30 @@ public class WallpaperActivity extends ChoiceScreen {
                             : Manifest.permission.READ_EXTERNAL_STORAGE}, PHOTOS));
         }
 
-        // Apple TV aerials, from Apple.
-        section(getString(R.string.wallpaper_aerials));
-        work.execute(() -> {
-            List<Aerials.Aerial> list = Aerials.list(this);
-            main.post(() -> {
-                for (Aerials.Aerial a : list) {
-                    String kind = "aerial:" + a.id;
-                    View v = card(null, 0xFF101826, a.name, current.equals(kind), () -> pick(() -> {
-                        Aerials.saveStill(this, a, Wallpapers.current(this));
-                        Wallpapers.prefs(this).edit().putString("aerialUrl", Aerials.videoFor(this, a)).apply();
-                        Wallpapers.set(this, kind);
-                    }));
-                    previews.execute(() -> show(v, Aerials.thumbnail(this, a)));
-                }
-            });
-        });
-
         note(getString(R.string.wallpaper_send));
         first.requestFocus();
     }
 
+    private final java.util.Map<View, Integer> macCards = new java.util.HashMap<>();
+    private final List<Runnable> macLoads = new ArrayList<>();
+    private int macLoaded;
+
+    /** Starts the previews from the start of the row up to a few cards past this one. */
+    private void loadMacPreviews(int around) {
+        int upTo = Math.min(macLoads.size(), around + 7);
+        while (macLoaded < upTo) macPreviews.execute(macLoads.get(macLoaded++));
+    }
+
+    private void relabel(View card, String text) {
+        if (card instanceof android.view.ViewGroup && ((android.view.ViewGroup) card).getChildCount() > 1
+                && ((android.view.ViewGroup) card).getChildAt(1) instanceof android.widget.TextView) {
+            ((android.widget.TextView) ((android.view.ViewGroup) card).getChildAt(1)).setText(text);
+        }
+    }
+
     @Override
     protected void onDestroy() {
+        macPreviews.shutdownNow();
         previews.shutdownNow();
         super.onDestroy();
     }

@@ -15,7 +15,7 @@ import android.graphics.drawable.Drawable;
 import androidx.annotation.NonNull;
 
 /**
- * tvOS 26 "Liquid Glass" surface, drawn without blur so it stays cheap on a 1 GB TV: a translucent body,
+ * tvOS 26 "Liquid Glass" surface: optionally frosted (see {@link Backdrop}), then a translucent body,
  * a rim that is bright at the top-left and bottom-right like light caught in a lens, a specular sheen across
  * the top and a refraction glow along the bottom edge. Interactive glass turns solid white when focused,
  * as tvOS buttons do; "on" glass (an active toggle) is tinted blue.
@@ -43,6 +43,11 @@ final class LiquidGlass extends Drawable {
     private final RectF rect = new RectF();
     private final Path clip = new Path();
     private int alpha = 255;
+    private int frostLayer = -1;
+    private android.view.View frostHost;
+    private final int[] loc = new int[2];
+    private final RectF frostRect = new RectF();
+    private final Paint frostPaint = new Paint(Paint.FILTER_BITMAP_FLAG);
 
     LiquidGlass(Context ctx, float radiusDp, int style, boolean interactive) {
         density = ctx.getResources().getDisplayMetrics().density;
@@ -51,6 +56,21 @@ final class LiquidGlass extends Drawable {
         this.interactive = interactive;
         rim.setStyle(Paint.Style.STROKE);
         rim.setStrokeWidth(1.25f * density);
+    }
+
+    /**
+     * Frosted: what's behind the glass shows through it blurred and more saturated, as in Apple's materials
+     * (saturate 180%, under the smoked tint). Layer: {@link Backdrop#HOME} or {@link Backdrop#PANEL}. The host is
+     * the view the glass is drawn in (null: the view it's the background of).
+     */
+    LiquidGlass frosted(int layer, android.view.View host) {
+        frostLayer = layer;
+        frostHost = host;
+        android.graphics.ColorMatrix m = new android.graphics.ColorMatrix();
+        m.setSaturation(1.8f);
+        frostPaint.setColorFilter(new android.graphics.ColorMatrixColorFilter(m));
+        if (host != null) Backdrop.watch(host);
+        return this;
     }
 
     /** Tints the glass as an active toggle (blue), like Do Not Disturb when it is on. */
@@ -141,10 +161,26 @@ final class LiquidGlass extends Drawable {
             return;
         }
 
-        c.drawRoundRect(rect, r, r, fill);
-        if (tintStrength > 0) c.drawRoundRect(rect, r, r, tint);
         clip.reset();
         clip.addRoundRect(rect, r, r, Path.Direction.CW);
+        if (frostLayer >= 0 && !on) {
+            android.view.View host = frostHost != null ? frostHost
+                    : getCallback() instanceof android.view.View ? (android.view.View) getCallback() : null;
+            android.graphics.Bitmap fb = Backdrop.frost(frostLayer);
+            if (host != null) {
+                Backdrop.watch(host);
+                if (fb != null && !fb.isRecycled()) {
+                    host.getLocationInWindow(loc);
+                    frostRect.set(-loc[0], -loc[1], -loc[0] + Backdrop.screenWidth(), -loc[1] + Backdrop.screenHeight());
+                    c.save();
+                    c.clipPath(clip);
+                    c.drawBitmap(fb, null, frostRect, frostPaint);
+                    c.restore();
+                }
+            }
+        }
+        c.drawRoundRect(rect, r, r, fill);
+        if (tintStrength > 0) c.drawRoundRect(rect, r, r, tint);
         c.save();
         c.clipPath(clip);
         c.drawRect(rect.left, rect.top, rect.right, rect.top + rect.height() * 0.48f, sheen);

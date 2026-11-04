@@ -151,10 +151,12 @@ public class ControlCenterActivity extends Activity {
         media = MediaListener.current(this);
         column.removeAllViews();
         boolean showMedia = media != null || StatusPill.MEDIA.equals(which);
-        column.addView(StatusPill.build(this, p -> {
+        LinearLayout pill = StatusPill.build(this, p -> {
             if (p.equals(panelName)) close();
             else show(p);
-        }, which, showMedia), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(48)));
+        }, which, showMedia);
+        ((LiquidGlass) pill.getBackground()).frosted(Backdrop.PANEL, null);
+        column.addView(pill, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(48)));
 
         holder.removeAllViews();
         View panel;
@@ -187,7 +189,7 @@ public class ControlCenterActivity extends Activity {
     private LinearLayout panelShell(int widthDp) {
         LinearLayout p = new LinearLayout(this);
         p.setOrientation(LinearLayout.VERTICAL);
-        p.setBackground(new LiquidGlass(this, 26, LiquidGlass.SMOKE, false));
+        p.setBackground(new LiquidGlass(this, 26, LiquidGlass.SMOKE, false).frosted(Backdrop.PANEL, null));
         p.setPadding(dp(10), dp(10), dp(10), dp(10));
         p.setClipChildren(false);
         p.setClipToPadding(false);

@@ -46,6 +46,7 @@ abstract class ChoiceScreen extends Activity {
         android.widget.ScrollView vertical = new android.widget.ScrollView(this);
         vertical.setVerticalScrollBarEnabled(false);
         vertical.setClipToPadding(false);
+        vertical.setClipChildren(false);
         rows = new LinearLayout(this);
         rows.setOrientation(LinearLayout.VERTICAL);
         rows.setClipChildren(false);
@@ -60,9 +61,21 @@ abstract class ChoiceScreen extends Activity {
         setContentView(root);
     }
 
-    /** Starts a new row of cards under a heading. */
-    void section(String heading) {
+    /** Starts a new row of cards under a heading; later cards go into it (or into a row given to cardIn). */
+    LinearLayout section(String heading) {
         newRow(heading);
+        return cards;
+    }
+
+    /** A card in a particular row: for rows that fill in later, after other rows were added below them. */
+    View cardIn(LinearLayout row, Drawable picture, int fill, String label, boolean current, Runnable pick) {
+        LinearLayout keep = cards;
+        cards = row;
+        try {
+            return card(picture, fill, label, current, pick);
+        } finally {
+            cards = keep;
+        }
     }
 
     private void newRow(String heading) {
@@ -77,8 +90,10 @@ abstract class ChoiceScreen extends Activity {
         }
         HorizontalScrollView scroll = new HorizontalScrollView(this);
         scroll.setHorizontalScrollBarEnabled(false);
+        // A focused card grows and lifts: leave it room, and don't clip it, so its rounded corners stay whole.
         scroll.setClipToPadding(false);
-        scroll.setPadding(dp(8), dp(12), dp(8), dp(12));
+        scroll.setClipChildren(false);
+        scroll.setPadding(dp(16), dp(16), dp(16), dp(16));
         cards = new LinearLayout(this);
         cards.setClipChildren(false);
         scroll.addView(cards);

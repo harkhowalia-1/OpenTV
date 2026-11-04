@@ -29,6 +29,16 @@ import android.widget.Toast;
 public class TvSettingsActivity extends Activity {
 
     private float density;
+    private ViewGroup wallpaperRow;
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // The wallpaper may have just been changed (here, or from the iPhone or Mac): show its current name.
+        if (wallpaperRow != null && wallpaperRow.getChildAt(2) instanceof TextView) {
+            ((TextView) wallpaperRow.getChildAt(2)).setText(wallpaperName());
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,7 +99,7 @@ public class TvSettingsActivity extends Activity {
                 new Intent(Settings.ACTION_WIFI_SETTINGS));
         row(list, R.drawable.ic_person, "Users and Accounts", Profiles.active(this),
                 new Intent(Settings.ACTION_SYNC_SETTINGS));
-        row(list, R.drawable.ic_display, getString(R.string.wallpaper),
+        wallpaperRow = (ViewGroup) row(list, R.drawable.ic_display, getString(R.string.wallpaper),
                 wallpaperName(),
                 new Intent(this, WallpaperActivity.class));
         row(list, R.drawable.ic_screensaver, "Screen Saver", getString(R.string.dream_name),
@@ -142,6 +152,10 @@ public class TvSettingsActivity extends Activity {
         if (k.equals("bing")) return getString(R.string.wallpaper_bing);
         if (k.startsWith("aerial:")) return "Apple TV Aerial";
         if (k.startsWith("upload:")) return k.substring(7);
+        if (k.startsWith("macos:")) {
+            String n = k.substring(6);
+            return MacOS.isDynamic(this, n) ? n + " (" + getString(R.string.wallpaper_dynamic) + ")" : n;
+        }
         if (k.startsWith("dynamic:")) return k.substring(8) + " (" + getString(R.string.wallpaper_dynamic) + ")";
         return getString(R.string.wallpaper_device);
     }

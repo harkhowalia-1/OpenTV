@@ -50,6 +50,7 @@
     <string name="wallpaper_photos_allow">Show Photos on This TV</string>
     <string name="wallpaper_photos_none">No photos on this TV yet</string>
     <string name="wallpaper_aerials">Apple TV Aerials</string>
+    <string name="wallpaper_macos">macOS Wallpapers</string>
     <string name="wallpaper_send">Send a photo from Otv Remote on your iPhone, or macOS wallpapers from OpenTV Companion on your Mac.</string>
     <string name="wallpaper_setting">Setting wallpaper…</string>
     <string name="wallpaper_failed">That wallpaper couldn\'t be set. Check the internet connection and try again.</string>

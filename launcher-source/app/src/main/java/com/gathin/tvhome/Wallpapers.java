@@ -185,9 +185,10 @@ final class Wallpapers {
         if (b.getInt() != 0x4F545644) throw new IllegalArgumentException("not a dynamic wallpaper");
         int count = b.getShort() & 0xFFFF;
         String n = safe(name);
-        File d = dir(c, "dynamic/" + n);
-        File[] old = d.listFiles();
-        if (old != null) for (File f : old) f.delete();
+        File root = dir(c, "macos");
+        File[] others = root.listFiles();
+        if (others != null) for (File o : others) { MacOS.clear(o); o.delete(); }
+        File d = dir(c, "macos/" + n);
         StringBuilder times = new StringBuilder();
         for (int i = 0; i < count; i++) {
             int minute = b.getShort() & 0xFFFF;
@@ -199,20 +200,39 @@ final class Wallpapers {
         try (FileOutputStream f = new FileOutputStream(new File(d, "times.txt"))) {
             f.write(times.toString().getBytes("UTF-8"));
         }
-        set(c, "dynamic:" + n);
+        if (count > 1) new File(dir(c, "macos-thumbs"), n + ".dynamic").createNewFile();
+        new File(dir(c, "macos-thumbs"), n + ".jpg").delete();   // a fresh preview from these pictures
+        set(c, "macos:" + n);
         prefs(c).edit().remove("dynamicShown").apply();
         refreshDynamic(c);
     }
 
-    static List<String> dynamics(Context c) {
-        List<String> out = new ArrayList<>();
-        File[] ds = dir(c, "dynamic").listFiles(File::isDirectory);
-        if (ds != null) for (File d : ds) if (new File(d, "times.txt").exists()) out.add(d.getName());
-        return out;
+    /** The folder of pictures for a time-of-day wallpaper ("macos:NAME", or the older "dynamic:NAME"). */
+    static File dynamicDir(Context c, String kind) {
+        if (kind.startsWith("macos:")) return dir(c, "macos/" + kind.substring(6));
+        if (kind.startsWith("dynamic:")) return dir(c, "dynamic/" + kind.substring(8));
+        return null;
     }
 
-    static File dynamicPreview(Context c, String name) {
-        File d = dir(c, "dynamic/" + name);
+    /** OtvOS 1.2.x kept the Mac's dynamic wallpapers under "Your Pictures": they're macOS wallpapers now. */
+    static void migrate(Context c) {
+        File[] old = dir(c, "dynamic").listFiles(File::isDirectory);
+        if (old == null || old.length == 0) return;
+        String k = kind(c);
+        for (File d : old) {
+            File to = new File(dir(c, "macos"), d.getName());
+            if (k.equals("dynamic:" + d.getName()) && !to.exists() && d.renameTo(to)) {
+                set(c, "macos:" + d.getName());
+            } else {
+                MacOS.clear(d);
+                d.delete();
+            }
+        }
+    }
+
+    /** The early-afternoon picture of a time-of-day wallpaper (kind "macos:NAME"). */
+    static File dynamicPreview(Context c, String kind) {
+        File d = dynamicDir(c, kind);
         int i = frameFor(d, 13 * 60);   // early afternoon
         return new File(d, i + ".jpg");
     }
@@ -236,8 +256,8 @@ final class Wallpapers {
     /** For a dynamic wallpaper: puts the picture for this time of day in place. True if it changed. */
     static boolean refreshDynamic(Context c) {
         String k = kind(c);
-        if (!k.startsWith("dynamic:")) return false;
-        File d = dir(c, "dynamic/" + k.substring(8));
+        File d = dynamicDir(c, k);
+        if (d == null) return false;
         Calendar now = Calendar.getInstance();
         int i = frameFor(d, now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE));
         if (prefs(c).getInt("dynamicShown", -1) == i && current(c).exists()) return false;
@@ -287,7 +307,13 @@ final class Wallpapers {
      */
     static void refresh(Context c) {
         try {
+            migrate(c);
             String k = kind(c);
+            // macOS wallpapers come from Apple again whenever they're wanted: keep only the one in use.
+            File[] mac = dir(c, "macos").listFiles();
+            if (mac != null) for (File o : mac) {
+                if (!k.equals("macos:" + o.getName())) { MacOS.clear(o); o.delete(); }
+            }
             if (k.equals("bing")) {
                 if (!today().equals(prefs(c).getString("bingDay", ""))) {
                     copy(fetchBing(c), current(c));

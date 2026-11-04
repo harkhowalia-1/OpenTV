@@ -26,6 +26,8 @@ import android.provider.Settings;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.os.Build;
+import android.graphics.Bitmap;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.view.animation.LayoutAnimationController;
@@ -140,6 +142,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         grid.setItemAnimator(null);
         dockDecoration = new DockDecoration(this, COLUMNS, density);
         grid.addItemDecoration(dockDecoration);
+        dockDecoration.glass.frosted(Backdrop.HOME, grid);
         grid.setLayoutAnimation(new LayoutAnimationController(
                 AnimationUtils.loadAnimation(this, R.anim.tile_enter), 0.06f));
         adapter = new AppAdapter(this, this, COLUMNS);
@@ -248,6 +251,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     private String shownWallpaper;
+    private boolean glowOn = true;
     private android.view.TextureView aerialView;
     private android.media.MediaPlayer aerial;
     private String aerialUrl;
@@ -269,6 +273,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         java.io.File f = Wallpapers.current(this);
         String key = kind.isEmpty() || !f.exists() ? "" : kind + f.lastModified();
         android.widget.ImageView wall = findViewById(R.id.wallpaper);
+        // The colour glow behind the apps belongs to the Glow wallpaper only: over a picture or video it's off.
+        glowOn = key.isEmpty();
+        ambient.setVisibility(glowOn ? View.VISIBLE : View.INVISIBLE);
+        syncGlassTint();
         if (!key.equals(shownWallpaper)) {
             shownWallpaper = key;
             if (key.isEmpty()) {
@@ -356,6 +364,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onResume() {
         super.onResume();
+        resumed = true;
+        Backdrop.clear(Backdrop.PANEL);
         resumedAt = SystemClock.uptimeMillis();
         Profiles.syncAccounts(this);
         applyWallpaper();
@@ -367,6 +377,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         heroName.setAlpha(0f);
         heroArt.setAlpha(0f);
         ambient.setAlpha(0f);
+        backdropDeep = false;
+        if (backdropAnim != null) backdropAnim.cancel();
+        applyBackdrop(0f);
         // Read these before reload(): rebinding can move focus to the first tile and overwrite them.
         final String returnKey = lastFocusedKey;
         final int returnSlot = lastFocused;
@@ -388,10 +401,27 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onPause() {
         super.onPause();
+        resumed = false;
         statusSlot.setVisibility(View.INVISIBLE);   // a panel on top draws its own pill in the same spot
         handler.removeCallbacks(minuteTick);
         handler.removeCallbacks(wallpaperTick);
-        if (aerial != null && aerial.isPlaying()) aerial.pause();   // no video while an app is in front
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        handler.removeCallbacks(frostTick);
+        handler.post(frostTick);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        handler.removeCallbacks(frostTick);
+        Backdrop.clear(Backdrop.PANEL);   // panels over an app don't see Home
+        // No video while an app covers Home. Control Center and other see-through panels only pause Home,
+        // so the aerial keeps playing behind them.
+        if (aerial != null && aerial.isPlaying()) aerial.pause();
     }
 
     @Override
@@ -448,8 +478,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             int dy = decoratedTop - grid.getPaddingTop();
             if (Math.abs(dy) > 1) grid.smoothScrollBy(0, dy);
             showHero(position, r.top - dy);
+            setBackdrop(false);
         } else {
             hideHero();
+            setBackdrop(true);
             // Scroll just enough so the whole glass (not only the tile) is visible.
             Rect want = new Rect(0, -(int) pad * 2, item.getWidth(), item.getHeight() + (int) pad);
             grid.requestChildRectangleOnScreen(item, want, false);
@@ -504,8 +536,111 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
     }
 
+    // ---- backdrop: the wallpaper blurs and dims when you move down into the apps, as on Apple TV --------
+
+    // ---- frosted glass: keeps the blurred copies of what's behind the glass up to date (see Backdrop) ------
+
+    private boolean resumed;
+    private String frostedStill;
+    private final Runnable frostTick = new Runnable() {
+        @Override
+        public void run() {
+            boolean live = aerial != null && aerialView != null && aerialView.getAlpha() > 0.5f;
+            updateHomeFrost(live);
+            if (!resumed) updatePanelFrost();
+            handler.postDelayed(this, live || !resumed ? 40 : 400);
+        }
+    };
+
+    private Bitmap smallScreen() {
+        int w = Math.max(1, root.getWidth() / Backdrop.SCALE), h = Math.max(1, root.getHeight() / Backdrop.SCALE);
+        return Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+    }
+
+    /** Home's own glass sees the wallpaper: the still, or each frame of a live aerial. */
+    private void updateHomeFrost(boolean live) {
+        if (root.getWidth() == 0) return;
+        ImageView wall = findViewById(R.id.wallpaper);
+        if (live) {
+            Bitmap small = smallScreen();
+            aerialView.getBitmap(small);
+            android.graphics.Canvas cv = new android.graphics.Canvas(small);
+            cv.drawColor(0x59000000);   // the aerial's dimming
+            if (backdropDim != null) cv.drawColor(((int) (0x4D * backdropDim.getAlpha()) << 24));
+            Backdrop.update(Backdrop.HOME, small, root.getWidth(), root.getHeight(), density);
+            frostedStill = null;
+        } else if (wall.getVisibility() == View.VISIBLE && wall.getDrawable() != null) {
+            String key = shownWallpaper + "|" + (int) (backdropAmount * 10);
+            if (key.equals(frostedStill)) return;
+            frostedStill = key;
+            Bitmap small = smallScreen();
+            android.graphics.Canvas cv = new android.graphics.Canvas(small);
+            cv.scale(small.getWidth() / (float) wall.getWidth(), small.getHeight() / (float) wall.getHeight());
+            wall.draw(cv);   // software drawing: the still and its dimming, without the on-screen blur
+            cv.setMatrix(null);
+            if (backdropDim != null) cv.drawColor(((int) (0x4D * backdropDim.getAlpha()) << 24));
+            Backdrop.update(Backdrop.HOME, small, root.getWidth(), root.getHeight(), density);
+        } else if (frostedStill == null || !frostedStill.isEmpty()) {
+            frostedStill = "";
+            Backdrop.clear(Backdrop.HOME);   // the colour glow: glass keeps its glow tint instead
+        }
+    }
+
+    /** Panels over Home (Control Center) see all of Home, apps and all, copied from this window. */
+    private void updatePanelFrost() {
+        if (root.getWidth() == 0 || Build.VERSION.SDK_INT < 26) return;
+        Bitmap small = smallScreen();
+        try {
+            android.view.PixelCopy.request(getWindow(), small, result -> {
+                if (result == android.view.PixelCopy.SUCCESS && !resumed) {
+                    Backdrop.update(Backdrop.PANEL, small, root.getWidth(), root.getHeight(), density);
+                } else {
+                    small.recycle();
+                }
+            }, handler);
+        } catch (IllegalArgumentException e) {
+            small.recycle();
+        }
+    }
+
+    private boolean backdropDeep;
+    private float backdropAmount;
+    private android.animation.ValueAnimator backdropAnim;
+    private View backdropDim;
+
+    private void setBackdrop(boolean deep) {
+        if (deep == backdropDeep) return;
+        backdropDeep = deep;
+        if (backdropAnim != null) backdropAnim.cancel();
+        backdropAnim = android.animation.ValueAnimator.ofFloat(backdropAmount, deep ? 1f : 0f);
+        backdropAnim.setDuration(deep ? 500 : 380);
+        backdropAnim.setInterpolator(new android.view.animation.DecelerateInterpolator(1.4f));
+        backdropAnim.addUpdateListener(a -> applyBackdrop((float) a.getAnimatedValue()));
+        backdropAnim.start();
+    }
+
+    private void applyBackdrop(float t) {
+        backdropAmount = t;
+        if (backdropDim == null) {
+            ViewGroup root = findViewById(R.id.root);
+            backdropDim = new View(this);
+            backdropDim.setBackgroundColor(0x4D000000);
+            backdropDim.setAlpha(0f);
+            root.addView(backdropDim, root.indexOfChild(ambient), new FrameLayout.LayoutParams(-1, -1));
+        }
+        backdropDim.setAlpha(t);
+        if (Build.VERSION.SDK_INT >= 31) {
+            float r = t * 36 * density;
+            android.graphics.RenderEffect blur = r < 0.5f ? null
+                    : android.graphics.RenderEffect.createBlurEffect(r, r, android.graphics.Shader.TileMode.CLAMP);
+            View wall = findViewById(R.id.wallpaper);
+            if (wall != null) wall.setRenderEffect(blur);
+            if (aerialView != null) aerialView.setRenderEffect(blur);
+        }
+    }
+
     private void syncGlassTint() {
-        float s = ambient.getAlpha();
+        float s = glowOn ? ambient.getAlpha() : 0f;
         dockDecoration.glass.setTint(ambientColor, s);
         grid.invalidate();
         if (statusSlot.getChildCount() > 0 && statusSlot.getChildAt(0).getBackground() instanceof LiquidGlass) {
@@ -745,7 +880,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private void refreshPill() {
         statusSlot.setVisibility(View.VISIBLE);
         statusSlot.removeAllViews();
-        statusSlot.addView(StatusPill.build(this, this::openPanel, null, MediaListener.current(this) != null));
+        LinearLayout pill = StatusPill.build(this, this::openPanel, null, MediaListener.current(this) != null);
+        ((LiquidGlass) pill.getBackground()).frosted(Backdrop.HOME, null);
+        statusSlot.addView(pill);
         syncGlassTint();
     }
 
