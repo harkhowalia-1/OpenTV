@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- IPTV's tile: a live disc broadcasting both ways (play cut out of a white disc, signal arcs) on OpenTV's
+     pink-to-violet. A vector, so it is sharp on any screen. Optically centred, evenly rounded play. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="320dp"
+    android:height="180dp"
+    android:viewportWidth="400"
+    android:viewportHeight="225">
+    <path android:pathData="M0,0h400v225H0z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="0" android:startY="0" android:endX="400" android:endY="112.5">
+                <item android:offset="0" android:color="#FFFF7AE6" />
+                <item android:offset="1" android:color="#FF8A34FF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <group android:translateY="-7.5">
+        <path
+            android:pathData="M155.6,82.7 A58,58 0 0,0 155.6,157.3"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeAlpha="0.75"
+            android:strokeWidth="9"
+            android:strokeLineCap="round" />
+        <path
+            android:pathData="M244.4,82.7 A58,58 0 0,1 244.4,157.3"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeAlpha="0.75"
+            android:strokeWidth="9"
+            android:strokeLineCap="round" />
+        <path
+            android:pathData="M137.2,67.3 A82,82 0 0,0 137.2,172.7"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeAlpha="0.38"
+            android:strokeWidth="9"
+            android:strokeLineCap="round" />
+        <path
+            android:pathData="M262.8,67.3 A82,82 0 0,1 262.8,172.7"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeAlpha="0.38"
+            android:strokeWidth="9"
+            android:strokeLineCap="round" />
+        <!-- The disc with the play cut out (even-odd fill makes the triangle a hole). -->
+        <path
+            android:fillType="evenOdd"
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M158,120 A42,42 0 1,1 242,120 A42,42 0 1,1 158,120 Z M193.2,102.8 L218.3,117.2 Q223.1,120.0 218.3,122.8 L193.2,137.2 Q188.5,140.0 188.5,134.5 L188.5,105.5 Q188.5,100.0 193.2,102.8 Z" />
+    </group>
+</vector>
