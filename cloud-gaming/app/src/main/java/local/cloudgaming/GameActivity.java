@@ -108,6 +108,11 @@ public class GameActivity extends Activity {
             v.animate().scaleX(f ? 1.08f : 1f).scaleY(f ? 1.08f : 1f).translationZ(f ? dp(10) : 0).setDuration(160).start();
         });
         play.setOnClickListener(v -> {
+            if (!Account.signedIn(this)) {
+                // Sign in first (on the iPhone), then the game starts by itself.
+                startActivity(new Intent(this, SignInActivity.class).putExtra(SignInActivity.EXTRA_THEN_GAME, g.id));
+                return;
+            }
             startActivity(new Intent(this, StreamActivity.class)
                     .putExtra(StreamActivity.EXTRA_URL, Xbox.launchUrl(g))
                     .putExtra(StreamActivity.EXTRA_GAME, g.id));

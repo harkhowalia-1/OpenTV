@@ -5,6 +5,11 @@
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <uses-feature android:name="android.hardware.gamepad" android:required="false" />
 
+    <!-- OtvOS hands over an Xbox sign-in made on the iPhone. Only apps signed with the same key (OtvOS) may send it. -->
+    <permission
+        android:name="local.cloudgaming.permission.SESSION"
+        android:protectionLevel="signature" />
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
@@ -28,6 +33,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".SignInActivity"
+            android:exported="false"
+            android:screenOrientation="landscape" />
+        <receiver
+            android:name=".SessionReceiver"
+            android:exported="true"
+            android:permission="local.cloudgaming.permission.SESSION">
+            <intent-filter>
+                <action android:name="local.cloudgaming.SESSION" />
+            </intent-filter>
+        </receiver>
         <activity
             android:name=".GameActivity"
             android:exported="false"

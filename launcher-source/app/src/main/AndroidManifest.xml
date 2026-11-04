@@ -29,6 +29,8 @@
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <!-- Software Update installs new versions of OtvOS and IPTV (you confirm each on the TV). -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Handing an Xbox sign-in from the iPhone to Cloud Gaming (a signature permission Cloud Gaming defines). -->
+    <uses-permission android:name="local.cloudgaming.permission.SESSION" />
     <!-- Screen Saver: Start After (granted with appops by the installer) and making OtvOS's screensaver the TV's. -->
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />

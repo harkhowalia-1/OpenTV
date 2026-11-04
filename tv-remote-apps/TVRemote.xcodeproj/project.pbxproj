@@ -45,6 +45,7 @@
 		D6ED9FC57C7CDDB2CE90E43E /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5D81D9300445997999E3EF5 /* ShareViewController.swift */; };
 		E0A33757FDBAC1A1AD52C53E /* TVRemoteMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 144520190EED79377BAC87D8 /* TVRemoteMacApp.swift */; };
 		E2365C5132F7AAC92FC90515 /* TVRemoteControls.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 0BE837398F031353133F679A /* TVRemoteControls.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E39525B19CE3EB389D304B47 /* XboxSignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFAB593281EDF2E909A1CA1A /* XboxSignInView.swift */; };
 		E75935FD3130CA710E9E5BAE /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 4F965C6147A4A25588DE2DAE /* README.md */; };
 		EC5FE9788ED182CE419949A4 /* RemoteModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2C565855A45AAB61E37DD9 /* RemoteModel.swift */; };
 		F26EF09A38E5A5DB0888AB26 /* Mac.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BD873AFF8EFD56CDC218F89A /* Mac.xcassets */; };
@@ -126,6 +127,7 @@
 		E1E891DC6B0F1EF404454AD4 /* TVControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVControls.swift; sourceTree = "<group>"; };
 		ED7E0716F1A6C49303242CDD /* TVRemoteMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TVRemoteMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		EF34A0C2E18520D6AB08490B /* Installer.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Installer.xcassets; sourceTree = "<group>"; };
+		EFAB593281EDF2E909A1CA1A /* XboxSignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XboxSignInView.swift; sourceTree = "<group>"; };
 		F2BD3E396CE46AF081278C30 /* TVManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVManager.swift; sourceTree = "<group>"; };
 		F2E46BF9B15064B9E737BACD /* OpenTVInstaller.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenTVInstaller.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F70E809DF723719B506F0D6E /* Setup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Setup.swift; sourceTree = "<group>"; };
@@ -202,6 +204,7 @@
 				094F7813DE0ACC2A7988613E /* TVRemoteApp.swift */,
 				ABD2A0C2C52560A288C6A19D /* TVSettingsView.swift */,
 				D3FF676E62E89F0BE73DEAE3 /* VolumeButtons.swift */,
+				EFAB593281EDF2E909A1CA1A /* XboxSignInView.swift */,
 			);
 			path = iOS;
 			sourceTree = "<group>";
@@ -449,6 +452,7 @@
 				74E6899BAE0911BCB80BBD9A /* TVSettingsView.swift in Sources */,
 				410EC854AA486D5FEED0F6CF /* VolumeButtons.swift in Sources */,
 				47CB1AF8A4555A83C36CAD0C /* WallpaperImage.swift in Sources */,
+				E39525B19CE3EB389D304B47 /* XboxSignInView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -134,7 +134,7 @@ final class RemoteServer {
                 if (c > 0) headers.put(line.substring(0, c).trim().toLowerCase(Locale.ROOT), line.substring(c + 1).trim());
             }
             // Wallpapers are pictures (up to 64 MB for a dynamic set); everything else is small JSON.
-            int limit = path.startsWith("/api/wallpaper") ? 64 << 20 : 65536;
+            int limit = path.startsWith("/api/wallpaper") ? 64 << 20 : path.startsWith("/api/tv/xbox") ? 4 << 20 : 65536;
             int len = parseInt(headers.get("content-length"));
             byte[] raw = new byte[len > 0 && len <= limit ? len : 0];
             int got = 0;

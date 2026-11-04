@@ -57,6 +57,8 @@
     <string name="cc_search">Search</string>
     <string name="cc_accessibility">Accessibility</string>
     <string name="cc_accessibility_sub">Screen reader, captions, zoom and more</string>
+    <string name="xbox_signed_in">Signed in to Xbox from your iPhone</string>
+    <string name="xbox_signed_in_as">Signed in to Xbox as %1$s</string>
     <string name="edit_hint">OK picks an app up and drops it · Play/Pause for options · Back when done</string>
     <string name="ss_type">Type</string>
     <string name="ss_aerials">Aerials</string>

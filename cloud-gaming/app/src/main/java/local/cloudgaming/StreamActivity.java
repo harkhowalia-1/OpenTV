@@ -23,6 +23,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -42,7 +43,7 @@ import java.util.regex.Pattern;
  */
 public class StreamActivity extends Activity {
 
-    static final String EXTRA_URL = "url", EXTRA_GAME = "game";
+    static final String EXTRA_URL = "url", EXTRA_GAME = "game", EXTRA_SIGNIN = "signin";
 
     private static final int CURSOR_STEP = 14;       // px per key event, before acceleration
     private static final int CURSOR_MAX_STEP = 60;
@@ -85,6 +86,12 @@ public class StreamActivity extends Activity {
         cookies.setAcceptThirdPartyCookies(web, true);   // Microsoft sign-in hops across domains
 
         RemotePad.install(web);
+        // A sign-in handed over from the iPhone: the Xbox site's saved session goes back in before its scripts run.
+        String session = Account.storageScript(this);
+        if (session != null && androidx.webkit.WebViewFeature.isFeatureSupported(androidx.webkit.WebViewFeature.DOCUMENT_START_SCRIPT)) {
+            androidx.webkit.WebViewCompat.addDocumentStartJavaScript(web, session, java.util.Collections.singleton("https://www.xbox.com"));
+            sessionPending = true;
+        }
         web.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageStarted(WebView v, String url, android.graphics.Bitmap icon) {
@@ -96,7 +103,21 @@ public class StreamActivity extends Activity {
             public void onPageFinished(WebView v, String url) {
                 onHost(url);
                 Account.saveCookies();
-                if (isXbox(url)) Account.probe(StreamActivity.this, v);
+                if (isXbox(url)) {
+                    Account.probe(StreamActivity.this, v);
+                    if (sessionPending) {
+                        sessionPending = false;
+                        Account.storageApplied(StreamActivity.this);
+                    }
+                    // Back on Xbox after Microsoft's sign-in pages: signed in. A sign-in trip ends here.
+                    if (visitedLogin) {
+                        visitedLogin = false;
+                        Account.markSignedIn(StreamActivity.this);
+                        if (getIntent().getBooleanExtra(EXTRA_SIGNIN, false)) finish();
+                    }
+                } else if (url != null && url.contains("login.")) {
+                    visitedLogin = true;
+                }
             }
         });
         web.setWebChromeClient(new WebChromeClient() {
@@ -131,9 +152,105 @@ public class StreamActivity extends Activity {
         web.requestFocus();
         String start = getIntent().getStringExtra(EXTRA_URL);
         String game = getIntent().getStringExtra(EXTRA_GAME);
-        if (game != null) Xbox.played(this, game);
+        if (game != null) {
+            Xbox.played(this, game);
+            showStarting(Xbox.cached(game));
+        }
         if (savedInstanceState != null) web.restoreState(savedInstanceState);
         else web.loadUrl(start != null ? start : getString(R.string.start_url));
+    }
+
+    private boolean sessionPending, visitedLogin;
+
+    // ---- "Starting <game>…": a native screen over Xbox's page until the game is on screen ---------------------
+
+    private View starting;
+    private TextView startingStatus;
+    private long startedAt;
+    private boolean clickedPlay;
+
+    /** The game's art, its name and Xbox's progress ("In line…"), until the stream's video is playing. */
+    private void showStarting(Xbox.Game g) {
+        if (g == null) return;
+        float d = getResources().getDisplayMetrics().density;
+        FrameLayout box = new FrameLayout(this);
+        box.setBackgroundColor(0xFF000000);
+        android.widget.ImageView art = new android.widget.ImageView(this);
+        art.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+        art.setAlpha(0.55f);
+        box.addView(art, new FrameLayout.LayoutParams(-1, -1));
+        Images.load(this, Xbox.sized(g.hero != null ? g.hero : g.poster, getResources().getDisplayMetrics().widthPixels), art::setImageBitmap);
+        android.widget.LinearLayout col = new android.widget.LinearLayout(this);
+        col.setOrientation(android.widget.LinearLayout.VERTICAL);
+        col.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
+        android.widget.ProgressBar spin = new android.widget.ProgressBar(this);
+        spin.setIndeterminateTintList(android.content.res.ColorStateList.valueOf(0xFFFFFFFF));
+        col.addView(spin, new android.widget.LinearLayout.LayoutParams((int) (44 * d), (int) (44 * d)));
+        TextView name = new TextView(this);
+        name.setText(getString(R.string.starting, g.title));
+        name.setTextColor(0xFFFFFFFF);
+        name.setTextSize(30);
+        name.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL));
+        name.setGravity(android.view.Gravity.CENTER);
+        name.setPadding(0, (int) (22 * d), 0, 0);
+        name.setShadowLayer(12 * d, 0, d, 0x99000000);
+        col.addView(name);
+        startingStatus = new TextView(this);
+        startingStatus.setTextColor(0xCCFFFFFF);
+        startingStatus.setTextSize(17);
+        startingStatus.setGravity(android.view.Gravity.CENTER);
+        startingStatus.setPadding(0, (int) (10 * d), 0, 0);
+        col.addView(startingStatus);
+        box.addView(col, new FrameLayout.LayoutParams(-2, -2, android.view.Gravity.CENTER));
+        starting = box;
+        root.addView(box, root.indexOfChild(cursor), new FrameLayout.LayoutParams(-1, -1));
+        startedAt = android.os.SystemClock.uptimeMillis();
+        handler.postDelayed(watchStart, 1500);
+    }
+
+    /** Asks Xbox's page how it's going: is the game's video playing, what does it say, does it need you? */
+    private static final String WATCH = "(function(){try{"
+            + "var playing=[].slice.call(document.querySelectorAll('video')).some(function(v){return v.readyState>=2&&v.videoWidth>0&&!v.paused;});"
+            + "var t=(document.body&&document.body.innerText)||'';"
+            + "var m=t.match(/[^\\n]*(in line|in queue|wait time|minutes|getting ready|connecting|starting)[^\\n]*/i);"
+            + "var dialog=!!document.querySelector('[role=dialog],[role=alertdialog]');"
+            + "var play=[].slice.call(document.querySelectorAll('button,a[role=button]')).filter(function(b){return /^\\s*play\\s*$/i.test(b.innerText||b.getAttribute('aria-label')||'');})[0];"
+            + "return JSON.stringify({playing:playing,status:m?m[0].trim().slice(0,90):'',dialog:dialog,play:!!play});"
+            + "}catch(e){return '{}';}})()";
+
+    private final Runnable watchStart = new Runnable() {
+        @Override
+        public void run() {
+            if (starting == null) return;
+            web.evaluateJavascript(WATCH, value -> {
+                if (starting == null) return;
+                try {
+                    org.json.JSONObject o = new org.json.JSONObject(new org.json.JSONObject("{\"v\":" + value + "}").getString("v"));
+                    long waited = android.os.SystemClock.uptimeMillis() - startedAt;
+                    String status = o.optString("status", "");
+                    if (!status.isEmpty()) startingStatus.setText(status);
+                    // Xbox's page offers its own Play button: press it for you (once).
+                    if (o.optBoolean("play") && !clickedPlay && waited > 4000) {
+                        clickedPlay = true;
+                        web.evaluateJavascript("(function(){var b=[].slice.call(document.querySelectorAll('button,a[role=button]')).filter(function(b){return /^\\s*play\\s*$/i.test(b.innerText||b.getAttribute('aria-label')||'');})[0];if(b)b.click();})()", null);
+                    }
+                    // The game is on screen, or Xbox needs you (a question, an error): show the page.
+                    if (o.optBoolean("playing") || o.optBoolean("dialog") || waited > 60000) {
+                        hideStarting();
+                        return;
+                    }
+                } catch (Exception ignored) {
+                }
+                handler.postDelayed(this, 1000);
+            });
+        }
+    };
+
+    private void hideStarting() {
+        if (starting == null) return;
+        View s = starting;
+        starting = null;
+        s.animate().alpha(0f).setDuration(500).withEndAction(() -> root.removeView(s)).start();
     }
 
     /** Xbox's own pages take the remote as a controller; any other page (Microsoft sign-in) gets the pointer. */

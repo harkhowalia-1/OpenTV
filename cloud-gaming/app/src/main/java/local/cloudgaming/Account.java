@@ -67,12 +67,80 @@ final class Account {
         return prefs(c).getString("gamertag", null);
     }
 
+    /** Signed in: by handover from the iPhone, or on this TV (Microsoft's sign-in finished back on Xbox). */
+    static boolean signedIn(Context c) {
+        return gamertag(c) != null || prefs(c).getBoolean("signedIn", false);
+    }
+
+    static void markSignedIn(Context c) {
+        prefs(c).edit().putBoolean("signedIn", true).apply();
+    }
+
+    /**
+     * Takes a sign-in made on the iPhone: {"cookies":[{name,value,domain,path,expires,secure,httpOnly}],
+     * "storage":{key:value}, "gamertag", "gamerpic"}. Cookies go into this app's browser; the Xbox site's
+     * saved session is put back the next time an Xbox page opens. Returns the gamertag.
+     */
+    static String importSession(Context c, String json) {
+        try {
+            JSONObject o = new JSONObject(json);
+            CookieManager cm = CookieManager.getInstance();
+            org.json.JSONArray cookies = o.optJSONArray("cookies");
+            for (int i = 0; cookies != null && i < cookies.length(); i++) {
+                JSONObject k = cookies.getJSONObject(i);
+                String domain = k.optString("domain");
+                String host = domain.startsWith(".") ? domain.substring(1) : domain;
+                if (host.isEmpty()) continue;
+                StringBuilder v = new StringBuilder(k.optString("name")).append('=').append(k.optString("value"));
+                if (domain.startsWith(".")) v.append("; Domain=").append(domain);
+                v.append("; Path=").append(k.optString("path", "/"));
+                long expires = k.optLong("expires", 0);
+                // Session cookies are kept for a month, so a restart doesn't sign you out.
+                if (expires > 0) v.append("; Max-Age=").append(Math.max(60, expires - System.currentTimeMillis() / 1000));
+                else v.append("; Max-Age=2592000");
+                if (k.optBoolean("secure", true)) v.append("; Secure; SameSite=None");
+                if (k.optBoolean("httpOnly", false)) v.append("; HttpOnly");
+                cm.setCookie("https://" + host + k.optString("path", "/"), v.toString());
+            }
+            cm.flush();
+            JSONObject storage = o.optJSONObject("storage");
+            SharedPreferences.Editor e = prefs(c).edit();
+            if (storage != null && storage.length() > 0) e.putString("pendingStorage", storage.toString());
+            String tag = o.optString("gamertag", "");
+            if (!tag.isEmpty()) e.putString("gamertag", tag);
+            String pic = o.optString("gamerpic", "");
+            if (!pic.isEmpty()) e.putString("gamerpic", pic);
+            e.putBoolean("signedIn", true);
+            e.apply();
+            prefs = null;   // the next read sees what was just saved, even in another process start
+            return tag.isEmpty() ? null : tag;
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    /**
+     * The Xbox site's saved session from the iPhone, put back once, before the site's own scripts run (they find
+     * you signed in). Null when there's nothing to put back.
+     */
+    static String storageScript(Context c) {
+        String pending = prefs(c).getString("pendingStorage", null);
+        if (pending == null) return null;
+        String id = Integer.toHexString(pending.hashCode());
+        return "(function(){try{if(localStorage.getItem('__otvSession')==='" + id + "')return;var d=" + pending
+                + ";for(var k in d)localStorage.setItem(k,d[k]);localStorage.setItem('__otvSession','" + id + "');}catch(e){}})();";
+    }
+
+    static void storageApplied(Context c) {
+        prefs(c).edit().remove("pendingStorage").apply();
+    }
+
     static String gamerpic(Context c) {
         return prefs(c).getString("gamerpic", null);
     }
 
     static void signedOut(Context c) {
-        prefs(c).edit().remove("gamertag").remove("gamerpic").apply();
+        prefs(c).edit().remove("gamertag").remove("gamerpic").remove("signedIn").remove("pendingStorage").apply();
         CookieManager.getInstance().removeAllCookies(null);
         SharedPreferences.Editor e = prefs(c).edit();
         for (String site : SITES) e.remove("cookies:" + site);

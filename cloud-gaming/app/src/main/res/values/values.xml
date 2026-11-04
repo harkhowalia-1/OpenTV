@@ -7,6 +7,15 @@
     <string name="sign_out">Sign Out</string>
     <string name="open_xbox">Open Xbox Cloud Gaming</string>
     <string name="play">▶  Play</string>
+    <string name="signin_title">Sign in to Xbox</string>
+    <string name="signin_phone">Use your iPhone: your saved passwords fill everything in, and this TV signs in by itself. Nothing to type here.</string>
+    <string name="signin_steps">Otv Remote  ›  Settings  ›  Xbox Cloud Gaming  ›  Sign In</string>
+    <string name="signin_on_tv">Sign In on This TV Instead</string>
+    <string name="signin_welcome">Welcome, %1$s</string>
+    <string name="signin_done">You\'re signed in</string>
+    <string name="signin_ready">Your games are ready.</string>
+    <string name="starting">Starting %1$s…</string>
+    <string name="starting_line">In line: %1$s</string>
     <string name="leave_title">Leave this game?</string>
     <string name="leave_message">Your session ends. Progress the game saves to the cloud is kept.</string>
     <string name="leave">Leave Game</string>

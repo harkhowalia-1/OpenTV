@@ -324,20 +324,20 @@ public class MainActivity extends Activity {
 
     private void updateProfile() {
         String tag = Account.gamertag(this);
-        profileName.setText(tag != null ? tag : getString(R.string.sign_in));
+        profileName.setText(tag != null ? tag : Account.signedIn(this) ? getString(R.string.signin_done) : getString(R.string.sign_in));
         String pic = Account.gamerpic(this);
         if (pic != null) Images.into(profilePic, pic);
         else profilePic.setImageDrawable(null);
     }
 
     private void onProfile() {
-        if (Account.gamertag(this) == null) {
-            startActivity(new Intent(this, StreamActivity.class)
-                    .putExtra(StreamActivity.EXTRA_URL, "https://www.xbox.com/" + Xbox.language() + "/play"));
+        if (!Account.signedIn(this)) {
+            startActivity(new Intent(this, SignInActivity.class));
             return;
         }
+        String who = Account.gamertag(this);
         new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle(Account.gamertag(this))
+                .setTitle(who != null ? who : getString(R.string.signin_done))
                 .setItems(new CharSequence[]{getString(R.string.open_xbox), getString(R.string.sign_out)}, (d, which) -> {
                     if (which == 0) {
                         startActivity(new Intent(this, StreamActivity.class)

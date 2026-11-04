@@ -6,6 +6,7 @@ import SwiftUI
 struct TVSettingsView: View {
     @ObservedObject var model: RemoteModel
     @Environment(\.dismiss) private var dismiss
+    @State private var signingInXbox = false
 
     var body: some View {
         NavigationStack {
@@ -21,6 +22,16 @@ struct TVSettingsView: View {
                         NavigationLink { ScreenSaverView(client: client) } label: {
                             Label("Screen Saver", systemImage: "sparkles.tv")
                         }
+                    }
+                    Section {
+                        Button { signingInXbox = true } label: {
+                            Label("Sign In to Xbox Cloud Gaming", systemImage: "gamecontroller")
+                        }
+                        .sheet(isPresented: $signingInXbox) { XboxSignInView(client: client) }
+                    } header: {
+                        Text("Xbox Cloud Gaming")
+                    } footer: {
+                        Text("Sign in here with your saved passwords; the TV signs itself in. Nothing to type on the TV.")
                     }
                     Section {
                         NavigationLink { BluetoothView(client: client) } label: {

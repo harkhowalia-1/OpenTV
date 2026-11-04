@@ -63,6 +63,15 @@ final class TvApi {
             case "/api/tv/screensaver": return Reply.ok(screensaver(c, in));
             case "/api/tv/screensaver/start": return Reply.ok(new JSONObject().put("ok", startScreensaver(c)));
             case "/api/tv/update": return Reply.ok(update(c, in));
+            case "/api/tv/xbox/key": return Reply.ok(XboxHandoff.newKey());
+            case "/api/tv/xbox/session": {
+                String tag = XboxHandoff.receive(c, in);
+                if (tag.equals("test-ok")) return Reply.ok(new JSONObject().put("ok", true).put("gamertag", tag));
+                new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> android.widget.Toast.makeText(c,
+                        tag.isEmpty() ? c.getString(R.string.xbox_signed_in) : c.getString(R.string.xbox_signed_in_as, tag),
+                        android.widget.Toast.LENGTH_LONG).show());
+                return Reply.ok(new JSONObject().put("ok", true).put("gamertag", tag));
+            }
             default: {
                 Reply r = Reply.ok(new JSONObject().put("error", "not found"));
                 r.code = 404;
