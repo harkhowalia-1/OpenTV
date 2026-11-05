@@ -47,7 +47,7 @@ public class WallpaperActivity extends ChoiceScreen {
     private String current;
 
     static final String CATEGORY = "category";
-    static final String AERIALS = "aerials", MACOS = "macos", YOURS = "yours", PHOTOS_CAT = "photos";
+    static final String AERIALS = "aerials", MACOS = "macos", YOURS = "yours", PHOTOS_CAT = "photos", LIVE = "live";
     private static final int PER_ROW = 5;
 
     /**
@@ -65,6 +65,7 @@ public class WallpaperActivity extends ChoiceScreen {
             case MACOS: buildMacOS(); break;
             case YOURS: buildYours(); break;
             case PHOTOS_CAT: buildPhotos(); break;
+            case LIVE: buildLive(); break;
             default: buildAerials(); break;
         }
     }
@@ -102,6 +103,19 @@ public class WallpaperActivity extends ChoiceScreen {
             });
         });
         note(getString(R.string.wallpaper_aerials_note));
+    }
+
+    /** Live wallpapers: drawn on the TV, nothing to download. */
+    private void buildLive() {
+        build(getString(R.string.wallpaper_live), getString(R.string.wallpaper_live_sub));
+        LinearLayout row = section(null);
+        for (String id : Live.IDS) {
+            String kind = "live:" + id;
+            View v = cardIn(row, null, 0xFF0B1626, Live.name(this, id), current.equals(kind), () -> pick(() -> Wallpapers.apply(this, kind)));
+            if (current.equals(kind)) focusFirst(v);
+            previews.execute(() -> show(v, Live.thumbnail(this, id)));
+        }
+        if (!focused) focusFirst(findViewWithCardTag());
     }
 
     private void buildMacOS() {

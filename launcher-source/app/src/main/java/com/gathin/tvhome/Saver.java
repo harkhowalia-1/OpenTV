@@ -80,6 +80,10 @@ final class Saver {
         mode = ScreenSaver.type(ctx);
         // Same as Wallpaper: what's on Home. Its aerial, its picture (slowly drifting), or the clock for the glow.
         sameAsWallpaper = mode.equals(ScreenSaver.SAME);
+        if (sameAsWallpaper && Live.is(Wallpapers.kind(ctx))) {
+            buildLive(Live.mode(Wallpapers.kind(ctx)));   // a live wallpaper: the same scene, with the clock
+            return;
+        }
         if (sameAsWallpaper) {
             String k = Wallpapers.kind(ctx);
             mode = k.startsWith("aerial:") ? ScreenSaver.AERIALS
@@ -111,6 +115,11 @@ final class Saver {
             host.finish();   // music is playing: no screensaver
             return;
         }
+        if (liveScene != null) {
+            liveScene.start();
+            liveScene.animate().alpha(1f).setDuration(1200).start();
+            return;
+        }
         if (!mode.equals(ScreenSaver.CLOCK)) {
             startPictures();
             return;
@@ -126,12 +135,49 @@ final class Saver {
     void stopped() {
         handler.removeCallbacksAndMessages(null);
         releasePlayer();
+        if (liveScene != null) liveScene.stop();
     }
 
     void detached() {
         handler.removeCallbacksAndMessages(null);
         releasePlayer();
+        if (liveScene != null) liveScene.stop();
         recycleSlides();
+    }
+
+    // ---- a live wallpaper ------------------------------------------------------------------------------------
+
+    private Live.Scene liveScene;
+
+    private void buildLive(int sceneMode) {
+        mode = "live";
+        host.setInteractive(false);   // any key wakes the TV
+        host.setScreenBright(true);
+        android.widget.FrameLayout s = new android.widget.FrameLayout(ctx);
+        s.setBackgroundColor(0xFF000000);
+        liveScene = new Live.Scene(ctx);
+        liveScene.setMode(sceneMode);
+        liveScene.setAlpha(0f);
+        s.addView(liveScene, new android.widget.FrameLayout.LayoutParams(-1, -1));
+        if (ScreenSaver.clock(ctx)) {
+            android.widget.TextClock clock = new android.widget.TextClock(ctx);
+            clock.setFormat12Hour("h:mm");
+            clock.setFormat24Hour("HH:mm");
+            clock.setTextColor(0xF2FFFFFF);
+            clock.setTextSize(44);
+            try {
+                clock.setTypeface(ctx.getResources().getFont(R.font.outfit));
+                clock.setFontVariationSettings("'wght' 300");
+            } catch (Exception ignored) {
+            }
+            clock.setLetterSpacing(-0.02f);
+            clock.setShadowLayer(dp(14), 0, dp(1), 0x80000000);
+            android.widget.FrameLayout.LayoutParams cl = new android.widget.FrameLayout.LayoutParams(-2, -2,
+                    android.view.Gravity.TOP | android.view.Gravity.END);
+            cl.setMargins(0, dp(48), dp(80), 0);
+            s.addView(clock, cl);
+        }
+        host.setContentView(s);
     }
 
     // ---- Aerials and Wallpapers ----------------------------------------------------------------------------
@@ -363,7 +409,7 @@ final class Saver {
 
     /** Keys while it shows (aerials and pictures: OK, left and right do things; any other key ends it). */
     boolean key(android.view.KeyEvent e) {
-        if (mode == null || mode.equals(ScreenSaver.CLOCK)) return host.superDispatchKeyEvent(e);
+        if (mode == null || mode.equals(ScreenSaver.CLOCK) || mode.equals("live")) return host.superDispatchKeyEvent(e);
         int k = e.getKeyCode();
         boolean aerials = mode.equals(ScreenSaver.AERIALS);
         if (k == android.view.KeyEvent.KEYCODE_DPAD_CENTER || k == android.view.KeyEvent.KEYCODE_ENTER) {

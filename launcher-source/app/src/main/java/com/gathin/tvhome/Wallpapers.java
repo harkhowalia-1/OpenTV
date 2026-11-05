@@ -113,6 +113,9 @@ final class Wallpapers {
                 }
             }
             throw new java.io.IOException("no macOS wallpaper " + kind);
+        } else if (Live.is(kind)) {
+            Live.saveStill(c, kind.substring(5), current(c));   // shown until the scene starts
+            set(c, kind);
         } else if (kind.startsWith("upload:")) {
             File f = new File(dir(c, "uploads"), kind.substring(7) + ".jpg");
             copy(f, current(c));

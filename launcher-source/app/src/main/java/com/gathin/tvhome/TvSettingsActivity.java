@@ -187,6 +187,7 @@ public class TvSettingsActivity extends Activity {
         if (k.isEmpty()) return getString(R.string.wallpaper_glow);
         if (k.equals("bing")) return getString(R.string.wallpaper_bing);
         if (k.startsWith("aerial:")) return "Aerial";
+        if (Live.is(k)) return Live.name(this, k);
         if (k.startsWith("upload:")) return k.substring(7);
         if (k.startsWith("macos:")) {
             String n = k.substring(6);

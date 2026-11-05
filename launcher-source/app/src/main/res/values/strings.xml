@@ -50,6 +50,10 @@
     <string name="wallpaper_photos_allow">Show Photos on This TV</string>
     <string name="wallpaper_photos_none">No photos on this TV yet</string>
     <string name="wallpaper_aerials">Aerials</string>
+    <string name="wallpaper_live">Live Wallpapers</string>
+    <string name="wallpaper_live_sub">Drawn live on the TV: slow, calm and never the same twice. Nothing to download.</string>
+    <string name="live_ocean">Underwater</string>
+    <string name="live_aurora">Aurora</string>
     <string name="wallpaper_macos">Desktop Pictures</string>
     <string name="cc_remote">Pair Remote</string>
     <string name="cc_airplay">AirPlay</string>

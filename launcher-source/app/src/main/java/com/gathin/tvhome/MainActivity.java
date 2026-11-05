@@ -253,6 +253,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private String shownWallpaper;
     private boolean glowOn = true;
     private android.view.TextureView aerialView;
+    private Live.Scene liveView;
     private android.media.MediaPlayer aerial;
     private String aerialUrl;
     private final Runnable wallpaperTick = new Runnable() {
@@ -301,6 +302,30 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }
         }
         playAerial(Wallpapers.video(this));
+        playLive(kind);
+    }
+
+    /** A live wallpaper: drawn on the TV behind the apps, only while Home is showing (over its still). */
+    private void playLive(String kind) {
+        int mode = Live.mode(kind);
+        if (mode < 0) {
+            if (liveView != null) {
+                liveView.stop();
+                liveView.setAlpha(0f);
+                liveView.setVisibility(View.GONE);
+            }
+            return;
+        }
+        if (liveView == null) {
+            liveView = new Live.Scene(this);
+            liveView.setAlpha(0f);
+            android.view.ViewGroup root = findViewById(R.id.root);
+            root.addView(liveView, 1, new android.widget.FrameLayout.LayoutParams(-1, -1));
+        }
+        liveView.setVisibility(View.VISIBLE);
+        liveView.setMode(mode);
+        liveView.start();
+        liveView.animate().alpha(1f).setStartDelay(150).setDuration(800).start();
     }
 
     /** A live aerial: plays muted and looping behind the apps, only while Home is showing. */
@@ -447,6 +472,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // frosted copies are let go, and come back in a moment when Home returns.
         stopAerial();
         aerialUrl = null;
+        if (liveView != null) {
+            liveView.stop();
+            liveView.setAlpha(0f);
+        }
         android.widget.ImageView wall = findViewById(R.id.wallpaper);
         android.graphics.drawable.Drawable d = wall.getDrawable();
         wall.setImageDrawable(null);
@@ -581,10 +610,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private final Runnable frostTick = new Runnable() {
         @Override
         public void run() {
-            boolean live = aerial != null && aerialView != null && aerialView.getAlpha() > 0.5f;
+            boolean live = aerial != null && aerialView != null && aerialView.getAlpha() > 0.5f
+                    || liveView != null && liveView.running() && liveView.getAlpha() > 0.5f;
             updateHomeFrost(live);
             if (!resumed) updatePanelFrost();
-            handler.postDelayed(this, live || !resumed ? 40 : 400);
+            // Live scenes drift slowly: the glass keeps up with them at 8 updates a second (aerials need 25).
+            boolean scene = liveView != null && liveView.running() && liveView.getAlpha() > 0.5f;
+            handler.postDelayed(this, !resumed ? 40 : scene ? 120 : live ? 40 : 400);
         }
     };
 
@@ -606,9 +638,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (live) {
             Bitmap small = smallScreen(spareHome);
             spareHome = null;
-            aerialView.getBitmap(small);
+            boolean scene = liveView != null && liveView.running() && liveView.getAlpha() > 0.5f;
+            (scene ? liveView : aerialView).getBitmap(small);
             android.graphics.Canvas cv = new android.graphics.Canvas(small);
-            cv.drawColor(0x59000000);   // the aerial's dimming
+            if (!scene) cv.drawColor(0x59000000);   // the aerial's dimming
             spareHome = Backdrop.update(Backdrop.HOME, small, root.getWidth(), root.getHeight(), density);
             frostedStill = null;
         } else if (shownWallpaper != null && !shownWallpaper.isEmpty() && wall.getDrawable() != null) {

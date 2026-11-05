@@ -21,7 +21,7 @@ import java.util.List;
 public class WallpaperSettingsActivity extends TvSettingsActivity {
 
     private final Handler main = new Handler(Looper.getMainLooper());
-    private View glow, bing, aerials, macos, yours, photos;
+    private View glow, bing, live, aerials, macos, yours, photos;
     private boolean busy;
 
     @Override
@@ -36,6 +36,7 @@ public class WallpaperSettingsActivity extends TvSettingsActivity {
         bing = row(list, R.drawable.ic_language, getString(R.string.wallpaper_bing), "", () -> apply("bing"));
 
         section(list, getString(R.string.wallpaper_collections));
+        live = row(list, R.drawable.ic_screensaver, getString(R.string.wallpaper_live), "", () -> open(WallpaperActivity.LIVE));
         aerials = row(list, R.drawable.ic_screensaver, getString(R.string.wallpaper_aerials), "",
                 () -> open(WallpaperActivity.AERIALS));
         if (MacOS.supported()) {
@@ -54,6 +55,10 @@ public class WallpaperSettingsActivity extends TvSettingsActivity {
         // Moving over a row shows what it is on the left, as tvOS previews a choice.
         previewOnFocus(glow, () -> showGlow());
         previewOnFocus(bing, () -> showFile(new File(Wallpapers.dir(this, "bing"), "bing-" + Wallpapers.today() + ".jpg")));
+        previewOnFocus(live, () -> new Thread(() -> {
+            File f = Live.thumbnail(this, Live.IDS[0]);
+            main.post(() -> showFile(f));
+        }, "otv-live-preview").start());
         previewOnFocus(aerials, () -> showFirst(Wallpapers.dir(this, "aerial-thumbs")));
         if (macos != null) previewOnFocus(macos, () -> showFirst(Wallpapers.dir(this, "macos-thumbs")));
         previewOnFocus(yours, () -> {
@@ -77,6 +82,7 @@ public class WallpaperSettingsActivity extends TvSettingsActivity {
         if (k.isEmpty()) return glow;
         if (k.equals("bing")) return bing;
         if (k.startsWith("aerial:")) return aerials;
+        if (Live.is(k)) return live;
         if (k.startsWith("macos:") || k.startsWith("dynamic:")) return macos != null ? macos : glow;
         return yours;
     }
@@ -87,6 +93,7 @@ public class WallpaperSettingsActivity extends TvSettingsActivity {
         set(glow, k.isEmpty() ? "✓" : "");
         set(bing, k.equals("bing") ? "✓" : getString(R.string.wallpaper_bing_sub));
         set(yours, count(Wallpapers.uploads(this).size(), k.startsWith("upload:")));
+        set(live, count(Live.IDS.length, Live.is(k)));
         set(photos, "");
         showCurrent();
         new Thread(() -> {

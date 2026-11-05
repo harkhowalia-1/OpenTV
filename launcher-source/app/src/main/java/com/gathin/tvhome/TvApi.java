@@ -123,6 +123,9 @@ final class TvApi {
         featured.put(item("", c.getString(R.string.wallpaper_glow)));
         featured.put(item("bing", c.getString(R.string.wallpaper_bing)));
         sections.put(section("", featured));
+        JSONArray live = new JSONArray();
+        for (String id : Live.IDS) live.put(item("live:" + id, Live.name(c, id)));
+        sections.put(section(c.getString(R.string.wallpaper_live), live));
         JSONArray aerials = new JSONArray();
         for (Aerials.Aerial a : Aerials.list(c)) aerials.put(item("aerial:" + a.id, a.name));
         sections.put(section(c.getString(R.string.wallpaper_aerials), aerials));
@@ -155,6 +158,8 @@ final class TvApi {
             if (it != null) f = MacOS.thumbnail(c, it);
         } else if (kind.startsWith("upload:")) {
             f = new File(Wallpapers.dir(c, "uploads"), kind.substring(7) + ".jpg");
+        } else if (Live.is(kind)) {
+            f = Live.thumbnail(c, kind.substring(5));
         }
         Reply r = new Reply();
         if (f == null || !f.exists()) {
