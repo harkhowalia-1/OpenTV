@@ -54,17 +54,8 @@
     store: `<svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="otvA1" x1="0" y1="0" x2="0" y2="180" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#2FC6FF"/><stop offset="1" stop-color="#1E62F5"/></linearGradient><linearGradient id="otvA2" x1="0" y1="54" x2="0" y2="149" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#D8ECFF"/></linearGradient></defs><path d="M0,0h320v180H0z" fill="url(#otvA1)"/><path d="M137,70v-8a23,23 0 0,1 46,0v8" fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="9" stroke-linecap="round"/><path d="M116,68h88a6,6 0 0,1 6,6l-5,66a10,10 0 0,1 -10,9h-70a10,10 0 0,1 -10,-9l-5,-66a6,6 0 0,1 6,-6z" fill="url(#otvA2)"/><g fill="#2A7CFF"><path d="M144.5,85h8a5.5,5.5 0 0,1 5.5,5.5v8a5.5,5.5 0 0,1 -5.5,5.5h-8a5.5,5.5 0 0,1 -5.5,-5.5v-8a5.5,5.5 0 0,1 5.5,-5.5z"/><path d="M167.5,85h8a5.5,5.5 0 0,1 5.5,5.5v8a5.5,5.5 0 0,1 -5.5,5.5h-8a5.5,5.5 0 0,1 -5.5,-5.5v-8a5.5,5.5 0 0,1 5.5,-5.5z" fill-opacity=".55"/><path d="M144.5,108h8a5.5,5.5 0 0,1 5.5,5.5v8a5.5,5.5 0 0,1 -5.5,5.5h-8a5.5,5.5 0 0,1 -5.5,-5.5v-8a5.5,5.5 0 0,1 5.5,-5.5z" fill-opacity=".55"/></g><path d="M171.5,111.5v12M165.5,117.5h12" stroke="#2A7CFF" stroke-width="4.5" stroke-linecap="round"/></svg>`,
     settings: `<svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="otvS1" cx="128" cy="63" r="190" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FAFAFC"/><stop offset=".5" stop-color="#D3D3D8"/><stop offset="1" stop-color="#8F8F96"/></radialGradient><linearGradient id="otvS2" x1="0" y1="33" x2="0" y2="147" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#F6F6F8"/><stop offset="1" stop-color="#A2A2A8"/></linearGradient></defs><path d="M0,0h320v180H0z" fill="url(#otvS1)"/><path d="M92.00,90.00a68.00,68.00 0 1,1 136.00,0a68.00,68.00 0 1,1 -136.00,0Z" fill="#2C2C30"/><path d="M161.40,33.00L162.24,33.17L162.96,33.64L163.43,34.36L163.60,35.20L163.60,41.80L163.43,42.64L162.96,43.36L162.24,43.83L161.40,44.00L158.60,44.00L157.76,43.83L157.04,43.36L156.57,42.64L156.40,41.80L156.40,35.20L156.57,34.36L157.04,33.64L157.76,33.17L158.60,33.00ZM178.95,36.22L179.69,36.64L180.23,37.32L180.46,38.14L180.36,38.99L178.32,45.27L177.90,46.02L177.22,46.55L176.40,46.78L175.55,46.68L172.88,45.82L172.13,45.40L171.60,44.73L171.37,43.90L171.47,43.05L173.51,36.77L173.93,36.02L174.60,35.49L175.43,35.26L176.28,35.36ZM194.64,44.71L195.22,45.34L195.52,46.14L195.48,47.00L195.12,47.78L191.24,53.12L190.61,53.70L189.81,54.00L188.95,53.97L188.17,53.61L185.91,51.96L185.32,51.33L185.03,50.53L185.06,49.67L185.42,48.89L189.30,43.55L189.93,42.97L190.73,42.67L191.59,42.70L192.37,43.06ZM206.94,57.63L207.30,58.41L207.33,59.27L207.03,60.07L206.45,60.70L201.11,64.58L200.33,64.94L199.47,64.97L198.67,64.68L198.04,64.09L196.39,61.83L196.03,61.05L196.00,60.19L196.30,59.39L196.88,58.76L202.22,54.88L203.00,54.52L203.86,54.48L204.66,54.78L205.29,55.36ZM214.64,73.72L214.74,74.57L214.51,75.40L213.98,76.07L213.23,76.49L206.95,78.53L206.10,78.63L205.27,78.40L204.60,77.87L204.18,77.12L203.32,74.45L203.22,73.60L203.45,72.78L203.98,72.10L204.73,71.68L211.01,69.64L211.86,69.54L212.68,69.77L213.36,70.31L213.78,71.05ZM217.00,91.40L216.83,92.24L216.36,92.96L215.64,93.43L214.80,93.60L208.20,93.60L207.36,93.43L206.64,92.96L206.17,92.24L206.00,91.40L206.00,88.60L206.17,87.76L206.64,87.04L207.36,86.57L208.20,86.40L214.80,86.40L215.64,86.57L216.36,87.04L216.83,87.76L217.00,88.60ZM213.78,108.95L213.36,109.69L212.68,110.23L211.86,110.46L211.01,110.36L204.73,108.32L203.98,107.90L203.45,107.22L203.22,106.40L203.32,105.55L204.18,102.88L204.60,102.13L205.27,101.60L206.10,101.37L206.95,101.47L213.23,103.51L213.98,103.93L214.51,104.60L214.74,105.43L214.64,106.28ZM205.29,124.64L204.66,125.22L203.86,125.52L203.00,125.48L202.22,125.12L196.88,121.24L196.30,120.61L196.00,119.81L196.03,118.95L196.39,118.17L198.04,115.91L198.67,115.32L199.47,115.03L200.33,115.06L201.11,115.42L206.45,119.30L207.03,119.93L207.33,120.73L207.30,121.59L206.94,122.37ZM192.37,136.94L191.59,137.30L190.73,137.33L189.93,137.03L189.30,136.45L185.42,131.11L185.06,130.33L185.03,129.47L185.32,128.67L185.91,128.04L188.17,126.39L188.95,126.03L189.81,126.00L190.61,126.30L191.24,126.88L195.12,132.22L195.48,133.00L195.52,133.86L195.22,134.66L194.64,135.29ZM176.28,144.64L175.43,144.74L174.60,144.51L173.93,143.98L173.51,143.23L171.47,136.95L171.37,136.10L171.60,135.27L172.13,134.60L172.88,134.18L175.55,133.32L176.40,133.22L177.22,133.45L177.90,133.98L178.32,134.73L180.36,141.01L180.46,141.86L180.23,142.68L179.69,143.36L178.95,143.78ZM158.60,147.00L157.76,146.83L157.04,146.36L156.57,145.64L156.40,144.80L156.40,138.20L156.57,137.36L157.04,136.64L157.76,136.17L158.60,136.00L161.40,136.00L162.24,136.17L162.96,136.64L163.43,137.36L163.60,138.20L163.60,144.80L163.43,145.64L162.96,146.36L162.24,146.83L161.40,147.00ZM141.05,143.78L140.31,143.36L139.77,142.68L139.54,141.86L139.64,141.01L141.68,134.73L142.10,133.98L142.78,133.45L143.60,133.22L144.45,133.32L147.12,134.18L147.87,134.60L148.40,135.27L148.63,136.10L148.53,136.95L146.49,143.23L146.07,143.98L145.40,144.51L144.57,144.74L143.72,144.64ZM125.36,135.29L124.78,134.66L124.48,133.86L124.52,133.00L124.88,132.22L128.76,126.88L129.39,126.30L130.19,126.00L131.05,126.03L131.83,126.39L134.09,128.04L134.68,128.67L134.97,129.47L134.94,130.33L134.58,131.11L130.70,136.45L130.07,137.03L129.27,137.33L128.41,137.30L127.63,136.94ZM113.06,122.37L112.70,121.59L112.67,120.73L112.97,119.93L113.55,119.30L118.89,115.42L119.67,115.06L120.53,115.03L121.33,115.32L121.96,115.91L123.61,118.17L123.97,118.95L124.00,119.81L123.70,120.61L123.12,121.24L117.78,125.12L117.00,125.48L116.14,125.52L115.34,125.22L114.71,124.64ZM105.36,106.28L105.26,105.43L105.49,104.60L106.02,103.93L106.77,103.51L113.05,101.47L113.90,101.37L114.73,101.60L115.40,102.13L115.82,102.88L116.68,105.55L116.78,106.40L116.55,107.22L116.02,107.90L115.27,108.32L108.99,110.36L108.14,110.46L107.32,110.23L106.64,109.69L106.22,108.95ZM103.00,88.60L103.17,87.76L103.64,87.04L104.36,86.57L105.20,86.40L111.80,86.40L112.64,86.57L113.36,87.04L113.83,87.76L114.00,88.60L114.00,91.40L113.83,92.24L113.36,92.96L112.64,93.43L111.80,93.60L105.20,93.60L104.36,93.43L103.64,92.96L103.17,92.24L103.00,91.40ZM106.22,71.05L106.64,70.31L107.32,69.77L108.14,69.54L108.99,69.64L115.27,71.68L116.02,72.10L116.55,72.78L116.78,73.60L116.68,74.45L115.82,77.12L115.40,77.87L114.73,78.40L113.90,78.63L113.05,78.53L106.77,76.49L106.02,76.07L105.49,75.40L105.26,74.57L105.36,73.72ZM114.71,55.36L115.34,54.78L116.14,54.48L117.00,54.52L117.78,54.88L123.12,58.76L123.70,59.39L124.00,60.19L123.97,61.05L123.61,61.83L121.96,64.09L121.33,64.68L120.53,64.97L119.67,64.94L118.89,64.58L113.55,60.70L112.97,60.07L112.67,59.27L112.70,58.41L113.06,57.63ZM127.63,43.06L128.41,42.70L129.27,42.67L130.07,42.97L130.70,43.55L134.58,48.89L134.94,49.67L134.97,50.53L134.68,51.33L134.09,51.96L131.83,53.61L131.05,53.97L130.19,54.00L129.39,53.70L128.76,53.12L124.88,47.78L124.52,47.00L124.48,46.14L124.78,45.34L125.36,44.71ZM143.72,35.36L144.57,35.26L145.40,35.49L146.07,36.02L146.49,36.77L148.53,43.05L148.63,43.90L148.40,44.73L147.87,45.40L147.12,45.82L144.45,46.68L143.60,46.78L142.78,46.55L142.10,46.02L141.68,45.27L139.64,38.99L139.54,38.14L139.77,37.32L140.31,36.64L141.05,36.22ZM111.00,90.00a49.00,49.00 0 1,1 98.00,0a49.00,49.00 0 1,1 -98.00,0ZM120.00,90.00a40.00,40.00 0 1,0 80.00,0a40.00,40.00 0 1,0 -80.00,0ZM139.92,54.83L141.03,54.45L142.20,54.53L143.25,55.04L144.02,55.92L156.02,76.71L156.40,77.82L156.32,78.99L155.80,80.03L154.92,80.81L154.58,81.01L153.47,81.38L152.30,81.31L151.25,80.79L150.48,79.91L138.48,59.12L138.10,58.02L138.18,56.85L138.70,55.80L139.58,55.03ZM200.50,90.20L200.27,91.35L199.62,92.32L198.65,92.97L197.50,93.20L173.50,93.20L172.35,92.97L171.38,92.32L170.73,91.35L170.50,90.20L170.50,89.80L170.73,88.65L171.38,87.68L172.35,87.03L173.50,86.80L197.50,86.80L198.65,87.03L199.62,87.68L200.27,88.65L200.50,89.80ZM139.58,124.97L138.70,124.20L138.18,123.15L138.10,121.98L138.48,120.88L150.48,100.09L151.25,99.21L152.30,98.69L153.47,98.62L154.58,98.99L154.92,99.19L155.80,99.97L156.32,101.01L156.40,102.18L156.02,103.29L144.02,124.08L143.25,124.96L142.20,125.47L141.03,125.55L139.92,125.17ZM147.00,90.00a13.00,13.00 0 1,1 26.00,0a13.00,13.00 0 1,1 -26.00,0ZM153.50,90.00a6.50,6.50 0 1,0 13.00,0a6.50,6.50 0 1,0 -13.00,0Z" fill="url(#otvS2)"/></svg>`,
   };
-  // App icons for the fallback tiles (rounded squares, as Android TV apps' launcher icons are).
-  const ICON = {
-    saver: ['linear-gradient(160deg,#30475e,#0d1b2a)', '<svg viewBox="0 0 40 40"><path d="M4 30l10-13 6 8 4-5 12 10z" fill="#fff"/><circle cx="28" cy="11" r="3.5" fill="#ffd60a"/></svg>'],
-    music: ['linear-gradient(160deg,#ff6b7d,#e0245e)', '<svg viewBox="0 0 40 40"><path d="M15 29V9l17-4v19" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"/><circle cx="11" cy="29" r="5" fill="#fff"/><circle cx="28" cy="24" r="5" fill="#fff"/></svg>'],
-    photos: ['#ffffff', '<svg viewBox="0 0 40 40">' + ['#ff9f0a', '#ffd60a', '#30d158', '#64d2ff', '#0a84ff', '#bf5af2', '#ff375f', '#ff6b22'].map((c, i) => `<ellipse cx="20" cy="11" rx="4.6" ry="8.2" fill="${c}" opacity=".85" transform="rotate(${i * 45} 20 20)"/>`).join('') + '</svg>'],
-    podcasts: ['linear-gradient(160deg,#d17bff,#8a2be2)', '<svg viewBox="0 0 40 40"><circle cx="20" cy="17" r="4" fill="#fff"/><path d="M17.5 24h5l-1 11h-3z" fill="#fff"/><path d="M12.5 24.5a10 10 0 1 1 15 0M8.5 28a15 15 0 1 1 23 0" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round"/></svg>'],
-    weather: ['linear-gradient(180deg,#4fb2ff,#1d6fd6)', '<svg viewBox="0 0 40 40"><circle cx="16" cy="15" r="7" fill="#ffd60a"/><path d="M14 31h16a6 6 0 0 0 0-12 8 8 0 0 0-15 2.5A5 5 0 0 0 14 31z" fill="#fff"/></svg>'],
-    files: ['linear-gradient(160deg,#6fd0ff,#1a8cff)', '<svg viewBox="0 0 40 40"><path d="M6 11a3 3 0 0 1 3-3h7l3 3h12a3 3 0 0 1 3 3v15a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3z" fill="#fff"/></svg>'],
-  };
 
-  // The dock (OtvOS's top row) and the next row; `tint` is the colour the Colour Glow takes from the tile.
+  // The dock, as OtvOS ships it with OpenTV's apps; `tint` is the colour the Colour Glow takes from each tile.
   const APPS = [
     { id: 'iptv', name: 'IPTV', banner: true, tint: [0.85, 0.33, 1.0], app: 'images/v2/app-iptv.jpg' },
     { id: 'browser', name: 'Browser', banner: true, tint: [0.2, 0.55, 1.0], app: 'images/v2/app-browser.jpg' },
@@ -72,14 +63,6 @@
     { id: 'spotify', name: 'Spotify', banner: true, tint: [0.12, 0.84, 0.38] },
     { id: 'store', name: 'App Store', banner: true, tint: [0.2, 0.5, 1.0] },
     { id: 'settings', name: 'Settings', banner: true, tint: [0.55, 0.56, 0.62], app: 'images/v2/app-wallsettings.jpg' },
-  ];
-  const ROW2 = [
-    { id: 'saver', name: 'Screen Saver', tint: [0.3, 0.55, 0.9], saver: true },
-    { id: 'music', name: 'Music', tint: [1.0, 0.3, 0.42] },
-    { id: 'photos', name: 'Photos', tint: [1.0, 0.72, 0.28] },
-    { id: 'podcasts', name: 'Podcasts', tint: [0.72, 0.36, 1.0] },
-    { id: 'weather', name: 'Weather', tint: [0.3, 0.62, 1.0] },
-    { id: 'files', name: 'Files', tint: [0.35, 0.72, 1.0] },
   ];
   const WALLS = [
     { name: 'Colour Glow', thumb: 'radial-gradient(circle at 30% 70%, #e0457b 0%, #5a1838 38%, #0a0507 75%)' },
@@ -220,8 +203,7 @@ void main(){
   }
 
   // ---- the TV ---------------------------------------------------------------------------------------------
-  const tile = (a) => `<div class="otv-tile" aria-label="${a.name}"><div class="otv-card">${a.banner ? BANNER[a.id]
-    : `<span class="otv-icon" style="background:${ICON[a.id][0]}">${ICON[a.id][1]}</span><span class="otv-label">${a.name}</span>`}<i class="otv-sheen"></i></div><span class="otv-name">${a.name}</span></div>`;
+  const tile = (a) => `<div class="otv-tile" aria-label="${a.name}"><div class="otv-card">${BANNER[a.id]}<i class="otv-sheen"></i></div></div>`;
   const CC = [
     { id: 'power', cls: 'big', html: `${I.power}<span>Power Off</span>`, label: 'Power Off' },
     { id: 'wifi', cls: 'wide blue', html: `${I.wifi}<div><b>Wi-Fi</b><small>Home Wi-Fi</small></div>` },
@@ -252,8 +234,6 @@ void main(){
             <div class="otv-dockbg"></div>
             <div class="otv-glass"></div>
             <div class="otv-dock"><div class="otv-row">${APPS.map(tile).join('')}</div></div>
-            <div class="otv-row2-label">More Apps</div>
-            <div class="otv-row otv-row2">${ROW2.map(tile).join('')}</div>
           </div>
         </div>
         <div class="otv-cc">${CC.map(c => `<div class="${c.cls}" data-id="${c.id}">${c.html}</div>`).join('')}</div>
@@ -267,7 +247,7 @@ void main(){
       this.el = host;
       this.screen = $('.otv-screen', host);
       this.wall = new Wall($('.otv-wall', host), opts.wall ?? 1);
-      this.rows = [[...host.querySelectorAll('.otv-dock .otv-tile')], [...host.querySelectorAll('.otv-row2 .otv-tile')]];
+      this.rows = [[...host.querySelectorAll('.otv-dock .otv-tile')]];
       this.pillItems = [$('.otv-ccbtn', host), $('.otv-avatar', host)];
       this.ccItems = [...host.querySelectorAll('.otv-cc > div')];
       this.title = $('.otv-title', host);
@@ -283,7 +263,7 @@ void main(){
       new ResizeObserver(() => { this.glassOn = false; if (this.focused) this.glass(this.focused); }).observe(this.screen);
       this.paint();
     }
-    get app() { return this.row === 0 ? APPS[this.col] : this.row === 1 ? ROW2[this.col] : null; }
+    get app() { return this.row === 0 ? APPS[this.col] : null; }
     paint() {
       this.ccItems.forEach(c => c.classList.remove('focus'));
       this.pillItems.forEach(p => p.classList.remove('focus'));
@@ -309,9 +289,8 @@ void main(){
         }
       }
       this.prev = { row: this.row, col: this.col };
-      this.el.classList.toggle('down', this.row === 1);
       this.glass(t);
-      this.setTitle(this.row === 0 ? this.app.name : '');
+      this.setTitle(this.app.name);
       this.wall.setTint(this.app.tint);
     }
     blurTiles() { if (this.focused) this.focused.classList.remove('focus'); this.focused = null; }
@@ -373,8 +352,8 @@ void main(){
       }
       if (dir === 'left') this.col = Math.max(0, this.col - 1);
       if (dir === 'right') this.col = Math.min((this.row === -1 ? this.pillItems : this.rows[this.row]).length - 1, this.col + 1);
-      if (dir === 'up') { if (this.row === 1) this.row = 0; else if (this.row === 0) { this.lastCol = this.col; this.row = -1; this.col = 0; } }
-      if (dir === 'down') { if (this.row === -1) { this.row = 0; this.col = this.lastCol ?? 0; } else if (this.row === 0) { this.row = 1; this.col = Math.min(this.col, ROW2.length - 1); } }
+      if (dir === 'up' && this.row === 0) { this.lastCol = this.col; this.row = -1; this.col = 0; }
+      if (dir === 'down' && this.row === -1) { this.row = 0; this.col = this.lastCol ?? 0; }
       this.paint();
     }
     ccMove(dir) {
@@ -400,7 +379,6 @@ void main(){
       if (this.row === -1) return this.col === 0 ? this.openCC() : this.flash(`<span class="otv-avatar" style="width:2.2cqw;height:2.2cqw;font-size:1.1cqw">A</span>Alex`);
       const a = this.app;
       if (a.app) return this.openApp(a.app);
-      if (a.saver) return this.startSaver();
       const t = this.rows[this.row][this.col]; t.classList.remove('bounce'); void t.offsetWidth; t.classList.add('bounce');
     }
     openApp(src) {
@@ -413,7 +391,7 @@ void main(){
       else if (this.scope === 'cc') this.leaveCC();
       else if (this.scope === 'saver') this.endSaver();
       else if (this.scope === 'search') this.closeSearch();
-      else if (this.row !== 0) { this.row = 0; this.col = Math.min(this.col, APPS.length - 1); this.paint(); }
+      else if (this.row !== 0) { this.row = 0; this.paint(); }
     }
     home() {
       if (this.el.classList.contains('off')) return this.power();
@@ -449,13 +427,13 @@ void main(){
       const off = this.el.classList.toggle('off');
       if (!off) this.home();
     }
-    startSaver() { this.saverFrom = this.wall.mode; this.scope = 'saver'; this.el.classList.add('saver'); this.el.classList.remove('down'); this.wall.set(2); }
+    startSaver() { this.saverFrom = this.wall.mode; this.scope = 'saver'; this.el.classList.add('saver'); this.wall.set(2); }
     endSaver() { this.el.classList.remove('saver'); this.scope = 'home'; this.wall.set(this.saverFrom ?? 1); this.paint(); }
     openSearch() { this.el.classList.remove('app-open', 'cc-open'); this.scope = 'search'; this.el.classList.add('searching'); this.search(''); }
     closeSearch() { this.el.classList.remove('searching'); this.scope = 'home'; this.paint(); }
     search(q) {
       $('.otv-search .q', this.el).textContent = q || '';
-      const all = APPS.concat(ROW2);
+      const all = APPS;
       const hits = q ? all.filter(a => a.name.toLowerCase().includes(q.toLowerCase())) : [];
       $('.otv-search .hits', this.el).innerHTML = (q && !hits.length ? '<span>Search the web for “' + q.replace(/[<&]/g, '') + '”</span>' : hits.map(a => `<span>${a.name}</span>`).join(''));
     }
