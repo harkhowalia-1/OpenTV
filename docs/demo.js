@@ -581,14 +581,15 @@ void main(){
       if (a && tiles[i].dataset.id === 'vol') tiles[i].querySelector('.otv-vol i').style.width = '85%';
     };
     glow.setTint([0.45, 0.5, 0.9]);
-    // Scroll: the first fifth brings the tiles in, one by one; the rest walks the highlight through them.
+    // Scroll: the panel appears whole as you arrive; the rest of the way walks the highlight through it.
     const update = () => {
       const r = sec.getBoundingClientRect();
       const p = Math.min(0.999, Math.max(0, -r.top / Math.max(1, r.height - innerHeight)));
       sec.classList.toggle('in', r.top < innerHeight * 0.6 && r.bottom > 0);
-      const build = Math.min(1, p / 0.18);
-      tiles.forEach((t, k) => t.classList.toggle('in', reduce || build * tiles.length > k || r.top < -10 && p > 0.18));
-      if (!hovering) setFocus(p < 0.2 ? -1 : Math.min(tiles.length - 1, Math.floor((p - 0.2) / 0.8 * tiles.length)));
+      // The whole panel comes in at once; then the highlight walks through it.
+      const shown = reduce || sec.classList.contains('in');
+      tiles.forEach((t) => t.classList.toggle('in', shown));
+      if (!hovering) setFocus(p < 0.06 ? -1 : Math.min(tiles.length - 1, Math.floor((p - 0.06) / 0.94 * tiles.length)));
     };
     let ticking = false;
     addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(() => { ticking = false; update(); }); } }, { passive: true });
