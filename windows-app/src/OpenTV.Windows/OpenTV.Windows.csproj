@@ -28,6 +28,13 @@
     <NoWarn>$(NoWarn);CA1416;WFO1000</NoWarn>
   </PropertyGroup>
 
+  <!-- UseWPF drops these from the implicit usings (WPF has its own Path and Point); the code means the usual ones. -->
+  <ItemGroup>
+    <Using Include="System.IO" />
+    <Using Include="System.Drawing" />
+    <Using Include="System.Net.Http" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\OpenTV.Core\OpenTV.Core.csproj" />
   </ItemGroup>
