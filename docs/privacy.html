@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OpenTV Privacy</title>
+<meta name="description" content="How Otv Remote and the OpenTV apps handle your data: nothing is collected.">
+<link rel="icon" href="icon.png">
+<meta name="color-scheme" content="light dark">
+<style>
+:root { --ink: #1d1d1f; --ink-2: #6e6e73; --paper-alt: #f5f5f7; --link: #0066cc;
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif; }
+@media (prefers-color-scheme: dark) {
+  :root { --ink: #f5f5f7; --ink-2: #a1a1a6; --paper-alt: #161617; --link: #2997ff; }
+  body { background: #000 !important; }
+  p, li { color: #d2d2d7 !important; }
+  .bar { background: rgba(22,22,23,0.8) !important; border-bottom-color: rgba(255,255,255,0.16) !important; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: #fff; color: var(--ink); font: 400 17px/1.47059 var(--font); letter-spacing: -0.022em; -webkit-font-smoothing: antialiased; }
+a { color: var(--link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.bar { position: sticky; top: 0; height: 52px; background: rgba(251,251,253,0.8); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid rgba(0,0,0,0.16); }
+.bar div, main, footer div { width: 692px; max-width: 87.5%; margin: 0 auto; }
+.bar div { height: 100%; display: flex; align-items: center; gap: 10px; font-size: 21px; font-weight: 600; }
+.bar img { width: 30px; height: 30px; margin: 0 -4px 0 -2px; }
+.bar a { color: var(--ink); display: flex; align-items: center; gap: 10px; }
+main { padding: 80px 0 100px; }
+h1 { font-size: 48px; line-height: 1.08; font-weight: 600; letter-spacing: -0.003em; margin: 0 0 12px; }
+.updated { color: var(--ink-2); margin: 0 0 40px; }
+.lede { font-size: 21px; line-height: 1.38; font-weight: 600; color: #86868b; margin: 0 0 48px; }
+.lede strong { color: var(--ink); }
+h2 { font-size: 24px; line-height: 1.17; font-weight: 600; margin: 44px 0 10px; }
+p, li { color: #424245; }
+ul { padding-left: 22px; }
+li { margin-bottom: 8px; }
+footer { background: var(--paper-alt); color: var(--ink-2); font-size: 12px; padding: 24px 0 36px; }
+@media (max-width: 734px) { h1 { font-size: 32px; } .lede { font-size: 19px; } main { padding-top: 50px; } }
+</style>
+</head>
+<body>
+<div class="bar"><div><a href="./"><img src="icon.png" alt="">OpenTV</a></div></div>
+<main>
+  <h1>Privacy</h1>
+  <p class="updated">Updated November 4, 2026. Applies to Otv Remote for iPhone and to the OpenTV apps for TV and Mac.</p>
+  <p class="lede"><strong>OpenTV doesn't collect anything.</strong> There are no accounts with us, no analytics, no ads and no tracking. The apps talk to your TV over your own network, and nothing is sent to us.</p>
+
+  <h2>Otv Remote</h2>
+  <ul>
+    <li><strong>Your TV, on your network.</strong> Otv Remote finds your TV on your Wi-Fi (this is why it asks for Local Network access) and sends it your button presses, text and links directly. Nothing goes through a server.</li>
+    <li><strong>Pairing.</strong> When you pair, the TV gives your iPhone a key so only your devices can control it. The key stays on your iPhone and the TV.</li>
+    <li><strong>Send to TV.</strong> A link you share to the TV goes only to your TV.</li>
+    <li><strong>Signing in to Xbox Cloud Gaming.</strong> Microsoft's sign-in page opens inside the app, in a private browser that keeps nothing afterwards. The signed-in session is encrypted on your iPhone for your TV alone and sent straight to it over your network. Your password goes only to Microsoft.</li>
+    <li><strong>Siri and Shortcuts.</strong> Actions you set up run on your iPhone and talk only to your TV.</li>
+  </ul>
+
+  <h2>On the TV</h2>
+  <ul>
+    <li>Wallpapers and screen savers are downloaded from Apple and Bing when you choose them. Cloud Gaming talks to Microsoft's Xbox services with your own sign-in, to show your games, friends and achievements. IPTV plays channels directly from the broadcasters that publish them. Those services handle requests under their own privacy policies.</li>
+    <li>Software updates are downloaded from OpenTV's releases on GitHub.</li>
+    <li>OpenTV Companion for Mac talks to the TV over your network or a USB-C cable.</li>
+  </ul>
+
+  <h2>Children</h2>
+  <p>OpenTV collects no information from anyone, including children.</p>
+
+  <h2>Questions</h2>
+  <p>Open an issue on <a href="https://github.com/harkhowalia-1/OpenTV/issues">GitHub</a>. If this policy changes, the new version will be posted on this page.</p>
+</main>
+<footer><div>Copyright © 2026 Harkhowalia. All rights reserved. · <a href="./">OpenTV</a></div></footer>
+</body>
+</html>

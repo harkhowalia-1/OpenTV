@@ -130,12 +130,6 @@ public class ScreenSaverActivity extends TvSettingsActivity {
 
     /** Starts the screensaver now, as tvOS's Preview does. */
     private void preview() {
-        Intent dream = new Intent(Intent.ACTION_MAIN).setClassName("com.android.systemui", "com.android.systemui.Somnambulator")
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        try {
-            startActivity(dream);
-        } catch (Exception e) {
-            open(new Intent(TV_SCREENSAVER_SETTINGS));
-        }
+        ScreenSaverPreview.start(this);   // Google TV doesn't let apps start the real one
     }
 }

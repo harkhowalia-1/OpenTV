@@ -2,311 +2,629 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>OpenTV: your Android TV experience, reimagined</title>
-<meta name="description" content="A fast, beautiful home screen for any Android TV or Google TV, your iPhone as the remote, AirPlay, Apple Home and Siri, live TV from around the world, and a Mac that works hand in hand with your TV.">
-<link rel="icon" type="image/png" href="icon.png">
-<link rel="apple-touch-icon" href="icon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OpenTV</title>
+<meta name="description" content="OpenTV reimagines Android TV: a calm home screen, your iPhone as the remote, AirPlay and Apple Home, live TV from around the world and cloud gaming. Free and open source.">
 <meta property="og:title" content="OpenTV">
-<meta property="og:description" content="Your Android TV experience, reimagined.">
-<meta property="og:image" content="images/home.jpg">
+<meta property="og:description" content="Your Android TV. Beautifully reimagined. Free and open source.">
+<meta property="og:image" content="https://harkhowalia-1.github.io/OpenTV/images/v2/hero.jpg">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#161617" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
 <style>
+/* ---- tokens --------------------------------------------------------------------------------------------- */
+:root {
+  --ink: #1d1d1f;
+  --ink-2: #6e6e73;
+  --ink-3: #86868b;
+  --paper: #ffffff;
+  --paper-alt: #f5f5f7;
+  --night: #000000;
+  --night-ink: #f5f5f7;
+  --blue: #0071e3;
+  --blue-hover: #0077ed;
+  --link: #0066cc;
+  --link-dark: #2997ff;
+  --brand: linear-gradient(90deg, #ff6a88 0%, #ff8a5c 45%, #b06bff 100%);
+  --radius-tile: 28px;
+  --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --nav-h: 52px;
+  --content: 980px;
+  --line: #d2d2d7;
+  --tile: #ffffff;
+  --nav-bg: rgba(251, 251, 253, 0.8);
+  --nav-line: rgba(0, 0, 0, 0.16);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+/* Dark Mode follows the system: Apple's dark greys (#000, #161617, #1d1d1f) and lighter blues for links. */
+@media (prefers-color-scheme: dark) {
   :root {
-    --bg:#ffffff; --bg-alt:#f5f5f7; --tile:#f5f5f7; --text:#1d1d1f; --muted:#6e6e73;
-    --accent:#0071e3; --accent-hover:#0077ed; --warm:#ff6a5c;
-    --nav:rgba(255,255,255,.72); --line:rgba(0,0,0,.08);
+    --ink: #f5f5f7;
+    --ink-2: #a1a1a6;
+    --ink-3: #86868b;
+    --paper: #000000;
+    --paper-alt: #161617;
+    --link: #2997ff;
+    --line: #424245;
+    --tile: #1d1d1f;
+    --nav-bg: rgba(22, 22, 23, 0.8);
+    --nav-line: rgba(255, 255, 255, 0.16);
   }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#000; --bg-alt:#0b0b0c; --tile:#161617; --text:#f5f5f7; --muted:#a1a1a6;
-      --accent:#2997ff; --accent-hover:#47a6ff; --nav:rgba(22,22,23,.72); --line:rgba(255,255,255,.1); }
-  }
-  * { box-sizing:border-box; margin:0; padding:0; }
-  html { scroll-behavior:smooth; }
-  body { font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased; letter-spacing:-0.015em; line-height:1.47; }
-  a { color:var(--accent); text-decoration:none; }
-  a:hover { text-decoration:underline; }
-  img { max-width:100%; display:block; }
+  pre { background: #1d1d1f; }
+  code { background: #1d1d1f; }
+  .hero .logo { filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.6)); }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 17px/1.47059 var(--font);
+  letter-spacing: -0.022em;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+img { display: block; max-width: 100%; height: auto; }
+a { color: var(--link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; border-radius: 4px; }
 
-  nav { position:sticky; top:0; z-index:10; background:var(--nav); backdrop-filter:saturate(180%) blur(20px); -webkit-backdrop-filter:saturate(180%) blur(20px); border-bottom:1px solid var(--line); }
-  .nav-inner { max-width:1024px; margin:0 auto; padding:0 22px; height:52px; display:flex; align-items:center; gap:24px; }
-  .brand { display:flex; align-items:center; gap:8px; font-weight:600; font-size:19px; color:var(--text); }
-  .brand img { width:26px; height:26px; border-radius:6px; }
-  .brand:hover { text-decoration:none; }
-  .nav-links { margin-left:auto; display:flex; align-items:center; gap:22px; font-size:12px; }
-  .nav-links a { color:var(--text); opacity:.8; }
-  .nav-links a:hover { opacity:1; text-decoration:none; }
-  .pill { display:inline-block; background:var(--accent); color:#fff !important; opacity:1 !important; border-radius:980px; padding:4px 12px; font-weight:500; }
-  .pill:hover { background:var(--accent-hover); }
-  @media (max-width:640px) { .nav-links a:not(.pill) { display:none; } }
+/* ---- layout and type ------------------------------------------------------------------------------------ */
+.content { width: var(--content); max-width: calc(100% - 44px); margin: 0 auto; }
+section { position: relative; padding: 100px 0; }
+.alt { background: var(--paper-alt); }
+.dark { background: var(--night); color: var(--night-ink); }
+.center { text-align: center; }
+.eyebrow { font-size: 21px; line-height: 1.19; font-weight: 600; letter-spacing: 0.011em; margin: 0 0 8px; }
+.eyebrow.brand { background: var(--brand); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.headline { font-size: 56px; line-height: 1.07143; font-weight: 600; letter-spacing: -0.005em; margin: 0; }
+.headline-hero { font-size: 80px; line-height: 1.05; font-weight: 600; letter-spacing: -0.015em; margin: 0; }
+.headline-small { font-size: 40px; line-height: 1.1; font-weight: 600; letter-spacing: 0; margin: 0; }
+.intro { font-size: 21px; line-height: 1.381; font-weight: 600; letter-spacing: 0.011em; color: var(--ink-3); margin: 26px auto 0; max-width: 800px; }
+.intro strong, .copy strong { color: var(--ink); font-weight: 600; }
+.dark .intro strong, .dark .copy strong { color: var(--night-ink); }
+.copy { font-size: 19px; line-height: 1.21053; font-weight: 600; letter-spacing: 0.012em; color: var(--ink-3); margin: 0; }
+.small { font-size: 14px; line-height: 1.43; letter-spacing: -0.016em; color: var(--ink-2); }
+.dark .small { color: var(--ink-3); }
 
-  .wrap { max-width:980px; margin:0 auto; padding:0 22px; }
-  .center { text-align:center; }
-  h1 { font-size:clamp(48px,8.5vw,96px); line-height:1.03; font-weight:700; letter-spacing:-0.04em; }
-  h2 { font-size:clamp(36px,5.6vw,64px); line-height:1.05; font-weight:700; letter-spacing:-0.035em; }
-  h3 { font-size:21px; line-height:1.2; font-weight:600; letter-spacing:-0.02em; }
-  .lede { font-size:clamp(19px,2.2vw,24px); line-height:1.38; color:var(--muted); font-weight:500; max-width:680px; margin:22px auto 0; }
-  .button { display:inline-block; border-radius:980px; padding:13px 26px; font-size:17px; background:var(--accent); color:#fff; }
-  .button:hover { background:var(--accent-hover); text-decoration:none; }
-  .link { font-size:17px; }
-  .cta { display:flex; gap:28px; justify-content:center; align-items:center; flex-wrap:wrap; margin-top:36px; }
-  .note { font-size:13px; color:var(--muted); margin-top:14px; }
+.button {
+  display: inline-block; background: var(--blue); color: #fff; border-radius: 980px;
+  font-size: 17px; line-height: 1.17648; font-weight: 400; padding: 12px 22px; letter-spacing: -0.022em;
+  transition: background-color 0.2s var(--ease), transform 0.2s var(--ease);
+}
+.button:hover { background: var(--blue-hover); text-decoration: none; }
+.button:active { transform: scale(0.98); }
+.more { font-size: 17px; }
+.more::after { content: "\203A"; display: inline-block; margin-left: 0.35em; transition: transform 0.2s var(--ease); }
+.more:hover::after { transform: translateX(3px); }
+.dark .more, .dark a { color: var(--link-dark); }
+.ctas { display: flex; gap: 32px; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 34px; }
 
-  .hero { padding:96px 0 56px; }
-  .hicon { width:136px; height:136px; margin:0 auto 34px; filter:drop-shadow(0 14px 28px rgba(0,0,0,.22)); }
-  .tv { margin:56px auto 0; max-width:1100px; padding:0 22px; }
-  .tv .frame { border-radius:22px; overflow:hidden; background:#000; padding:14px; box-shadow:0 40px 80px rgba(0,0,0,.25), inset 0 0 0 1px rgba(255,255,255,.08); }
-  .tv .frame img { border-radius:10px; }
-  .tv .stand { width:22%; height:10px; margin:0 auto; border-radius:0 0 8px 8px; background:linear-gradient(#bfc1c6,#86888d); }
+/* ---- the product bar (sticky, frosted, like a product page's local navigation) ------------------------ */
+.localnav {
+  position: sticky; top: 0; z-index: 50; height: var(--nav-h);
+  transition: background-color 0.5s var(--ease), border-color 0.5s var(--ease);
+  border-bottom: 1px solid transparent;
+}
+.localnav.stuck {
+  background: var(--nav-bg);
+  -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
+  border-bottom-color: var(--nav-line);
+}
+.localnav .content { height: 100%; display: flex; align-items: center; justify-content: space-between; }
+.localnav .title { font-size: 21px; font-weight: 600; letter-spacing: 0.011em; color: var(--ink); display: flex; align-items: center; gap: 10px; }
+.localnav .title img { width: 30px; height: 30px; margin: 0 -4px 0 -2px; }
+.localnav .title:hover { text-decoration: none; }
+.localnav nav { display: flex; align-items: center; gap: 24px; }
+.localnav nav a { font-size: 12px; line-height: 1.33; color: var(--ink); opacity: 0.88; letter-spacing: -0.01em; }
+.localnav nav a:hover { color: var(--link); opacity: 1; text-decoration: none; }
+.localnav nav a.cta { opacity: 1; background: var(--blue); color: #fff; border-radius: 980px; padding: 4px 11px; font-size: 12px; }
+.localnav nav a.cta:hover { background: var(--blue-hover); color: #fff; }
 
-  section { padding:110px 0; }
-  .alt { background:var(--bg-alt); }
-  .eyebrow { font-size:17px; font-weight:600; color:var(--warm); margin-bottom:10px; }
-  .grid { display:grid; grid-template-columns:repeat(2,1fr); gap:22px; margin-top:56px; }
-  .tile { background:var(--tile); border-radius:24px; overflow:hidden; display:flex; flex-direction:column; }
-  .tile img { width:100%; aspect-ratio:16/9; object-fit:cover; }
-  .tile .t { padding:26px 28px 30px; }
-  .tile p { color:var(--muted); margin-top:8px; font-size:17px; }
-  @media (max-width:760px) { .grid { grid-template-columns:1fr; } }
+/* ---- reveal on scroll ------------------------------------------------------------------------------------ */
+[data-reveal] { opacity: 0; transform: translateY(40px); transition: opacity 1.2s var(--ease-out), transform 1.2s var(--ease-out); transition-delay: var(--d, 0s); }
+[data-reveal].shown { opacity: 1; transform: none; }
 
-  .split { display:grid; grid-template-columns:1.1fr .9fr; gap:56px; align-items:center; margin-top:56px; }
-  .split img.shot { border-radius:14px; box-shadow:0 30px 60px rgba(0,0,0,.18); }
-  .split ul { list-style:none; margin-top:18px; }
-  .split li { padding:14px 0; border-top:1px solid var(--line); font-size:17px; }
-  .split li b { display:block; }
-  .split li span { color:var(--muted); }
-  @media (max-width:820px) { .split { grid-template-columns:1fr; } }
+/* ---- hero ------------------------------------------------------------------------------------------------- */
+.hero { padding-top: 64px; padding-bottom: 80px; }
+.hero .logo { width: 112px; height: 112px; margin: 0 auto 14px; filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.18)); }
+.hero-art { margin: 64px auto 0; max-width: 1200px; padding: 0 22px; }
+.hero-art img { width: 100%; opacity: 0; transform: scale(1.06); transition: opacity 1.6s var(--ease-out) 0.2s, transform 2s var(--ease-out) 0.2s; }
+.hero-art img.shown { opacity: 1; transform: none; }
+.hero .small { margin-top: 18px; }
 
-  .apps { display:flex; justify-content:center; gap:34px; flex-wrap:wrap; margin-top:48px; }
-  .app { width:150px; text-align:center; font-size:14px; color:var(--muted); }
-  .app img { width:96px; height:96px; margin:0 auto 12px; border-radius:22px; object-fit:cover; box-shadow:0 10px 24px rgba(0,0,0,.18); }
-  .app img.wide { width:150px; height:84px; border-radius:16px; }
-  .app b { display:block; color:var(--text); font-size:15px; }
+/* ---- cinematic: the TV grows as you scroll to it ---------------------------------------------------------- */
+.cinema { padding-bottom: 60px; overflow: hidden; }
+.cinema .stage { margin: 70px auto 0; max-width: 1400px; padding: 0 22px; perspective: 1200px; }
+.cinema .stage img { width: 100%; transform-origin: 50% 40%; will-change: transform; border-radius: 6px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; margin-top: 70px; }
+.two-col .copy { text-align: left; }
 
-  .steps { display:grid; grid-template-columns:repeat(3,1fr); gap:22px; margin-top:56px; counter-reset:step; }
-  .step { background:var(--tile); border-radius:22px; padding:30px 28px; }
-  .step::before { counter-increment:step; content:counter(step); display:flex; width:34px; height:34px; border-radius:17px; background:var(--accent); color:#fff; font-weight:600; align-items:center; justify-content:center; margin-bottom:18px; }
-  .step p { color:var(--muted); margin-top:8px; }
-  @media (max-width:820px) { .steps { grid-template-columns:1fr; } }
+/* ---- reel: auto-advancing gallery with captions ---------------------------------------------------------- */
+.reel { padding-top: 40px; }
+.reel .viewport { overflow: hidden; margin-top: 50px; }
+.reel .track { display: flex; gap: 24px; transition: transform 0.9s var(--ease-out); padding: 0 calc((100vw - min(1100px, 92vw)) / 2); }
+.reel .slide { flex: 0 0 min(1100px, 92vw); opacity: 0.35; transition: opacity 0.9s var(--ease); }
+.reel .slide.active { opacity: 1; }
+.reel .slide img { width: 100%; border-radius: 18px; }
+.reel .caption { min-height: 56px; margin: 26px auto 0; max-width: 640px; font-size: 17px; font-weight: 500; line-height: 1.6; text-align: center; color: var(--night-ink); transition: opacity 0.4s var(--ease); }
+.reel .caption strong { font-weight: 600; }
+.reel .controls { display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 18px; }
+.dots { display: flex; gap: 12px; background: rgba(66,66,69,0.72); -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px); padding: 18px 22px; border-radius: 980px; }
+.dots button { width: 8px; height: 8px; border-radius: 980px; border: 0; padding: 0; background: rgba(255,255,255,0.42); cursor: pointer; transition: width 0.45s var(--ease), background-color 0.45s var(--ease); position: relative; overflow: hidden; }
+.dots button.active { width: 48px; background: rgba(255,255,255,0.42); }
+.dots button.active::after { content: ""; position: absolute; inset: 0; background: #f5f5f7; border-radius: 980px; transform-origin: left; animation: fill var(--reel-ms, 5000ms) linear forwards; }
+.reel.paused .dots button.active::after { animation-play-state: paused; }
+@keyframes fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.playpause { width: 56px; height: 56px; border-radius: 50%; border: 0; background: rgba(66,66,69,0.72); -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px); color: #f5f5f7; cursor: pointer; display: grid; place-items: center; }
+.playpause svg { width: 18px; height: 18px; fill: currentColor; }
 
-  .devices { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:36px; }
-  .devices span { background:var(--tile); border-radius:980px; padding:8px 16px; font-size:15px; }
+/* ---- lines that light up as you scroll ------------------------------------------------------------------ */
+.lines { padding: 120px 0 140px; }
+.lines .line {
+  font-size: 48px; line-height: 1.08; font-weight: 600; letter-spacing: -0.003em; margin: 0 auto 44px; max-width: 760px;
+  background: var(--brand); -webkit-background-clip: text; background-clip: text; color: transparent;
+  opacity: 0.18; transition: opacity 0.6s var(--ease);
+}
+.lines .line.lit { opacity: 1; }
+.lines .after { margin-top: 70px; }
 
-  footer { border-top:1px solid var(--line); padding:44px 0 60px; font-size:12px; color:var(--muted); }
-  footer .row { display:flex; justify-content:space-between; gap:22px; flex-wrap:wrap; align-items:center; }
-  footer p + p { margin-top:8px; }
-  .coffee img { height:44px; }
+/* ---- iPhone ------------------------------------------------------------------------------------------------ */
+.phones { display: flex; justify-content: center; align-items: flex-start; gap: 28px; margin-top: 80px; }
+.phones figure { margin: 0; flex: 0 1 300px; will-change: transform; }
+.phones img { width: 100%; filter: drop-shadow(0 30px 40px rgba(0,0,0,0.18)); }
+.phones figcaption { margin-top: 18px; text-align: center; font-size: 17px; font-weight: 600; color: var(--ink-3); line-height: 1.3; }
+.phones figcaption strong { color: var(--ink); display: block; }
+.phones figure:nth-child(2) { margin-top: 70px; }
 
-  .phone { width:min(300px,70vw); margin:0 auto; border-radius:46px; padding:12px; background:#111; box-shadow:0 30px 60px rgba(0,0,0,.28), inset 0 0 0 2px #2c2c2e; }
-  .phone img { border-radius:36px; }
-  .features { display:grid; grid-template-columns:repeat(3,1fr); gap:22px; margin-top:56px; }
-  .feature { background:var(--tile); border-radius:22px; padding:28px; }
-  .feature .ic { font-size:30px; line-height:1; margin-bottom:14px; }
-  .feature p { color:var(--muted); margin-top:6px; }
-  @media (max-width:820px) { .features { grid-template-columns:1fr; } }
-  .ways { display:grid; grid-template-columns:repeat(2,1fr); gap:22px; margin-top:56px; text-align:left; }
-  .way { background:var(--tile); border-radius:22px; padding:30px; }
-  .way .tag { font-size:12px; font-weight:600; color:var(--warm); text-transform:uppercase; letter-spacing:.04em; }
-  .way h3 { margin-top:6px; }
-  .way ol { margin:14px 0 0 18px; color:var(--muted); }
-  .way li { margin:6px 0; }
-  .way code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13px; background:var(--bg); border-radius:6px; padding:2px 6px; color:var(--text); }
-  .way pre { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; background:var(--bg); border-radius:12px; padding:14px; margin-top:14px; overflow-x:auto; color:var(--text); line-height:1.6; }
-  .way .button { margin-top:18px; font-size:15px; padding:10px 20px; }
-  @media (max-width:820px) { .ways { grid-template-columns:1fr; } }
-  .downloads { display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin-top:30px; }
-  .downloads a { background:var(--tile); border-radius:980px; padding:10px 18px; font-size:15px; }
+/* ---- tiles ------------------------------------------------------------------------------------------------- */
+.tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-top: 70px; }
+.tile { background: var(--tile); border-radius: var(--radius-tile); overflow: hidden; display: flex; flex-direction: column; transition: transform 0.5s var(--ease), box-shadow 0.5s var(--ease); }
+.tile:hover { transform: scale(1.01); box-shadow: 0 20px 50px rgba(0,0,0,0.08); }
+.tile.wide { grid-column: span 2; }
+.tile.black { background: #000; color: var(--night-ink); }
+.tile .t { padding: 40px 44px 28px; }
+.tile h3 { font-size: 32px; line-height: 1.125; font-weight: 600; letter-spacing: 0.004em; margin: 0 0 12px; }
+.tile .copy { font-size: 17px; line-height: 1.4; }
+.tile.black .copy { color: var(--ink-3); }
+.tile img { margin-top: auto; width: 100%; }
+.tile.split { flex-direction: row; align-items: center; }
+.tile.split .t { flex: 1 1 45%; padding: 56px; }
+.tile.split .pic { flex: 1 1 55%; padding: 40px 40px 0 0; align-self: flex-end; }
+
+/* ---- features ------------------------------------------------------------------------------------------- */
+.features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 70px; text-align: left; }
+.feature { background: var(--tile); border-radius: 18px; padding: 34px 30px; }
+.alt .feature { background: var(--tile); }
+section:not(.alt) .feature { background: var(--paper-alt); }
+.feature svg { width: 40px; height: 40px; margin-bottom: 18px; color: var(--blue); }
+@media (prefers-color-scheme: dark) { .feature svg { color: var(--link); } }
+.feature h3 { font-size: 21px; line-height: 1.19; font-weight: 600; margin: 0 0 8px; letter-spacing: 0.011em; }
+.feature p { margin: 0; font-size: 17px; line-height: 1.41; color: var(--ink-2); letter-spacing: -0.022em; }
+
+/* ---- install --------------------------------------------------------------------------------------------- */
+.ways { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-top: 60px; text-align: left; }
+.way { background: var(--tile); border-radius: 18px; padding: 36px 34px; display: flex; flex-direction: column; }
+.way .tag { font-size: 12px; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; color: #bf4800; }
+.way h3 { font-size: 28px; line-height: 1.14; font-weight: 600; margin: 8px 0 14px; letter-spacing: 0.007em; }
+.way ol { margin: 0 0 22px; padding-left: 20px; color: var(--ink-2); }
+.way li { margin-bottom: 8px; }
+.way .button { align-self: flex-start; margin-top: auto; }
+code, pre { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 13px; letter-spacing: 0; }
+code { background: var(--paper-alt); padding: 2px 6px; border-radius: 6px; }
+pre { background: #1d1d1f; color: #f5f5f7; padding: 16px 18px; border-radius: 12px; overflow-x: auto; line-height: 1.6; margin: 0; }
+.downloads { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 28px; margin-top: 44px; }
+
+/* ---- devices and footer --------------------------------------------------------------------------------- */
+.chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 44px; }
+.chips span { background: var(--paper-alt); border-radius: 980px; padding: 10px 20px; font-size: 17px; }
+footer { background: var(--paper-alt); color: var(--ink-2); font-size: 12px; line-height: 1.33; letter-spacing: -0.01em; padding: 30px 0 40px; }
+footer p { margin: 0 0 10px; }
+footer a { color: var(--ink); }
+footer .row { display: flex; justify-content: space-between; align-items: center; gap: 24px; border-top: 1px solid var(--line); padding-top: 18px; margin-top: 18px; flex-wrap: wrap; }
+footer .coffee img { height: 36px; }
+
+/* ---- smaller screens (Apple's breakpoints: 1068px and 734px) ------------------------------------------- */
+@media (max-width: 1068px) {
+  :root { --content: 692px; }
+  .headline-hero { font-size: 64px; }
+  .headline { font-size: 48px; line-height: 1.08349; }
+  .lines .line { font-size: 40px; }
+  .features { grid-template-columns: repeat(2, 1fr); }
+  .tile.split { flex-direction: column; }
+  .tile.split .pic { padding: 0 40px; }
+}
+@media (max-width: 734px) {
+  :root { --content: 87.5%; }
+  section { padding: 70px 0; }
+  .headline-hero { font-size: 44px; line-height: 1.09; }
+  .headline { font-size: 32px; line-height: 1.125; letter-spacing: 0.004em; }
+  .eyebrow { font-size: 19px; }
+  .intro { font-size: 19px; }
+  .lines .line { font-size: 30px; margin-bottom: 30px; }
+  .two-col, .tiles, .features, .ways { grid-template-columns: 1fr; }
+  .tile.wide { grid-column: auto; }
+  .tile .t, .tile.split .t { padding: 30px 26px 20px; }
+  .phones { gap: 12px; }
+  .phones figure:nth-child(2) { margin-top: 40px; }
+  .phones figcaption { font-size: 13px; }
+  .localnav nav a:not(.cta) { display: none; }
+  .localnav .title { font-size: 19px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal], .hero-art img { opacity: 1 !important; transform: none !important; transition: none !important; }
+  .cinema .stage img, .phones figure { transform: none !important; }
+  .reel .track { transition: none; }
+  .lines .line { opacity: 1; }
+}
 </style>
 </head>
 <body>
 
-<nav>
-  <div class="nav-inner">
-    <a class="brand" href="#"><img src="icon.png" alt="">OpenTV</a>
-    <div class="nav-links">
+<div class="localnav" id="localnav">
+  <div class="content">
+    <a class="title" href="#top"><img src="icon.png" alt="">OpenTV</a>
+    <nav aria-label="OpenTV">
       <a href="#tv">TV</a>
       <a href="#iphone">iPhone</a>
       <a href="#mac">Mac</a>
       <a href="#install">Install</a>
       <a href="https://github.com/harkhowalia-1/OpenTV">GitHub</a>
-      <a class="pill" href="#install">Download</a>
+      <a class="cta" href="#install">Download</a>
+    </nav>
+  </div>
+</div>
+
+<main id="top">
+
+<!-- Welcome -->
+<section class="hero alt center">
+  <div class="content">
+    <img class="logo" src="icon.png" alt="" width="112" height="112" data-reveal>
+    <h1 class="headline-hero" data-reveal style="--d:.1s">Your Android TV.<br>Beautifully reimagined.</h1>
+    <p class="intro" data-reveal style="--d:.2s">A <strong>calm home screen</strong> that puts your apps first. <strong>Your iPhone as the remote.</strong> AirPlay, Apple Home and Siri, <strong>live TV from around the world</strong> and Xbox cloud gaming, on the TV you already have. Free and open source.</p>
+    <div class="ctas" data-reveal style="--d:.3s">
+      <a class="button" href="#install">Get OpenTV</a>
+      <a class="more" href="https://github.com/harkhowalia-1/OpenTV/releases/latest">What's new in 1.3.2</a>
+    </div>
+    <p class="small" data-reveal style="--d:.35s">For Android TV and Google TV, Android 8 and later.</p>
+  </div>
+  <div class="hero-art"><picture><source srcset="images/v2/hero-dark.jpg" media="(prefers-color-scheme: dark)"><img id="heroArt" src="images/v2/hero.jpg" width="2400" height="1560" alt="OpenTV's home screen on a TV, with Otv Remote on an iPhone in front of it"></picture></div>
+</section>
+
+<!-- Home screen -->
+<section class="dark cinema center" id="tv">
+  <div class="content">
+    <p class="eyebrow" data-reveal>Home Screen</p>
+    <h2 class="headline" data-reveal style="--d:.1s">Your apps, front and centre.<br>Your room, on screen.</h2>
+  </div>
+  <div class="stage"><img id="cinemaTV" src="images/v2/tv-home.jpg" width="2000" height="1240" loading="lazy" alt="OtvOS home screen with a slow-motion aerial wallpaper behind a row of app tiles"></div>
+  <div class="content two-col">
+    <p class="copy" data-reveal><strong>Slow-motion aerials and desktop pictures</strong> play behind your apps, and soften to a blur as you move into them. Tiles lift under focus and the whole screen takes on the colour of what you pick. Rearrange it all with a long press.</p>
+    <p class="copy" data-reveal style="--d:.1s"><strong>Made for small chips.</strong> OtvOS keeps the TV quick on its own: it tidies caches when you're not watching, streams aerials when space is short and closes background apps in Game Mode, so even a Chromecast feels new.</p>
+  </div>
+</section>
+
+<!-- A closer look -->
+<section class="dark reel center" id="reel">
+  <div class="content">
+    <h2 class="headline-small" data-reveal>Take a closer look.</h2>
+  </div>
+  <div class="viewport" data-reveal>
+    <div class="track">
+      <div class="slide"><img src="images/v2/tv-control-center.jpg" width="2000" height="1240" loading="lazy" alt="Control Center over the home screen"></div>
+      <div class="slide"><img src="images/v2/tv-wallsettings.jpg" width="2000" height="1240" loading="lazy" alt="Wallpaper settings"></div>
+      <div class="slide"><img src="images/v2/tv-screensaver.jpg" width="2000" height="1240" loading="lazy" alt="Screen Saver settings"></div>
+      <div class="slide"><img src="images/v2/tv-wallpaper.jpg" width="2000" height="1240" loading="lazy" alt="The home screen with a different aerial"></div>
     </div>
   </div>
-</nav>
+  <p class="caption" aria-live="polite"></p>
+  <div class="controls">
+    <div class="dots" role="tablist" aria-label="Choose a picture"></div>
+    <button class="playpause" type="button" aria-label="Pause"><svg viewBox="0 0 18 18"><rect x="3" y="2" width="4" height="14" rx="1"/><rect x="11" y="2" width="4" height="14" rx="1"/></svg></button>
+  </div>
+  <template id="captions">
+    <p><strong>Control Center.</strong> Hold Home for power, sleep timer, screen saver, volume, AirPlay and Apple Home.</p>
+    <p><strong>Wallpaper.</strong> Colour Glow, Bing's picture of the day, aerials, desktop pictures or your own photos.</p>
+    <p><strong>Screen Saver.</strong> Aerials with captions, your pictures, or a quiet clock. Or simply the same as your wallpaper.</p>
+    <p><strong>Always new.</strong> A different place on screen whenever you like, changed from the TV or your iPhone.</p>
+  </template>
+</section>
 
-<header class="hero center">
-  <div class="wrap">
-    <img class="hicon" src="icon.png" alt="OpenTV icon">
-    <h1>OpenTV</h1>
-    <p class="lede">Your Android TV experience, reimagined. A fast, beautiful home screen, your iPhone as the remote, AirPlay, Apple Home and Siri, live TV from around the world, and a Mac that works hand in hand with your TV.</p>
-    <div class="cta">
-      <a class="button" href="https://github.com/harkhowalia-1/OpenTV/releases/latest/download/OpenTV-Installer.zip">Download for Mac</a>
-      <a class="link" href="#install">Other ways to install ›</a>
-    </div>
-    <p class="note">Free. For Android TV and Google TV, Android 8 and later.</p>
+<!-- What you can do -->
+<section class="dark lines center">
+  <div class="content">
+    <p class="eyebrow" data-reveal>All from the couch</p>
+    <div style="height:40px"></div>
+    <p class="line">Play Xbox games without a console.</p>
+    <p class="line">Watch 12,000 free live channels.</p>
+    <p class="line">Browse the web with a trackpad.</p>
+    <p class="line">AirPlay from your iPhone and Mac.</p>
+    <p class="line">Ask Siri to turn the TV off.</p>
+    <p class="intro after" data-reveal><strong>One remote. One home screen.</strong> Everything you watch and play, together on the TV you already own.</p>
   </div>
-  <div class="tv">
-    <div class="frame"><img src="images/home.jpg" alt="OtvOS home screen with the top shelf and app tiles"></div>
-    <div class="stand"></div>
-  </div>
-</header>
+</section>
 
-<section id="tv" class="alt">
-  <div class="wrap center">
-    <p class="eyebrow">OtvOS</p>
-    <h2>A home screen worth coming home to.</h2>
-    <p class="lede">OtvOS replaces your TV's home screen with one that's clean, quick and a joy to use, and it's tuned to fly even on a 1.4 GB streaming stick.</p>
-  </div>
-  <div class="wrap">
-    <div class="grid">
-      <div class="tile"><img src="images/home.jpg" alt="Home screen"><div class="t"><h3>Your apps, front and centre</h3><p>A top shelf for favourites, tiles that lift and glow under focus, and the focused app's colour washing across the room. Profiles follow the Google accounts on the TV.</p></div></div>
-      <div class="tile"><img src="images/control-center.jpg" alt="Control Center"><div class="t"><h3>Control Center</h3><p>Hold Home. Power, sleep timer, Wi-Fi, Do Not Disturb, screensaver, volume, AirPlay, Apple Home, and Close Background Apps when the TV needs a breather.</p></div></div>
-      <div class="tile"><img src="images/iptv.jpg" alt="IPTV app"><div class="t"><h3>12,000 live channels</h3><p>IPTV brings free channels from almost every country: categories, search, favourites and recently watched. Channel up and down while you watch.</p></div></div>
-      <div class="tile"><img src="images/settings.jpg" alt="Settings"><div class="t"><h3>Everything matches</h3><p>Settings, an App Store, a clock screensaver and a Connect Remote screen, all in the same calm design.</p></div></div>
+<!-- Apps -->
+<section class="alt center" id="apps">
+  <div class="content">
+    <p class="eyebrow" data-reveal>TV and Beyond</p>
+    <h2 class="headline" data-reveal style="--d:.1s">The best apps,<br>made to feel at home.</h2>
+    <p class="intro" data-reveal style="--d:.2s">OpenTV comes with apps designed for the big screen and the remote: <strong>Xbox Cloud Gaming</strong> that knows your games and friends, <strong>IPTV</strong> with free channels from almost every country, and a <strong>Browser</strong> with a real trackpad.</p>
+    <div class="tiles">
+      <div class="tile black wide split" data-reveal>
+        <div class="t"><h3>Cloud Gaming</h3><p class="copy">Sign in once from your iPhone with your saved passwords. Your gamertag, Gamerscore, friends and the games you've played, with achievement progress, all on the TV. The remote even works as a controller.</p></div>
+        <div class="pic"><img src="images/v2/tv-cloud.jpg" width="2000" height="1240" loading="lazy" alt="Cloud Gaming's home screen"></div>
+      </div>
+      <div class="tile black" data-reveal>
+        <div class="t"><h3>IPTV</h3><p class="copy">Live TV from around the world, by country and category. Channel up and down while you watch.</p></div>
+        <img src="images/v2/tv-iptv.jpg" width="2000" height="1240" loading="lazy" alt="IPTV's home screen">
+      </div>
+      <div class="tile black" data-reveal style="--d:.1s">
+        <div class="t"><h3>Browser</h3><p class="copy">Tabs, favourites and popular sites, with a pointer you move from the iPhone's trackpad.</p></div>
+        <img src="images/v2/tv-browser.jpg" width="2000" height="1240" loading="lazy" alt="The Browser showing the OpenTV website">
+      </div>
     </div>
   </div>
 </section>
 
-<section id="iphone">
-  <div class="wrap split">
-    <div class="phone"><img src="images/iphone-remote.jpg" alt="Otv Remote on iPhone"></div>
-    <div>
-      <p class="eyebrow">Otv Remote</p>
-      <h2>Your iPhone is the remote.</h2>
-      <ul>
-        <li><b>Swipe, tap, type</b><span>A touch surface, every button, and the iPhone's keyboard for search boxes.</span></li>
-        <li><b>Volume buttons</b><span>The iPhone's own volume buttons change the TV's volume while the app is open.</span></li>
-        <li><b>Control Center and Lock Screen</b><span>Remote, play and pause, power and volume controls, plus Siri and Shortcuts.</span></li>
-        <li><b>Send to TV</b><span>Share a YouTube video, a Netflix show, a song or a web page, and it opens on the TV.</span></li>
-        <li><b>Always ready</b><span>Pair once, reconnects by itself, wakes the TV. The whole family can connect at once.</span></li>
-      </ul>
+<!-- iPhone -->
+<section class="center" id="iphone">
+  <div class="content">
+    <p class="eyebrow brand" data-reveal>Otv Remote</p>
+    <h2 class="headline" data-reveal style="--d:.1s">Your iPhone.<br>The only remote you need.</h2>
+    <p class="intro" data-reveal style="--d:.2s"><strong>Swipe to move, tap to select</strong> and use the iPhone's own volume buttons. Open a web page and it becomes a <strong>trackpad</strong>. Type with the <strong>keyboard you know</strong>. And set up the TV, from wallpaper to Bluetooth, without leaving the couch.</p>
+    <div class="phones">
+      <figure data-parallax="0.06"><img src="images/v2/phone-remote.png" width="900" height="1800" loading="lazy" alt="Otv Remote's touch remote"><figcaption><strong>Remote</strong>Every button, and a touch surface</figcaption></figure>
+      <figure data-parallax="-0.04"><img src="images/v2/phone-browser.png" width="900" height="1800" loading="lazy" alt="Otv Remote as a trackpad"><figcaption><strong>Trackpad</strong>Turns on by itself for web pages</figcaption></figure>
+      <figure data-parallax="0.08"><img src="images/v2/phone-typing.png" width="900" height="1800" loading="lazy" alt="Typing on the TV from the iPhone"><figcaption><strong>Keyboard</strong>Search and sign in from your phone</figcaption></figure>
+    </div>
+    <div class="features">
+      <div class="feature" data-reveal><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="4" width="16" height="32" rx="4"/><path d="M8 14v8M32 12v4M32 19v4"/></svg><h3>Volume buttons</h3><p>The iPhone's own buttons change the TV's volume while the app is open.</p></div>
+      <div class="feature" data-reveal style="--d:.08s"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="13" height="13" rx="4"/><rect x="22" y="5" width="13" height="13" rx="4"/><rect x="5" y="22" width="13" height="13" rx="4"/><circle cx="28.5" cy="28.5" r="6.5"/></svg><h3>Control Center</h3><p>Remote, play and pause, power and volume on the Lock Screen and in Control Center.</p></div>
+      <div class="feature" data-reveal style="--d:.16s"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 5v20M13 12l7-7 7 7"/><path d="M10 20H8v15h24V20h-2"/></svg><h3>Send to TV</h3><p>Share a video, a show, a song or a web page and it opens on the TV.</p></div>
+      <div class="feature" data-reveal><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="20" cy="20" r="5"/><path d="M20 4v5M20 31v5M4 20h5M31 20h5M8.7 8.7l3.5 3.5M27.8 27.8l3.5 3.5M8.7 31.3l3.5-3.5M27.8 12.2l3.5-3.5"/></svg><h3>TV settings</h3><p>Inputs, wallpaper, screen saver, Bluetooth and software updates.</p></div>
+      <div class="feature" data-reveal style="--d:.08s"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="18" width="22" height="17" rx="4"/><path d="M14 18v-5a6 6 0 0 1 12 0v5"/></svg><h3>Sign in with saved passwords</h3><p>Sign the TV in to Xbox on your iPhone; the session reaches the TV encrypted.</p></div>
+      <div class="feature" data-reveal style="--d:.16s"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16a20 20 0 0 1 28 0M11 21a13 13 0 0 1 18 0M16 26a6 6 0 0 1 8 0"/><circle cx="20" cy="31" r="1.5" fill="currentColor"/></svg><h3>Always ready</h3><p>Pair once. It reconnects by itself and wakes the TV. The whole family can connect.</p></div>
+    </div>
+    <div class="ctas" data-reveal>
+      <a class="button" href="https://github.com/harkhowalia-1/OpenTV/releases/latest/download/Otv-Remote.ipa">Download Otv Remote</a>
+      <a class="more" href="#install">How to install it</a>
     </div>
   </div>
 </section>
 
-<section id="mac" class="alt">
-  <div class="wrap center">
-    <p class="eyebrow">OpenTV Companion</p>
-    <h2>Your Mac and your TV, finally on speaking terms.</h2>
-  </div>
-  <div class="wrap split">
-    <img class="shot" src="images/manager.jpg" alt="TV Manager on the Mac">
-    <ul>
-      <li><b>TV as Display</b><span>Extend your Mac onto the TV as a second screen, mirror it, or put iPhone Mirroring on the big screen. Low latency over Wi-Fi, even lower over a USB-C cable.</span></li>
-      <li><b>Your pointer on the TV</b><span>Push the cursor past the top of your screen and keep going. Push into the TV's left edge to go back, its top edge for Control Center; a two-finger click is Home.</span></li>
-      <li><b>Send to TV</b><span>The tab in any browser, or the video in QuickTime or VLC, carries on on the TV at the same moment.</span></li>
-      <li><b>TV Manager</b><span>Every app on the TV: open, stop, clear, turn off, uninstall, or drop an .apk to install it. Resolution, animations, ad-blocking DNS, HDMI-CEC, screenshots and files.</span></li>
-    </ul>
-  </div>
-</section>
-
-<section>
-  <div class="wrap center">
-    <h2>And so much more.</h2>
-  </div>
-  <div class="wrap features">
-    <div class="feature"><div class="ic">📡</div><h3>AirPlay</h3><p>Play and mirror from iPhone, iPad and Mac.</p></div>
-    <div class="feature"><div class="ic">🏠</div><h3>Apple Home and Siri</h3><p>The TV joins the Home app: turn it on and off and change the volume with Siri.</p></div>
-    <div class="feature"><div class="ic">🔌</div><h3>Wired mode</h3><p>Plug the TV into your Mac with USB-C and the remote, display and pointer all go over the cable.</p></div>
-    <div class="feature"><div class="ic">⚡️</div><h3>Made for small chips</h3><p>One switch turns off the background extras. Close Background Apps frees memory in seconds.</p></div>
-    <div class="feature"><div class="ic">🛡️</div><h3>Private by design</h3><p>Everything stays on your network. No accounts, nothing collected.</p></div>
-    <div class="feature"><div class="ic">↩️</div><h3>Easy to undo</h3><p>The installer puts your TV back exactly as it was, any time.</p></div>
-  </div>
-</section>
-
-<section class="alt">
-  <div class="wrap center">
-    <h2>One project. Every screen.</h2>
-    <div class="apps">
-      <div class="app"><img src="images/icon-otvos.png" alt=""><b>OtvOS</b>Home screen for the TV</div>
-      <div class="app"><img class="wide" src="images/tile-iptv.png" alt=""><b>IPTV</b>Live channels</div>
-      <div class="app"><img src="images/icon-remote.png" alt=""><b>Otv Remote</b>iPhone</div>
-      <div class="app"><img src="icon.png" alt=""><b>OpenTV Companion</b>Mac</div>
-      <div class="app"><img src="images/icon-installer.png" alt=""><b>OpenTV Installer</b>Sets it all up</div>
+<!-- Personalize -->
+<section class="alt center">
+  <div class="content">
+    <p class="eyebrow" data-reveal>Personalize</p>
+    <h2 class="headline" data-reveal style="--d:.1s">Change the scenery.<br>Right from your phone.</h2>
+    <div class="tiles">
+      <div class="tile black wide split" data-reveal>
+        <div class="t"><h3>Wallpaper, live.</h3><p class="copy">Pick an aerial, a desktop picture, Bing's picture of the day or one of your own photos on the iPhone, and the TV changes in an instant. Screen savers follow along, or pick their own.</p></div>
+        <div class="pic"><img src="images/v2/phone-wallpaper.png" width="900" height="1800" loading="lazy" alt="Choosing a wallpaper in Otv Remote" style="max-width:340px;margin:0 auto"></div>
+      </div>
     </div>
   </div>
 </section>
 
-<section id="install">
-  <div class="wrap center">
-    <p class="eyebrow">Install</p>
-    <h2>Pick your way in.</h2>
-    <p class="lede">First, on the TV: Settings › System › About, press <i>Android TV OS build</i> seven times, then turn on USB debugging and Wireless debugging in Developer options. (Not needed for the no-computer way.)</p>
+<!-- Mac -->
+<section class="center" id="mac">
+  <div class="content">
+    <p class="eyebrow" data-reveal>OpenTV Companion</p>
+    <h2 class="headline" data-reveal style="--d:.1s">Your Mac and your TV.<br>Finally on speaking terms.</h2>
+    <div class="features">
+      <div class="feature" data-reveal><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="32" height="20" rx="3"/><path d="M14 34h12M20 28v6"/></svg><h3>TV as a display</h3><p>Extend your Mac onto the TV, mirror it, or put iPhone Mirroring on the big screen. Even lower latency over USB-C.</p></div>
+      <div class="feature" data-reveal style="--d:.08s"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6l18 12-8 2 5 10-4 2-5-10-6 6z"/></svg><h3>Your pointer on the TV</h3><p>Push the cursor past the top of your screen and keep going. Push back to return.</p></div>
+      <div class="feature" data-reveal style="--d:.16s"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="9" width="22" height="16" rx="3"/><rect x="15" y="17" width="20" height="14" rx="3"/></svg><h3>Send to TV</h3><p>The tab in your browser, or the video in QuickTime or VLC, carries on on the TV.</p></div>
+      <div class="feature" data-reveal><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="12" height="12" rx="3"/><rect x="23" y="5" width="12" height="12" rx="3"/><rect x="5" y="23" width="12" height="12" rx="3"/><path d="M29 23v12M23 29h12"/></svg><h3>TV Manager</h3><p>Every app on the TV: open, stop, clear, turn off or uninstall. Drop an .apk to install it.</p></div>
+      <div class="feature" data-reveal style="--d:.08s"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 26c0-8 5-14 12-14s12 6 12 14"/><path d="M20 12V6M14 34h12"/><circle cx="20" cy="26" r="3"/></svg><h3>Tweaks</h3><p>Resolution, animations, ad-blocking DNS, HDMI-CEC, screenshots and files.</p></div>
+      <div class="feature" data-reveal style="--d:.16s"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6v10M26 6v10M10 16h20v6a10 10 0 0 1-20 0z"/><path d="M20 32v4"/></svg><h3>Wired mode</h3><p>Plug the TV into your Mac and remote, display and pointer all go over the cable.</p></div>
+    </div>
+    <div class="ctas" data-reveal>
+      <a class="button" href="https://github.com/harkhowalia-1/OpenTV/releases/latest/download/OpenTV-Companion.zip">Download for Mac</a>
+    </div>
   </div>
-  <div class="wrap ways">
-    <div class="way">
-      <span class="tag">Easiest · Mac</span>
-      <h3>OpenTV Installer</h3>
-      <ol>
-        <li>Download it, unzip, and open it (right-click › Open the first time).</li>
-        <li>Pick your TV: it finds it on your Wi-Fi or over USB-C.</li>
-        <li>Choose what to install and press Install. Run it again any time to update, or to restore the TV.</li>
-      </ol>
-      <a class="button" href="https://github.com/harkhowalia-1/OpenTV/releases/latest/download/OpenTV-Installer.zip">Download OpenTV Installer</a>
+</section>
+
+<!-- More -->
+<section class="alt center">
+  <div class="content">
+    <h2 class="headline" data-reveal>And so much more.</h2>
+    <div class="features">
+      <div class="feature" data-reveal><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="7" width="30" height="20" rx="3"/><path d="M13 35l7-8 7 8z"/></svg><h3>AirPlay</h3><p>Play and mirror from iPhone, iPad and Mac.</p></div>
+      <div class="feature" data-reveal style="--d:.08s"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 19L20 7l14 12M10 16v17h20V16"/><path d="M17 33v-8h6v8"/></svg><h3>Apple Home and Siri</h3><p>The TV joins the Home app. Turn it on and off and change the volume with Siri.</p></div>
+      <div class="feature" data-reveal style="--d:.16s"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="20" cy="20" r="14"/><path d="M20 12v8l5 4"/></svg><h3>Looks after itself</h3><p>Keeps storage free and the TV quick, while you're not watching.</p></div>
+      <div class="feature" data-reveal><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4l13 5v10c0 9-6 14-13 17C13 33 7 28 7 19V9z"/></svg><h3>Private by design</h3><p>Everything stays on your network. No accounts with us, nothing collected.</p></div>
+      <div class="feature" data-reveal style="--d:.08s"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6v18M12 17l8 8 8-8M8 32h24"/></svg><h3>Software Update</h3><p>New versions arrive on their own, or from the iPhone's TV settings.</p></div>
+      <div class="feature" data-reveal style="--d:.16s"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14H26a8 8 0 0 1 0 16H14"/><path d="M15 8l-6 6 6 6"/></svg><h3>Easy to undo</h3><p>The installer puts your TV back exactly as it was, any time.</p></div>
     </div>
-    <div class="way">
-      <span class="tag">No computer · TV</span>
-      <h3>Straight from the TV</h3>
-      <ol>
-        <li>Install <b>Downloader</b> from the TV's app store.</li>
-        <li>Open <code>harkhowalia-1.github.io/OpenTV/apk</code> and install OtvOS. For IPTV, <code>harkhowalia-1.github.io/OpenTV/iptv</code>.</li>
-        <li>Settings › System › Accessibility › OtvOS: turn it on. Press Home.</li>
-      </ol>
-    </div>
-    <div class="way">
-      <span class="tag">Any computer · adb</span>
-      <h3>Command line</h3>
-      <ol><li>Download OtvOS.apk, connect with <code>adb connect &lt;tv-address&gt;</code> and run:</li></ol>
+  </div>
+</section>
+
+<!-- Install -->
+<section class="center" id="install">
+  <div class="content">
+    <p class="eyebrow" data-reveal>Install</p>
+    <h2 class="headline" data-reveal style="--d:.1s">Pick your way in.</h2>
+    <p class="intro" data-reveal style="--d:.2s">First, on the TV: <strong>Settings › System › About</strong>, press <em>Android TV OS build</em> seven times, then turn on USB debugging and Wireless debugging in Developer options. Not needed for the no-computer way.</p>
+    <div class="ways">
+      <div class="way" style="background:var(--paper-alt)" data-reveal>
+        <span class="tag">Easiest · Mac</span>
+        <h3>OpenTV Installer</h3>
+        <ol>
+          <li>Download it, unzip, and open it (right-click › Open the first time).</li>
+          <li>Pick your TV: it finds it on your Wi-Fi or over USB-C.</li>
+          <li>Choose what to install and press Install. Run it again any time to update, or to restore the TV.</li>
+        </ol>
+        <a class="button" href="https://github.com/harkhowalia-1/OpenTV/releases/latest/download/OpenTV-Installer.zip">Download OpenTV Installer</a>
+      </div>
+      <div class="way" style="background:var(--paper-alt);--d:.08s" data-reveal>
+        <span class="tag">No computer · TV</span>
+        <h3>Straight from the TV</h3>
+        <ol>
+          <li>Install <b>Downloader</b> from the TV's app store.</li>
+          <li>Open <code>harkhowalia-1.github.io/OpenTV/apk</code> and install OtvOS. For IPTV, <code>harkhowalia-1.github.io/OpenTV/iptv</code>.</li>
+          <li>Settings › System › Accessibility › OtvOS: turn it on. Press Home.</li>
+        </ol>
+      </div>
+      <div class="way" style="background:var(--paper-alt)" data-reveal>
+        <span class="tag">Any computer · adb</span>
+        <h3>Command line</h3>
+        <ol><li>Download OtvOS.apk, connect with <code>adb connect &lt;tv-address&gt;</code> and run:</li></ol>
 <pre>adb install -r -g OtvOS.apk
 adb shell settings put secure enabled_accessibility_services com.gathin.tvhome/com.gathin.tvhome.HomeKeyService
 adb shell settings put secure accessibility_enabled 1
 adb shell cmd package set-home-activity --user 0 com.gathin.tvhome/.MainActivity</pre>
+      </div>
+      <div class="way" style="background:var(--paper-alt)" data-reveal>
+        <span class="tag">iPhone</span>
+        <h3>Otv Remote</h3>
+        <ol>
+          <li>Download the IPA below.</li>
+          <li>Install it with AltStore or Sideloadly, which sign it with your own Apple Account.</li>
+          <li>Open it and pick your TV. Or build it yourself with Xcode from the source.</li>
+        </ol>
+        <a class="button" href="https://github.com/harkhowalia-1/OpenTV/releases/latest/download/Otv-Remote.ipa">Download Otv Remote (IPA)</a>
+      </div>
     </div>
-    <div class="way">
-      <span class="tag">iPhone</span>
-      <h3>Otv Remote</h3>
-      <ol>
-        <li>Download the IPA below.</li>
-        <li>Install it with AltStore or Sideloadly, which sign it with your own Apple ID.</li>
-        <li>Open it and pick your TV. Or build it yourself with Xcode from the source.</li>
-      </ol>
-      <a class="button" href="https://github.com/harkhowalia-1/OpenTV/releases/latest/download/Otv-Remote.ipa">Download Otv Remote (IPA)</a>
-    </div>
-  </div>
-  <div class="wrap center">
     <div class="downloads">
-      <a href="https://github.com/harkhowalia-1/OpenTV/releases/latest/download/OtvOS.apk">OtvOS.apk</a>
-      <a href="https://github.com/harkhowalia-1/OpenTV/releases/latest/download/IPTV.apk">IPTV.apk</a>
-      <a href="https://github.com/harkhowalia-1/OpenTV/releases/latest/download/OpenTV-Companion.zip">OpenTV Companion for Mac</a>
-      <a href="https://github.com/harkhowalia-1/OpenTV/releases/latest/download/Otv-Remote.ipa">Otv Remote.ipa</a>
-      <a href="https://github.com/harkhowalia-1/OpenTV">Source code</a>
+      <a class="more" href="https://github.com/harkhowalia-1/OpenTV/releases/latest/download/OtvOS.apk">OtvOS.apk</a>
+      <a class="more" href="https://github.com/harkhowalia-1/OpenTV/releases/latest/download/IPTV.apk">IPTV.apk</a>
+      <a class="more" href="https://github.com/harkhowalia-1/OpenTV/releases/latest/download/Browser.apk">Browser.apk</a>
+      <a class="more" href="https://github.com/harkhowalia-1/OpenTV/releases/latest/download/CloudGaming.apk">CloudGaming.apk</a>
+      <a class="more" href="https://github.com/harkhowalia-1/OpenTV">Source code</a>
     </div>
   </div>
 </section>
 
-<section id="devices" class="alt">
-  <div class="wrap center">
-    <p class="eyebrow">Works with</p>
-    <h2>Almost every Android TV.</h2>
-    <p class="lede">Android TV and Google TV from Android 8 onward. Built and tuned on a Chromecast with Google TV (HD), so it's right at home on small chips.</p>
-    <div class="devices">
-      <span>Chromecast with Google TV</span><span>Google TV Streamer</span><span>NVIDIA Shield</span><span>Sony Bravia</span>
-      <span>TCL</span><span>Hisense</span><span>Philips</span><span>Xiaomi Mi Box</span><span>onn. 4K</span><span>Android TV boxes</span>
+<!-- Devices -->
+<section class="alt center" id="devices">
+  <div class="content">
+    <p class="eyebrow" data-reveal>Works with</p>
+    <h2 class="headline" data-reveal style="--d:.1s">Almost every Android TV.</h2>
+    <p class="intro" data-reveal style="--d:.2s">Android TV and Google TV from Android 8 onward. <strong>Built and tuned on a Chromecast with Google TV (HD)</strong>, so it's right at home on small chips.</p>
+    <div class="chips" data-reveal>
+      <span style="background:var(--tile)">Chromecast with Google TV</span><span style="background:var(--tile)">Google TV Streamer</span><span style="background:var(--tile)">NVIDIA Shield</span><span style="background:var(--tile)">Sony Bravia</span><span style="background:var(--tile)">TCL</span><span style="background:var(--tile)">Hisense</span><span style="background:var(--tile)">Philips</span><span style="background:var(--tile)">Xiaomi Mi Box</span><span style="background:var(--tile)">onn. 4K</span><span style="background:var(--tile)">Android TV boxes</span>
     </div>
   </div>
 </section>
+
+</main>
 
 <footer>
-  <div class="wrap">
+  <div class="content">
+    <p>OpenTV is an independent project and is not affiliated with, endorsed by or sponsored by Apple Inc., Google LLC or Microsoft Corporation. AirPlay, Apple Home, Siri, iPhone, iPad and Mac are trademarks of Apple Inc. Android TV, Google TV and Chromecast are trademarks of Google LLC. Xbox is a trademark of Microsoft Corporation. Aerials and desktop pictures are Apple's and are played from Apple's servers; nothing is redistributed. IPTV lists only free channels that broadcasters publish openly; OpenTV hosts no streams. Game art shown belongs to its owners.</p>
     <div class="row">
-      <div>
-        <p>OpenTV is an independent project and is not affiliated with, endorsed by or sponsored by Apple Inc. or Google LLC. AirPlay, Apple Home, Siri, iPhone, iPad and Mac are trademarks of Apple Inc. Android TV, Google TV and Chromecast are trademarks of Google LLC. IPTV lists only free channels that broadcasters publish openly; OpenTV hosts no streams.</p>
-        <p>Copyright © 2026 Harkhowalia. All rights reserved. · <a href="https://github.com/harkhowalia-1/OpenTV#credits">Credits</a> · <a href="https://github.com/harkhowalia-1/OpenTV">GitHub</a></p>
-      </div>
+      <p>Copyright © 2026 Harkhowalia. All rights reserved. · <a href="privacy.html">Privacy</a> · <a href="https://github.com/harkhowalia-1/OpenTV#credits">Credits</a> · <a href="https://github.com/harkhowalia-1/OpenTV">GitHub</a></p>
       <a class="coffee" href="https://buymeacoffee.com/harkhowalia"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-orange.png" alt="Buy me a coffee"></a>
     </div>
   </div>
 </footer>
 
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // The product bar frosts once the page scrolls under it.
+  const nav = document.getElementById('localnav');
+  const onScrollNav = () => nav.classList.toggle('stuck', scrollY > 8);
+
+  // Fade and rise into place, once, as things come into view.
+  const io = new IntersectionObserver(entries => {
+    for (const e of entries) if (e.isIntersecting) { e.target.classList.add('shown'); io.unobserve(e.target); }
+  }, { rootMargin: '0px 0px -12% 0px' });
+  document.querySelectorAll('[data-reveal]').forEach(el => io.observe(el));
+  const hero = document.getElementById('heroArt');
+  const showHero = () => hero.classList.add('shown');
+  hero.complete ? requestAnimationFrame(showHero) : hero.addEventListener('load', showHero);
+
+  // Scroll-linked: the TV grows into place, the iPhones drift at their own pace, lines light up in turn.
+  const tv = document.getElementById('cinemaTV');
+  const phones = [...document.querySelectorAll('[data-parallax]')];
+  const lines = [...document.querySelectorAll('.lines .line')];
+  let ticking = false;
+  const frame = () => {
+    ticking = false;
+    onScrollNav();
+    if (reduce) return;
+    const vh = innerHeight;
+    const r = tv.getBoundingClientRect();
+    const p = Math.min(1, Math.max(0, (vh - r.top) / (vh * 0.9)));   // 0 as it enters, 1 once it's well in view
+    tv.style.transform = `scale(${0.78 + 0.22 * p}) translateY(${(1 - p) * 60}px)`;
+    tv.style.opacity = 0.25 + 0.75 * p;
+    for (const f of phones) {
+      const b = f.getBoundingClientRect();
+      const d = (b.top + b.height / 2 - vh / 2);
+      f.style.transform = `translateY(${d * parseFloat(f.dataset.parallax)}px)`;
+    }
+    for (const l of lines) {
+      const b = l.getBoundingClientRect();
+      const mid = b.top + b.height / 2;
+      l.classList.toggle('lit', mid < vh * 0.62 && mid > vh * 0.18);
+    }
+  };
+  const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(frame); } };
+  addEventListener('scroll', onScroll, { passive: true });
+  addEventListener('resize', onScroll);
+  frame();
+  if (reduce) lines.forEach(l => l.classList.add('lit'));
+
+  // The reel: one picture at a time, with its caption; dots to jump, a button to pause.
+  const reel = document.getElementById('reel');
+  const track = reel.querySelector('.track');
+  const slides = [...track.children];
+  const captions = [...document.getElementById('captions').content.children].map(p => p.innerHTML);
+  const caption = reel.querySelector('.caption');
+  const dots = reel.querySelector('.dots');
+  const toggle = reel.querySelector('.playpause');
+  const ms = 5000;
+  reel.style.setProperty('--reel-ms', ms + 'ms');
+  let index = 0, timer = null, playing = !reduce, visible = false;
+  slides.forEach((_, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.setAttribute('role', 'tab');
+    b.setAttribute('aria-label', `Picture ${i + 1}`);
+    b.addEventListener('click', () => { go(i); restart(); });
+    dots.appendChild(b);
+  });
+  const go = i => {
+    index = (i + slides.length) % slides.length;
+    const w = slides[0].getBoundingClientRect().width + 24;
+    track.style.transform = `translateX(${-index * w}px)`;
+    slides.forEach((s, k) => s.classList.toggle('active', k === index));
+    [...dots.children].forEach((d, k) => {
+      d.classList.toggle('active', k === index);
+      d.setAttribute('aria-selected', k === index);
+      // Restart the progress fill.
+      if (k === index) { d.style.animation = 'none'; d.offsetWidth; d.style.animation = ''; }
+    });
+    caption.style.opacity = 0;
+    setTimeout(() => { caption.innerHTML = captions[index] || ''; caption.style.opacity = 1; }, 200);
+  };
+  const restart = () => {
+    clearInterval(timer);
+    if (playing && visible) timer = setInterval(() => go(index + 1), ms);
+  };
+  toggle.addEventListener('click', () => {
+    playing = !playing;
+    reel.classList.toggle('paused', !playing);
+    toggle.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+    toggle.innerHTML = playing
+      ? '<svg viewBox="0 0 18 18"><rect x="3" y="2" width="4" height="14" rx="1"/><rect x="11" y="2" width="4" height="14" rx="1"/></svg>'
+      : '<svg viewBox="0 0 18 18"><path d="M4 2.5v13a1 1 0 0 0 1.5.86l11-6.5a1 1 0 0 0 0-1.72l-11-6.5A1 1 0 0 0 4 2.5z"/></svg>';
+    restart();
+  });
+  new IntersectionObserver(([e]) => { visible = e.isIntersecting; restart(); }, { threshold: 0.4 }).observe(reel);
+  if (!playing) reel.classList.add('paused');
+  addEventListener('resize', () => go(index));
+  go(0);
+})();
+</script>
 </body>
 </html>

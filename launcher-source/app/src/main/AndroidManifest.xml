@@ -162,6 +162,14 @@
 
         <!-- Screensaver: pick it in Settings, or `settings put secure screensaver_components
              com.gathin.tvhome/.ClockDream` over adb. -->
+        <!-- Preview: the screensaver as a page of its own (Google TV can't start the real one on demand). -->
+        <activity
+            android:name=".ScreenSaverPreview"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask"
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" />
+
         <service
             android:name=".ClockDream"
             android:label="@string/dream_name"

@@ -181,12 +181,12 @@ public class TvSettingsActivity extends Activity {
         return first;
     }
 
-    /** "Bing Daily Wallpaper", "Apple TV Aerial", "Catalina (Dynamic)"… for the Wallpaper row. */
+    /** "Bing Daily Wallpaper", "Aerial", "Catalina (Dynamic)"… for the Wallpaper row. */
     private String wallpaperName() {
         String k = Wallpapers.kind(this);
         if (k.isEmpty()) return getString(R.string.wallpaper_glow);
         if (k.equals("bing")) return getString(R.string.wallpaper_bing);
-        if (k.startsWith("aerial:")) return "Apple TV Aerial";
+        if (k.startsWith("aerial:")) return "Aerial";
         if (k.startsWith("upload:")) return k.substring(7);
         if (k.startsWith("macos:")) {
             String n = k.substring(6);

@@ -35,66 +35,74 @@
   <a href="#credits">Credits</a>
 </p>
 
+<p align="center"><img src="docs/images/v2/hero.jpg" alt="OpenTV on a TV, with Otv Remote on an iPhone in front of it" width="100%"></p>
+
 ## On the TV
 
 <table>
   <tr>
     <td width="50%" valign="top">
-      <img src="docs/images/home.jpg" alt="OtvOS home screen" width="100%">
+      <img src="docs/images/v2/tv-home.jpg" alt="OtvOS home screen" width="100%">
       <h3>OtvOS home screen</h3>
-      A top shelf for your favourite apps, tiles that lift and glow under focus, and the focused app's colour washing across the screen. Profiles follow the Google accounts on the TV.
+      Your apps in a row of tiles that lift and glow under focus, over slow-motion aerials, desktop pictures, Bing's picture of the day or your own photos. The wallpaper softens to a blur as you move into your apps. Long-press a tile to rearrange.
     </td>
     <td width="50%" valign="top">
-      <img src="docs/images/control-center.jpg" alt="Control Center" width="100%">
+      <img src="docs/images/v2/tv-control-center.jpg" alt="Control Center" width="100%">
       <h3>Control Center</h3>
-      Hold Home: power and sleep, sleep timer, Wi-Fi, Do Not Disturb, screensaver, volume, AirPlay, Apple Home and <b>Close Background Apps</b>, which frees memory in a few seconds.
+      Hold Home: power, Wi-Fi, Bluetooth, screen saver, sleep timer, volume, AirPlay, Apple Home, Game Mode and Close Background Apps. Hover a button to see its name.
     </td>
   </tr>
   <tr>
     <td width="50%" valign="top">
-      <img src="docs/images/iptv.jpg" alt="IPTV" width="100%">
+      <img src="docs/images/v2/tv-cloud.jpg" alt="Cloud Gaming" width="100%">
+      <h3>Xbox Cloud Gaming</h3>
+      Sign in once from the iPhone with your saved passwords. Your gamertag, Gamerscore, friends and the games you've played, with achievement progress. The remote works as a controller, and Game Mode closes everything else while you play.
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/images/v2/tv-iptv.jpg" alt="IPTV" width="100%">
       <h3>IPTV</h3>
       Over 12,000 free live channels from almost every country: rows by category, every country, search, favourites (hold OK) and recently watched. Up and down change channel while you watch.
     </td>
+  </tr>
+  <tr>
     <td width="50%" valign="top">
-      <img src="docs/images/settings.jpg" alt="OtvOS Settings" width="100%">
-      <h3>Settings and App Store</h3>
-      Settings and an App Store in the same design, a clock screensaver, a Connect Remote screen with a four-digit code, and a sleep timer that turns the TV off for you.
+      <img src="docs/images/v2/tv-wallsettings.jpg" alt="Wallpaper settings" width="100%">
+      <h3>Wallpaper and Screen Saver</h3>
+      Aerials by theme with captions, desktop pictures that change with the time of day, and a screen saver that can simply match your wallpaper. Previews show before anything downloads.
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/images/v2/tv-browser.jpg" alt="Browser" width="100%">
+      <h3>Browser</h3>
+      Tabs, favourites and popular sites, with a pointer you move from the iPhone's trackpad, which turns on by itself when a web page opens.
     </td>
   </tr>
 </table>
 
 - **AirPlay** from iPhone, iPad and Mac, with the open-source UxPlay receiver.
 - **Apple Home and Siri**: the TV appears in the Home app. Turn it on and off, change the volume, and use the remote in your iPhone's Control Center.
-- **Fast on small chips**: built and tuned on a Chromecast with 1.4 GB of memory. One switch turns off the Google TV extras that run in the background.
+- **Looks after itself**: built and tuned on a Chromecast with 1.4 GB of memory. OtvOS tidies app caches while you're not watching, streams aerials instead of downloading them when space is short, and updates itself.
 
 ## With your iPhone
 
 <table>
   <tr>
-    <td width="34%" valign="top"><img src="docs/images/iphone-remote.jpg" alt="Otv Remote on iPhone" width="100%"></td>
-    <td valign="top">
-      <h3>Otv Remote</h3>
-      <ul>
-        <li>A touch surface and buttons: swipe to move, tap to select, Back, Home, Control Center, play and pause, mute, skip.</li>
-        <li>The iPhone's volume buttons change the TV's volume while the app is open.</li>
-        <li>Type on the TV with the iPhone's keyboard.</li>
-        <li>Controls for Control Center and the Lock Screen, Siri and Shortcuts actions.</li>
-        <li><b>Send to TV</b> from the Share sheet: YouTube, Netflix, Spotify, video links and web pages open on the TV.</li>
-        <li>Pairs once with the code on the TV, reconnects by itself, and can wake the TV. Any number of phones and Macs can be connected at once.</li>
-      </ul>
-    </td>
+    <td width="33%" valign="top"><img src="docs/images/v2/phone-remote.png" alt="Otv Remote" width="100%"></td>
+    <td width="33%" valign="top"><img src="docs/images/v2/phone-browser.png" alt="Otv Remote as a trackpad" width="100%"></td>
+    <td width="33%" valign="top"><img src="docs/images/v2/phone-wallpaper.png" alt="Choosing the TV's wallpaper in Otv Remote" width="100%"></td>
   </tr>
 </table>
+
+**Otv Remote**
+
+- A touch surface and buttons: swipe to move, tap to select, Back, Home, Control Center, play and pause, mute, skip.
+- Turns into a **trackpad** by itself when a web page is open on the TV.
+- The iPhone's volume buttons change the TV's volume while the app is open. Type on the TV with the iPhone's keyboard.
+- **TV settings** from the phone: inputs, wallpaper (applied at once), screen saver, Bluetooth and software updates.
+- **Sign the TV in to Xbox Cloud Gaming** on the iPhone with your saved passwords; the session goes to the TV encrypted, end to end.
+- Controls for Control Center and the Lock Screen, Siri and Shortcuts actions, and **Send to TV** from the Share sheet.
+- Pairs once with the code on the TV, reconnects by itself, and can wake the TV. Any number of phones and Macs can be connected at once.
 
 ## With your Mac
-
-<table>
-  <tr>
-    <td width="60%" valign="top"><img src="docs/images/manager.jpg" alt="TV Manager on the Mac" width="100%"></td>
-    <td valign="top"><img src="docs/images/menu-remote.jpg" alt="OpenTV Companion in the menu bar" width="80%"></td>
-  </tr>
-</table>
 
 **OpenTV Companion** lives in the menu bar; click it in the Dock for the TV Manager.
 

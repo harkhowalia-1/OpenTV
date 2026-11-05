@@ -40,7 +40,10 @@ targets:
     info:
       path: iOS/Info.plist
       properties:
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         CFBundleDisplayName: Otv Remote
+        ITSAppUsesNonExemptEncryption: false   # standard encryption from Apple's own frameworks only (exempt)
         UILaunchScreen: {}
         UIRequiresFullScreen: true
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
@@ -70,6 +73,8 @@ targets:
     info:
       path: Controls/Info.plist
       properties:
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         CFBundleDisplayName: Otv Remote
         NSLocalNetworkUsageDescription: Otv Remote controls your TV on your Wi-Fi network.
         NSAppTransportSecurity: { NSAllowsLocalNetworking: true }
@@ -92,6 +97,8 @@ targets:
     info:
       path: Share/Info.plist
       properties:
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         CFBundleDisplayName: Send to TV
         NSLocalNetworkUsageDescription: Send to TV opens links on your TV over your Wi-Fi network.
         NSAppTransportSecurity: { NSAllowsLocalNetworking: true }

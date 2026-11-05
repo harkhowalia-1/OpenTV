@@ -49,8 +49,8 @@
     <string name="wallpaper_photos">Photos on This TV</string>
     <string name="wallpaper_photos_allow">Show Photos on This TV</string>
     <string name="wallpaper_photos_none">No photos on this TV yet</string>
-    <string name="wallpaper_aerials">Apple TV Aerials</string>
-    <string name="wallpaper_macos">macOS Wallpapers</string>
+    <string name="wallpaper_aerials">Aerials</string>
+    <string name="wallpaper_macos">Desktop Pictures</string>
     <string name="cc_remote">Pair Remote</string>
     <string name="cc_airplay">AirPlay</string>
     <string name="cc_accessory">Game Controllers</string>
@@ -87,9 +87,9 @@
     <string name="wallpaper_now">Wallpaper</string>
     <string name="wallpaper_collections">Collections</string>
     <string name="wallpaper_bing_sub">New every day</string>
-    <string name="wallpaper_aerials_sub">Apple TV\'s aerial films, playing behind your apps.</string>
+    <string name="wallpaper_aerials_sub">Slow-motion aerial films, playing behind your apps.</string>
     <string name="wallpaper_aerials_note">Aerials stream from Apple; 4K on 4K TVs.</string>
-    <string name="wallpaper_macos_sub">Every macOS wallpaper. Dynamic ones change with the time of day.</string>
+    <string name="wallpaper_macos_sub">Landscapes from Apple. Dynamic ones change with the time of day.</string>
     <string name="wallpaper_macos_note">Downloaded from Apple when you choose one.</string>
     <string name="wallpaper_yours_sub">Pictures sent from your iPhone or Mac.</string>
     <string name="wallpaper_photos_sub">Pictures stored on this TV and USB drives.</string>

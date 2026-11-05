@@ -345,13 +345,8 @@ final class TvApi {
     }
 
     private static boolean startScreensaver(Context c) {
-        try {
-            c.startActivity(new Intent(Intent.ACTION_MAIN).setClassName("com.android.systemui", "com.android.systemui.Somnambulator")
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+        ScreenSaverPreview.start(c);   // Google TV doesn't let apps start the real one
+        return true;
     }
 
     private static JSONObject update(Context c, JSONObject in) throws Exception {

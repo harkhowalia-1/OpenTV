@@ -27,6 +27,9 @@ struct RemoteView: View {
         .padding(.horizontal, compact ? 16 : 24)
         .padding(.vertical, compact ? 16 : 12)
         .foregroundStyle(.white)
+        #if os(iOS)
+        .ignoresSafeArea(.keyboard)   // the Type on TV sheet's keyboard covers the remote; it doesn't squeeze it
+        #endif
         .alert("OpenTV", isPresented: Binding(get: { model.error != nil }, set: { if !$0 { model.error = nil } })) {
             Button("OK", role: .cancel) {}
         } message: {

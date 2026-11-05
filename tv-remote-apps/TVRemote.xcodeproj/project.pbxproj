@@ -32,7 +32,9 @@
 		7C49CD427E53F5BCEB8617BD /* DisplayStreamer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0560BEA2CEA100A74E2C7BBD /* DisplayStreamer.swift */; };
 		82383E22068058C2DC2E5605 /* RemoteClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D15003BFCB253BEEF2F9D87C /* RemoteClient.swift */; };
 		8358C23A50C87C7D805D8300 /* Installer.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EF34A0C2E18520D6AB08490B /* Installer.xcassets */; };
+		99112DD1629EEACF43A55E20 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B181AB56729A9855364AA573 /* PrivacyInfo.xcprivacy */; };
 		996C7A929E35708C55A08A2E /* ControlChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E330D43EA9C760574CB68FE /* ControlChannel.swift */; };
+		9F68CC9E42106E075F28F578 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = BBEC910341877D11CA193D56 /* PrivacyInfo.xcprivacy */; };
 		A2FEF85245D6391F15227808 /* RemoteIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = DC71C591851CB6D328070F77 /* RemoteIcon.icon */; };
 		B43A79B07987F953811042D3 /* PointerBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDA3B77452957EF29ED411FE /* PointerBridge.swift */; };
 		B70DC5C590CEC98F6E34D41C /* RemoteClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D15003BFCB253BEEF2F9D87C /* RemoteClient.swift */; };
@@ -41,6 +43,7 @@
 		BD7EFD8F8735DA9BFD54D3AE /* StreamSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33F9C485FE10AF6B5D1C4DAD /* StreamSocket.swift */; };
 		C3F2DC36FAA7DFEE44EF0B52 /* ADB.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FA67227FE61067232CDF1E8 /* ADB.swift */; };
 		C66AF969E533CA78D8575910 /* iOS.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 391EDD60295DDF75B335E97B /* iOS.xcassets */; };
+		CF8D979E714762D16E500066 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = E71C1F3FCCB860CD341C6F13 /* PrivacyInfo.xcprivacy */; };
 		D68C61251905F64EAD33B234 /* RemoteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 989406DA19F06477DFEBA75D /* RemoteView.swift */; };
 		D6ED9FC57C7CDDB2CE90E43E /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5D81D9300445997999E3EF5 /* ShareViewController.swift */; };
 		E0A33757FDBAC1A1AD52C53E /* TVRemoteMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 144520190EED79377BAC87D8 /* TVRemoteMacApp.swift */; };
@@ -110,8 +113,10 @@
 		9FA67227FE61067232CDF1E8 /* ADB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ADB.swift; sourceTree = "<group>"; };
 		A0B4C3A14807EBBBD76BC3D1 /* scrcpy-server */ = {isa = PBXFileReference; path = "scrcpy-server"; sourceTree = "<group>"; };
 		ABD2A0C2C52560A288C6A19D /* TVSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVSettingsView.swift; sourceTree = "<group>"; };
+		B181AB56729A9855364AA573 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		B4729B8827DAC892F7BADDA5 /* MacWallpapers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacWallpapers.swift; sourceTree = "<group>"; };
 		B5D81D9300445997999E3EF5 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		BBEC910341877D11CA193D56 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		BD873AFF8EFD56CDC218F89A /* Mac.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Mac.xcassets; sourceTree = "<group>"; };
 		C4FB49F3FE9806CD28D73BC7 /* WallpaperImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WallpaperImage.swift; sourceTree = "<group>"; };
 		CCDB51C1CF0BB17615CA78A6 /* TVRemoteShare.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = TVRemoteShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -125,6 +130,7 @@
 		DCE79915A6B00DD3018DBA04 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		DFE96D2559B330E2D31D8D87 /* TVRemote.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TVRemote.entitlements; sourceTree = "<group>"; };
 		E1E891DC6B0F1EF404454AD4 /* TVControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVControls.swift; sourceTree = "<group>"; };
+		E71C1F3FCCB860CD341C6F13 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		ED7E0716F1A6C49303242CDD /* TVRemoteMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TVRemoteMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		EF34A0C2E18520D6AB08490B /* Installer.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Installer.xcassets; sourceTree = "<group>"; };
 		EFAB593281EDF2E909A1CA1A /* XboxSignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XboxSignInView.swift; sourceTree = "<group>"; };
@@ -168,6 +174,7 @@
 			isa = PBXGroup;
 			children = (
 				5F2D79784B2528F4DF48B4D6 /* Info.plist */,
+				BBEC910341877D11CA193D56 /* PrivacyInfo.xcprivacy */,
 				E1E891DC6B0F1EF404454AD4 /* TVControls.swift */,
 				38B30748F7449363D7112ECB /* TVRemoteControls.entitlements */,
 			);
@@ -189,6 +196,7 @@
 			isa = PBXGroup;
 			children = (
 				8CF4D8FA034004E8E4D0525D /* Info.plist */,
+				B181AB56729A9855364AA573 /* PrivacyInfo.xcprivacy */,
 				B5D81D9300445997999E3EF5 /* ShareViewController.swift */,
 				4CC1C351133D794F73EA26CF /* TVRemoteShare.entitlements */,
 			);
@@ -199,6 +207,7 @@
 			isa = PBXGroup;
 			children = (
 				6F6F59B5D6A62CE31373CAD0 /* Info.plist */,
+				E71C1F3FCCB860CD341C6F13 /* PrivacyInfo.xcprivacy */,
 				D153EE2F08BD23A5B40DCE0E /* Shortcuts.swift */,
 				DFE96D2559B330E2D31D8D87 /* TVRemote.entitlements */,
 				094F7813DE0ACC2A7988613E /* TVRemoteApp.swift */,
@@ -285,6 +294,7 @@
 			buildConfigurationList = D559F459C6AF3727BE449444 /* Build configuration list for PBXNativeTarget "TVRemoteShare" */;
 			buildPhases = (
 				650C21AEF418AF4918C5AB63 /* Sources */,
+				D46F89E97A873C3AC150CAD3 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -341,6 +351,7 @@
 			buildConfigurationList = 85E16B1FAC7F5E8146F5388C /* Build configuration list for PBXNativeTarget "TVRemoteControls" */;
 			buildPhases = (
 				D4587CFFF40EF06F62D753CB /* Sources */,
+				56715D34288F9C6B81BDAD93 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -408,6 +419,14 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		56715D34288F9C6B81BDAD93 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9F68CC9E42106E075F28F578 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		76AB18C5EC14C4EEBEFEAC0B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -426,10 +445,19 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D46F89E97A873C3AC150CAD3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				99112DD1629EEACF43A55E20 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DC9C11B86D20C9CDE7658E29 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CF8D979E714762D16E500066 /* PrivacyInfo.xcprivacy in Resources */,
 				A2FEF85245D6391F15227808 /* RemoteIcon.icon in Resources */,
 				C66AF969E533CA78D8575910 /* iOS.xcassets in Resources */,
 			);

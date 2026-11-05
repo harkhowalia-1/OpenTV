@@ -226,7 +226,7 @@ public class HomeKeyService extends AccessibilityService implements RemoteServer
 
     /** Any key wakes a sleeping TV, or closes the screensaver, first, like a real remote. */
     private void wakeIfAsleep(String name) {
-        ClockDream dream = ClockDream.active;
+        Saver.Host dream = ClockDream.active;
         if (dream != null) dream.finish();
         PowerManager pm = getSystemService(PowerManager.class);
         if (pm == null || pm.isInteractive() || name.equals("power")) return;
@@ -263,14 +263,33 @@ public class HomeKeyService extends AccessibilityService implements RemoteServer
     /** Types into whatever text field has focus (a search box, a sign-in field). */
     @Override
     public void text(String value) {
-        handler.post(() -> {
-            AccessibilityNodeInfo root = getRootInActiveWindow();
-            AccessibilityNodeInfo field = root != null ? root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT) : null;
-            if (field == null || !field.isEditable()) return;
-            Bundle args = new Bundle();
-            args.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, value);
-            field.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args);
-        });
+        latestText = value;
+        handler.post(() -> setFocusedText(value));
+        // The TV's own keyboard can put back what it was composing just after a quick change (the last letter
+        // typed on the phone went missing): check once things settle, and put the latest text back if needed.
+        handler.removeCallbacks(recheckText);
+        handler.postDelayed(recheckText, 400);
+    }
+
+    private volatile String latestText;
+    private final Runnable recheckText = () -> {
+        String want = latestText;
+        AccessibilityNodeInfo field = focusedField();
+        if (want != null && field != null && !want.contentEquals(field.getText() == null ? "" : field.getText())) setFocusedText(want);
+    };
+
+    private AccessibilityNodeInfo focusedField() {
+        AccessibilityNodeInfo root = getRootInActiveWindow();
+        AccessibilityNodeInfo field = root != null ? root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT) : null;
+        return field != null && field.isEditable() ? field : null;
+    }
+
+    private void setFocusedText(String value) {
+        AccessibilityNodeInfo field = focusedField();
+        if (field == null) return;
+        Bundle args = new Bundle();
+        args.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, value);
+        field.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args);
     }
 
     @Override

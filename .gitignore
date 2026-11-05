@@ -14,3 +14,6 @@ local.properties
 
 # Device dump from the TV (settings, package lists): stays local
 tv-backup/
+
+# Raw TV and iPhone captures for the App Store screenshots: may show personal details, stay local
+tv-remote-apps/AppStore/Captures/
