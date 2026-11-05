@@ -11,6 +11,7 @@
 .otv-bezel { background: #000; border-radius: 0.75%/1.35%; padding: 0.75%; }
 .otv-screen {
   position: relative; aspect-ratio: 16 / 9; overflow: hidden; overflow: clip; background: #000; border-radius: 0.2%;
+  isolation: isolate; transform: translateZ(0); -webkit-mask-image: -webkit-radial-gradient(white, black);   /* Safari: keep tilted tiles inside */
   container-type: inline-size; color: #fff; user-select: none; -webkit-user-select: none;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Roboto, "Helvetica Neue", sans-serif; letter-spacing: 0;
 }
@@ -59,7 +60,7 @@
 .otv-row { perspective: 40cqw; z-index: 2; }
 .otv-tile { flex: 0 0 12.5cqw; height: 7.5cqw; position: relative; z-index: 2; transition: transform 0.18s ease-out; }
 .otv-tile.focus { transform: scale(1.1); transition: transform 0.26s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 3; }
-.otv-card { position: absolute; inset: 0; border-radius: 1.04cqw; overflow: hidden; background: #1c1c1e; transform-style: preserve-3d; }
+.otv-card { position: absolute; inset: 0; border-radius: 1.04cqw; overflow: hidden; background: #1c1c1e; }
 .otv-card > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .otv-icon { position: absolute; left: 50%; top: 50%; width: 5cqw; height: 5cqw; margin: -3.24cqw 0 0 -2.5cqw; border-radius: 1.15cqw; display: grid; place-items: center; overflow: hidden; }
 .otv-icon svg { width: 62%; height: 62%; }
@@ -176,6 +177,7 @@
 .ophone-bezel { background: #000; border-radius: 15.7cqw; padding: 3.2cqw; }
 .ophone-screen {
   position: relative; aspect-ratio: 1206 / 2622; overflow: hidden; overflow: clip; border-radius: 12.5cqw; background: #000; color: #fff;
+  isolation: isolate; transform: translateZ(0);
   container-type: inline-size; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
   letter-spacing: -0.01em; user-select: none; -webkit-user-select: none; touch-action: none;
 }
@@ -242,7 +244,8 @@
 /* ---- the scene: the TV with the iPhone in front of it --------------------------------------------------- */
 .demo { position: relative; max-width: 1200px; margin: 64px auto 0; padding: 0 22px 2%; }
 .demo .otv { width: 80%; }
-.demo .ophone { position: absolute; right: 22px; bottom: 0; width: 21%; min-width: 210px; }
+.demo .ophone { position: absolute; right: 22px; bottom: 0; width: 21%; min-width: 210px; z-index: 2; }
+.demo .otv { position: relative; z-index: 1; }
 .demo-hint { text-align: center; margin: 34px auto 0; font-size: 14px; color: var(--ink-2, #6e6e73); letter-spacing: -0.016em; }
 .demo-hint kbd { font: 600 12px -apple-system, sans-serif; border: 1px solid rgba(0, 0, 0, 0.18); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; margin: 0 1px; }
 @media (prefers-color-scheme: dark) { .demo-hint kbd { border-color: rgba(255, 255, 255, 0.25); } .otv-frame { box-shadow: 0 30px 70px rgba(0, 0, 0, 0.7); } }
