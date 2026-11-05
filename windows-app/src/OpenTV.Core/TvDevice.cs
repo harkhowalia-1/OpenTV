@@ -45,6 +45,8 @@ public sealed record TvDevice
 public enum RemoteKey
 {
     Up, Down, Left, Right, Select, Back, Home, Control,
+    /// <summary>Opens the TV's Inputs panel (HDMI, AV, Live TV); only TVs with inputs, not a Chromecast.</summary>
+    Inputs,
     PlayPause, Next, Previous, VolUp, VolDown, Mute, Power,
 }
 

@@ -44,7 +44,7 @@ struct TV: Codable, Hashable, Identifiable, Sendable {
 
 /// The buttons the TV understands (`/api/key/<name>`).
 enum RemoteKey: String, CaseIterable, Sendable {
-    case up, down, left, right, select, back, home, control
+    case up, down, left, right, select, back, home, control, inputs
     case playpause, next, previous, volup, voldown, mute, power
 }
 
@@ -124,10 +124,12 @@ struct RemoteClient: Sendable {
         return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:]
     }
 
-    /// The TV's name, its stable ID and whether this device is paired.
-    func hello() async throws -> (name: String, id: String?, paired: Bool) {
+    /// The TV's name, its stable ID, whether this device is paired, and whether it's a TV with inputs to
+    /// switch between (HDMI, AV, Live TV), unlike a Chromecast.
+    func hello() async throws -> (name: String, id: String?, paired: Bool, inputs: Bool) {
         let o = try await call(request("hello", method: "GET"))
-        return (o["name"] as? String ?? tv.name, o["id"] as? String, o["paired"] as? Bool ?? false)
+        return (o["name"] as? String ?? tv.name, o["id"] as? String, o["paired"] as? Bool ?? false,
+                o["inputs"] as? Bool ?? false)
     }
 
     /// "Send to TV": opens a link (YouTube, Netflix, Spotify, a video file, a web page) on the TV, at

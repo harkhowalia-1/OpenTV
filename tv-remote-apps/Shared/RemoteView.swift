@@ -112,14 +112,19 @@ struct RemoteView: View {
                 .padding(.vertical, 4)
             #endif
 
-            let s: CGFloat = compact ? 52 : 66
-            Grid(horizontalSpacing: compact ? 18 : 26, verticalSpacing: compact ? 14 : 18) {
-                GridRow {
+            let s: CGFloat = compact ? 52 : (model.hasInputs ? 62 : 66)
+            let gap: CGFloat = compact ? (model.hasInputs ? 14 : 18) : (model.hasInputs ? 20 : 26)
+            VStack(spacing: compact ? 14 : 18) {
+                HStack(spacing: gap) {
                     RoundButton(symbol: "chevron.backward", size: s) { model.press(.back) }.help("Back")
                     RoundButton(symbol: "tv", size: s) { model.press(.home) }.help("Home")
                     RoundButton(symbol: "switch.2", size: s) { model.press(.control) }.help("Control Center")
+                    // On a TV (not a Chromecast): opens the TV's Inputs panel, to pick HDMI, AV or Live TV.
+                    if model.hasInputs {
+                        RoundButton(symbol: "cable.connector", size: s) { model.press(.inputs) }.help("Inputs")
+                    }
                 }
-                GridRow {
+                HStack(spacing: gap) {
                     RoundButton(symbol: "playpause.fill", size: s) { model.press(.playpause) }.help("Play/Pause")
                     RoundButton(symbol: "speaker.slash.fill", size: s) { model.press(.mute) }.help("Mute")
                     KeyboardButton(model: model, size: s)

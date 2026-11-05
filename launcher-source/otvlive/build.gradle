@@ -11,8 +11,8 @@ android {
         applicationId 'com.gathin.otvlive'
         minSdk 26
         targetSdk 34
-        versionCode 1
-        versionName '1.0'
+        versionCode rootProject.ext.otvVersionCode
+        versionName rootProject.ext.otvVersionName
     }
 
     buildTypes {

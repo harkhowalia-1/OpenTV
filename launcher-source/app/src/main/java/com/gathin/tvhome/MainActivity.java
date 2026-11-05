@@ -267,6 +267,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         updateWifiLabel();
         refreshPill();
         handler.postDelayed(minuteTick, MINUTE_MS);
+        // A newer OtvOS on GitHub: say so once (Settings › OtvOS Update installs it).
+        Updater.checkNowAndThen(this, (release, error) -> {
+            if (isFinishing()) return;
+            Toast.makeText(this, getString(R.string.update_available, release.version), Toast.LENGTH_LONG).show();
+        });
 
         // Return to the app we left from, or the same slot if that app is gone. Always refocus: after
         // reload() the view that holds focus may no longer show the app it had.
@@ -787,17 +792,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     private boolean hasInputs() {
-        if (!liveTvPkg.isEmpty()) return true;
-        TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
-        if (tim == null) return false;
-        try {
-            for (TvInputInfo info : tim.getTvInputList()) {
-                // Only physical inputs count; apps such as VLC register non-passthrough "tuner" inputs.
-                if (info.isPassthroughInput()) return true;
-            }
-        } catch (RuntimeException ignored) {
-        }
-        return false;
+        return TvInputs.available(this);
     }
 
     /** Dropdown menu under the Inputs pill: HDMI ports (with connection state), AV and Live TV. */
@@ -814,56 +809,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         popup.setAnimationStyle(0);
         popup.setElevation(0f);
 
-        TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
-        boolean sawNonHdmi = false;
-        String tunerId = null;
-        if (tim != null) {
-            List<TvInputInfo> inputs = new ArrayList<>(tim.getTvInputList());
-            // HDMI ports first in port order, then AV and the rest.
-            Collections.sort(inputs, (a, b) -> {
-                boolean ha = a.getType() == TvInputInfo.TYPE_HDMI, hb = b.getType() == TvInputInfo.TYPE_HDMI;
-                if (ha != hb) return ha ? -1 : 1;
-                return String.valueOf(a.loadLabel(this)).compareToIgnoreCase(String.valueOf(b.loadLabel(this)));
-            });
-            // Some TVs (Sony) report every HDMI port as connected whether or not anything is plugged in,
-            // so drop the HDMI status then. A TV with every port really in use loses it too.
-            int hdmiPorts = 0, hdmiConnected = 0;
-            for (TvInputInfo info : inputs) {
-                if (!info.isPassthroughInput() || info.getType() != TvInputInfo.TYPE_HDMI) continue;
-                hdmiPorts++;
-                if (tim.getInputState(info.getId()) == TvInputManager.INPUT_STATE_CONNECTED) hdmiConnected++;
-            }
-            boolean hdmiStateBogus = hdmiPorts > 1 && hdmiConnected == hdmiPorts;
-            for (TvInputInfo info : inputs) {
-                if (info.getType() == TvInputInfo.TYPE_TUNER
-                        && (info.getServiceInfo().applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0
-                        && (tunerId == null || info.getId().compareTo(tunerId) < 0)) {
-                    tunerId = info.getId();
-                }
-                if (!info.isPassthroughInput()) continue;
-                CharSequence l = info.loadLabel(this);
-                String label = l == null ? info.getId() : l.toString();
-                boolean hdmi = info.getType() == TvInputInfo.TYPE_HDMI;
-                if (hdmi && !label.toUpperCase().contains("HDMI")) label = "HDMI " + label;
-                final String id = info.getId();
-                int state = hdmi && hdmiStateBogus ? -1 : tim.getInputState(id);
-                if (!hdmi && rows.getChildCount() > 0 && !sawNonHdmi) addSeparator(rows);
-                if (!hdmi) sawNonHdmi = true;
-                addInputRow(rows, popup, hdmi ? R.drawable.ic_input : R.drawable.ic_av, label, state,
-                        () -> open(new Intent(Intent.ACTION_VIEW).setDataAndType(
-                                TvContract.buildChannelUriForPassthroughInput(id), "vnd.android.cursor.item/channel")));
-            }
-        }
-        Intent liveTv = liveTvPkg.isEmpty() ? null : getPackageManager().getLeanbackLaunchIntentForPackage(liveTvPkg);
-        if (liveTv != null && tunerId != null) {
-            liveTv = new Intent(Intent.ACTION_VIEW)
-                    .setDataAndType(TvContract.buildChannelUriForPassthroughInput(tunerId), "vnd.android.cursor.item/channel")
-                    .setPackage(liveTvPkg);
-        }
-        if (liveTv != null) {
-            if (rows.getChildCount() > 0) addSeparator(rows);
-            final Intent liveTvIntent = liveTv;
-            addInputRow(rows, popup, R.drawable.ic_livetv, getString(R.string.live_tv), -1, () -> open(liveTvIntent));
+        int lastKind = -1;
+        for (TvInputs.Input in : TvInputs.list(this)) {
+            // A line between the HDMI ports, the other inputs and Live TV.
+            if (lastKind != -1 && in.kind != lastKind) addSeparator(rows);
+            lastKind = in.kind;
+            int state = in.state == TvInputs.CONNECTED ? TvInputManager.INPUT_STATE_CONNECTED
+                    : in.state == TvInputs.DISCONNECTED ? TvInputManager.INPUT_STATE_DISCONNECTED : -1;
+            addInputRow(rows, popup, in.icon(), in.label, state, () -> open(in.intent));
         }
         if (rows.getChildCount() == 0) {
             Toast.makeText(this, R.string.no_inputs, Toast.LENGTH_SHORT).show();

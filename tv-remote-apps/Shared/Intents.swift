@@ -2,7 +2,7 @@ import AppIntents
 
 /// TV buttons for Control Center, Siri and Shortcuts.
 enum TVButton: String, AppEnum {
-    case playPause, power, volumeUp, volumeDown, mute, home, back, controlCenter, next, previous
+    case playPause, power, volumeUp, volumeDown, mute, home, back, controlCenter, inputs, next, previous
 
     static let typeDisplayRepresentation: TypeDisplayRepresentation = "TV Button"
     static let caseDisplayRepresentations: [TVButton: DisplayRepresentation] = [
@@ -14,6 +14,7 @@ enum TVButton: String, AppEnum {
         .home: "Home",
         .back: "Back",
         .controlCenter: "Control Center",
+        .inputs: "Inputs",
         .next: "Next",
         .previous: "Previous",
     ]
@@ -28,6 +29,7 @@ enum TVButton: String, AppEnum {
         case .home: return .home
         case .back: return .back
         case .controlCenter: return .control
+        case .inputs: return .inputs
         case .next: return .next
         case .previous: return .previous
         }
