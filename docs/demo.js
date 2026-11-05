@@ -545,6 +545,25 @@ void main(){
   // ---- mount -------------------------------------------------------------------------------------------------
   document.querySelectorAll('[data-otv]').forEach((host) => {
     const tv = new TV(host, { wall: +(host.dataset.wall || 1) });
+    if (host.dataset.mode === 'saver') {
+      // The screen saver: the live scene full screen with the clock, Aurora and Underwater taking turns.
+      const scenes = [{ wall: 2, place: 'Northern lights, over the mountains' }, { wall: 1, place: 'Light through the water' }];
+      let n = 0;
+      const show = () => {
+        const s = scenes[n % scenes.length];
+        const place = host.querySelector('.otv-saverplace');
+        place.style.opacity = 0;
+        tv.wall.set(s.wall);
+        setTimeout(() => { place.textContent = s.place; place.style.opacity = ''; }, 700);
+      };
+      tv.scope = 'saver'; host.classList.add('saver'); show();
+      let timer = null;
+      new IntersectionObserver(([e]) => {
+        clearInterval(timer);
+        if (e.isIntersecting && !reduce) timer = setInterval(() => { n++; show(); }, 9000);
+      }, { threshold: 0.3 }).observe(host);
+      return;
+    }
     const scene = host.closest('.demo');
     const phoneHost = scene && $('[data-ophone]', scene);
     const phone = phoneHost ? new Phone(phoneHost, tv) : null;

@@ -24,7 +24,7 @@
 
 /* Home */
 .otv-home { position: absolute; inset: 0; transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
-.otv.app-open .otv-home, .otv.saver .otv-home { opacity: 0; transform: scale(1.04); }
+.otv.app-open .otv-home, .otv.saver .otv-home { opacity: 0; transform: scale(1.04); pointer-events: none; }
 .otv-pill {
   position: absolute; left: 78.33cqw; top: 2.76cqw; width: 17.4cqw; height: 5.05cqw; border-radius: 2.6cqw;
   display: flex; align-items: center; justify-content: space-between; padding: 0 0.55cqw 0 1.9cqw;
