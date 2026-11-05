@@ -1,0 +1,259 @@
+/* OpenTV's live demo: OtvOS on a TV and Otv Remote on an iPhone, built in HTML.
+   The TV is laid out on OtvOS's own 1920 × 1080 grid; 1cqw is 19.2 TV pixels, so it scales with its width. */
+
+/* ---- the TV ------------------------------------------------------------------------------------------------ */
+.otv { position: relative; }
+.otv-frame {
+  position: relative; border-radius: 0.9%/1.6%; padding: 0.25%;
+  background: linear-gradient(180deg, #5a5a5e, #2a2a2d 40%, #48484c);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.28), 0 6px 14px rgba(0, 0, 0, 0.18);
+}
+.otv-bezel { background: #000; border-radius: 0.75%/1.35%; padding: 0.75%; }
+.otv-screen {
+  position: relative; aspect-ratio: 16 / 9; overflow: hidden; overflow: clip; background: #000; border-radius: 0.2%;
+  container-type: inline-size; color: #fff; user-select: none; -webkit-user-select: none;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Roboto, "Helvetica Neue", sans-serif; letter-spacing: 0;
+}
+.otv-screen::after {   /* a faint reflection on the glass */
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 20;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 45%);
+}
+.otv-wall { position: absolute; inset: 0; width: 100%; height: 100%; transition: filter 0.6s ease, transform 0.6s ease, opacity 0.6s ease; }
+.otv-wall.next { opacity: 0; }
+.otv.down .otv-wall { filter: blur(1.4cqw) brightness(0.55) saturate(1.2); transform: scale(1.06); }
+
+/* Home */
+.otv-home { position: absolute; inset: 0; transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.otv.app-open .otv-home, .otv.saver .otv-home { opacity: 0; transform: scale(1.04); }
+.otv-pill {
+  position: absolute; left: 78.33cqw; top: 2.76cqw; width: 17.4cqw; height: 5.05cqw; border-radius: 2.6cqw;
+  display: flex; align-items: center; justify-content: space-between; padding: 0 0.55cqw 0 1.9cqw;
+  background: rgba(40, 42, 48, 0.62); -webkit-backdrop-filter: blur(1.2cqw) saturate(1.6); backdrop-filter: blur(1.2cqw) saturate(1.6);
+  box-shadow: inset 0 0 0 0.06cqw rgba(255, 255, 255, 0.16);
+}
+.otv-clock { font-size: 1.75cqw; font-weight: 500; letter-spacing: 0.01em; font-variant-numeric: tabular-nums; }
+.otv-pill .otv-ccbtn { width: 3.3cqw; height: 3.3cqw; border-radius: 50%; display: grid; place-items: center; transition: background 0.2s, transform 0.2s; }
+.otv-pill .otv-ccbtn svg { width: 1.5cqw; }
+.otv-avatar { width: 3.6cqw; height: 3.6cqw; border-radius: 50%; background: #4fd1c5; display: grid; place-items: center; font-size: 1.7cqw; font-weight: 500; transition: transform 0.2s, box-shadow 0.2s; }
+.otv-ccbtn.focus { background: rgba(255, 255, 255, 0.92); color: #000; transform: scale(1.12); }
+.otv-avatar.focus { transform: scale(1.14); box-shadow: 0 0 0 0.25cqw #fff; }
+.otv-title {
+  position: absolute; left: 7.3cqw; top: 31.5cqw; font: 300 3.2cqw/1 "Outfit", -apple-system, sans-serif; letter-spacing: 0.01em;
+  text-shadow: 0 0.2cqw 1cqw rgba(0, 0, 0, 0.35); transition: opacity 0.3s ease;
+}
+.otv.down .otv-title { opacity: 0; }
+.otv-rows { position: absolute; left: 0; right: 0; top: 38.75cqw; transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.otv.down .otv-rows { transform: translateY(-24cqw); }
+.otv-dock, .otv-dockbg { position: relative; margin-left: 4.17cqw; width: 91.46cqw; height: 11.04cqw; }
+.otv-dockbg {
+  position: absolute; left: 0; top: 0; border-radius: 2.3cqw;
+  background: rgba(255, 255, 255, 0.13); -webkit-backdrop-filter: blur(1.6cqw) saturate(1.7); backdrop-filter: blur(1.6cqw) saturate(1.7);
+  box-shadow: inset 0 0 0 0.06cqw rgba(255, 255, 255, 0.22), 0 1cqw 3cqw rgba(0, 0, 0, 0.18);
+}
+.otv-row { display: flex; gap: 2.71cqw; padding-left: 1.46cqw; position: absolute; top: 1.82cqw; }
+.otv-row2 { position: relative; top: 4.2cqw; padding-left: 5.63cqw; }
+.otv-row2-label { position: relative; top: 3cqw; left: 5.63cqw; font: 500 1.35cqw/1 -apple-system, sans-serif; opacity: 0; transition: opacity 0.4s; }
+.otv.down .otv-row2-label { opacity: 0.85; }
+/* Tiles, as OtvOS draws them (item_app.xml, tile_bg.xml, tile_sheen.xml, AppAdapter): 120 × 72 dp, 10 dp corners on
+   #1C1C1E; focus scales to 1.10 with an overshoot in 260 ms (back in 180 ms) and fades in a sheen with a fine rim. */
+.otv-row { perspective: 40cqw; z-index: 2; }
+.otv-tile { flex: 0 0 12.5cqw; height: 7.5cqw; position: relative; z-index: 2; transition: transform 0.18s ease-out; }
+.otv-tile.focus { transform: scale(1.1); transition: transform 0.26s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 3; }
+.otv-card { position: absolute; inset: 0; border-radius: 1.04cqw; overflow: hidden; background: #1c1c1e; transform-style: preserve-3d; }
+.otv-card > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.otv-icon { position: absolute; left: 50%; top: 50%; width: 5cqw; height: 5cqw; margin: -3.24cqw 0 0 -2.5cqw; border-radius: 1.15cqw; display: grid; place-items: center; overflow: hidden; }
+.otv-icon svg { width: 62%; height: 62%; }
+.otv-label { position: absolute; left: 0; right: 0; bottom: 0.83cqw; text-align: center; font: 400 1.35cqw/1 "Outfit", sans-serif; padding: 0 1cqw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.otv-sheen {
+  position: absolute; inset: 0; border-radius: inherit; opacity: 0; transition: opacity 0.2s;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.04) 50%, rgba(255, 255, 255, 0));
+  box-shadow: inset 0 0 0 0.104cqw rgba(255, 255, 255, 0.35);
+}
+.otv-tile.focus .otv-sheen { opacity: 1; }
+.otv-name { position: absolute; left: 0; right: 0; top: 8.23cqw; text-align: center; font: 500 1.46cqw/1 "Outfit", sans-serif; letter-spacing: 0.02em; color: rgba(255, 255, 255, 0.95);
+  opacity: 0; transform: translateY(-0.62cqw); transition: opacity 0.22s, transform 0.22s; white-space: nowrap; }
+.otv-row2 .otv-tile.focus .otv-name { opacity: 1; transform: translateY(0.42cqw) scale(0.91); }
+.otv-tile.bounce .otv-card { animation: otv-bounce 0.42s ease; }
+@keyframes otv-bounce { 0%, 100% { transform: none; } 40% { transform: scale(0.92); } 70% { transform: scale(1.04); } }
+/* The glass behind the focused tile (GlassView): frosted fill, a specular top, a bright rim and a soft outer glow. */
+.otv-glass {
+  position: absolute; left: 0; top: 0; width: 15cqw; height: 9.5cqw; border-radius: 1.77cqw; z-index: 1; pointer-events: none; opacity: 0;
+  transition: opacity 0.18s; will-change: transform;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.07));
+  box-shadow: inset 0 0 0 0.16cqw rgba(255, 255, 255, 0.8), 0 0 0 0.1cqw rgba(255, 255, 255, 0.19), 0 0 0 0.2cqw rgba(255, 255, 255, 0.09), 0 0 0 0.31cqw rgba(255, 255, 255, 0.06);
+}
+.otv-glass::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 45%; border-radius: inherit; border-bottom-left-radius: 0; border-bottom-right-radius: 0; background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0)); }
+
+/* Control Center */
+.otv-cc {
+  position: absolute; left: 70.73cqw; top: 9.375cqw; width: 25cqw; padding: 0.73cqw; border-radius: 2cqw;
+  display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 5.21cqw; gap: 0.73cqw;
+  background: rgba(36, 38, 44, 0.66); -webkit-backdrop-filter: blur(2cqw) saturate(1.6); backdrop-filter: blur(2cqw) saturate(1.6);
+  box-shadow: inset 0 0 0 0.06cqw rgba(255, 255, 255, 0.18), 0 2cqw 5cqw rgba(0, 0, 0, 0.35);
+  opacity: 0; transform: translateY(-1cqw) scale(0.97); transform-origin: 90% 0; pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.otv.cc-open .otv-cc { opacity: 1; transform: none; }
+.otv-cc > div {
+  background: rgba(22, 23, 26, 0.7); border-radius: 1.56cqw; display: flex; align-items: center; gap: 0.8cqw; padding: 0 0.9cqw; white-space: nowrap;
+  transition: background 0.2s, color 0.2s, transform 0.2s; color: #fff;
+}
+.otv-cc > div svg { width: 1.75cqw; flex: none; }
+.otv-cc .big { grid-column: span 2; grid-row: span 2; flex-direction: column; justify-content: center; gap: 1.1cqw; }
+.otv-cc .big svg { width: 3.6cqw; }
+.otv-cc .wide { grid-column: span 2; }
+.otv-cc .full { grid-column: span 4; justify-content: space-between; padding: 0 1.8cqw; }
+.otv-cc .sq { justify-content: center; padding: 0; }
+.otv-cc b { display: block; font-size: 1.1cqw; font-weight: 600; }
+.otv-cc small { display: block; font-size: 1.02cqw; color: rgba(255, 255, 255, 0.62); margin-top: 0.15cqw; }
+.otv-cc .big span { font-size: 1.15cqw; }
+.otv-cc > div.focus { background: #fff; color: #111; transform: scale(1.04); }
+.otv-cc > div.focus small { color: rgba(0, 0, 0, 0.55); }
+.otv-cc .blue svg { color: #3b9bff; }
+.otv-cc > div.focus.blue svg { color: #0a62e0; }
+.otv-vol { flex: 1; height: 0.6cqw; border-radius: 1cqw; background: rgba(255, 255, 255, 0.25); margin: 0 1.2cqw; overflow: hidden; }
+.otv-vol i { display: block; height: 100%; width: 60%; background: #fff; border-radius: inherit; transition: width 0.2s; }
+.otv-cc > div.focus .otv-vol { background: rgba(0, 0, 0, 0.15); }
+.otv-cc > div.focus .otv-vol i { background: #111; }
+.otv-cclabel {
+  position: absolute; left: 70.73cqw; width: 25cqw; top: 47.2cqw; text-align: center; font-size: 1.15cqw; font-weight: 600;
+  opacity: 0; transition: opacity 0.2s; text-shadow: 0 0.1cqw 0.6cqw rgba(0, 0, 0, 0.6);
+}
+.otv.cc-open .otv-cclabel.on { opacity: 1; }
+
+/* An open app, the screen saver, search, the volume HUD, a toast, and the screen turned off */
+.otv-app { position: absolute; inset: 0; opacity: 0; transform: scale(0.86); transition: opacity 0.35s ease, transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); pointer-events: none; }
+.otv-app img { width: 100%; height: 100%; object-fit: cover; }
+.otv.app-open .otv-app { opacity: 1; transform: none; }
+.otv-saverclock { position: absolute; right: 4.2cqw; top: 3cqw; font: 300 2.3cqw/1 "Outfit", sans-serif; opacity: 0; transition: opacity 0.8s; }
+.otv-saverplace { position: absolute; left: 4.2cqw; bottom: 3.4cqw; font-size: 1.4cqw; font-weight: 500; opacity: 0; transition: opacity 1.2s 0.6s; text-shadow: 0 0.1cqw 0.8cqw rgba(0, 0, 0, 0.6); }
+.otv.saver .otv-saverclock, .otv.saver .otv-saverplace { opacity: 1; }
+.otv-search {
+  position: absolute; left: 50%; top: 2.6cqw; width: 44cqw; transform: translate(-50%, -1cqw); opacity: 0; transition: opacity 0.25s, transform 0.3s;
+  display: flex; flex-direction: column; align-items: center; gap: 1.2cqw; pointer-events: none;
+}
+.otv.searching .otv-search { opacity: 1; transform: translate(-50%, 0); }
+.otv-search .bar {
+  width: 100%; height: 3.6cqw; border-radius: 1.8cqw; display: flex; align-items: center; gap: 0.9cqw; padding: 0 1.4cqw;
+  background: rgba(50, 52, 58, 0.75); -webkit-backdrop-filter: blur(1.4cqw); backdrop-filter: blur(1.4cqw); font-size: 1.35cqw;
+  box-shadow: inset 0 0 0 0.06cqw rgba(255, 255, 255, 0.2);
+}
+.otv-search .bar svg { width: 1.3cqw; opacity: 0.7; }
+.otv-search .bar i { width: 0.1cqw; height: 1.6cqw; background: #3b9bff; animation: otv-caret 1s steps(1) infinite; margin-left: -0.6cqw; }
+@keyframes otv-caret { 50% { opacity: 0; } }
+.otv-search .hits { display: flex; gap: 0.8cqw; }
+.otv-search .hits span { padding: 0.5cqw 1.1cqw; border-radius: 1cqw; background: rgba(255, 255, 255, 0.16); font-size: 1.1cqw; }
+.otv.searching .otv-pill { opacity: 0; }
+.otv-hud {
+  position: absolute; left: 50%; top: 2.8cqw; transform: translate(-50%, -1.2cqw); opacity: 0; transition: opacity 0.25s, transform 0.3s;
+  display: flex; align-items: center; gap: 1cqw; padding: 0.9cqw 1.6cqw; border-radius: 2cqw; font-size: 1.2cqw; font-weight: 600;
+  background: rgba(40, 42, 48, 0.72); -webkit-backdrop-filter: blur(1.4cqw); backdrop-filter: blur(1.4cqw);
+}
+.otv-hud.on { opacity: 1; transform: translate(-50%, 0); }
+.otv-hud svg { width: 1.6cqw; }
+.otv-hud .lvl { width: 10cqw; height: 0.5cqw; border-radius: 1cqw; background: rgba(255, 255, 255, 0.25); overflow: hidden; }
+.otv-hud .lvl i { display: block; height: 100%; background: #fff; transition: width 0.2s; }
+.otv-off { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity 0.6s ease; z-index: 15;
+  display: flex; align-items: flex-end; justify-content: center; padding-bottom: 3cqw; font-size: 1.3cqw; color: rgba(255, 255, 255, 0.45); }
+.otv.off .otv-off { opacity: 1; pointer-events: auto; cursor: pointer; }
+.otv-off span { opacity: 0; transition: opacity 0.6s 1.2s; }
+.otv.off .otv-off span { opacity: 1; }
+.otv-led { position: absolute; left: 50%; bottom: -0.55%; width: 0.5%; aspect-ratio: 1; border-radius: 50%; transform: translateX(-50%); background: #ff3b30; opacity: 0; box-shadow: 0 0 6px #ff3b30; transition: opacity 0.4s; }
+.otv.off .otv-led { opacity: 0.85; }
+
+/* ---- the iPhone ---------------------------------------------------------------------------------------- */
+.ophone { position: relative; container-type: inline-size; }
+.ophone-frame {
+  position: relative; border-radius: 17cqw; padding: 1.3cqw;
+  background: linear-gradient(145deg, #77777c 0%, #3a3a3e 22%, #1f1f22 55%, #4a4a4f 85%, #2c2c30 100%);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.32), 0 8px 18px rgba(0, 0, 0, 0.2), inset 0 0 0 0.25cqw rgba(255, 255, 255, 0.12);
+}
+.ophone-frame::before, .ophone-frame::after {   /* side buttons */
+  content: ""; position: absolute; width: 1.2cqw; border-radius: 1cqw; background: #3a3a3e;
+}
+.ophone-frame::before { left: -0.8cqw; top: 22%; height: 7%; box-shadow: 0 9cqw 0 #3a3a3e, 0 22cqw 0 #3a3a3e; }
+.ophone-frame::after { right: -0.8cqw; top: 26%; height: 11%; }
+.ophone-bezel { background: #000; border-radius: 15.7cqw; padding: 3.2cqw; }
+.ophone-screen {
+  position: relative; aspect-ratio: 1206 / 2622; overflow: hidden; overflow: clip; border-radius: 12.5cqw; background: #000; color: #fff;
+  container-type: inline-size; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  letter-spacing: -0.01em; user-select: none; -webkit-user-select: none; touch-action: none;
+}
+.ophone-island { position: absolute; left: 50%; top: 2.8cqw; width: 30cqw; height: 8.8cqw; transform: translateX(-50%); background: #000; border-radius: 5cqw; z-index: 5; box-shadow: 0 0 0 0.3cqw #000; }
+.ophone-status { display: flex; justify-content: space-between; align-items: center; padding: 4.6cqw 8cqw 0 11cqw; font-size: 4.2cqw; font-weight: 600; height: 13cqw; }
+.ophone-status svg { height: 3.3cqw; margin-left: 1.4cqw; }
+.ophone-head { display: flex; align-items: center; padding: 5cqw 4cqw 0 6.5cqw; gap: 2.4cqw; }
+.ophone-head .tv { width: 6cqw; opacity: 0.9; }
+.ophone-head .name { font-size: 4.25cqw; font-weight: 600; line-height: 1.1; }
+.ophone-head .name svg { width: 2.6cqw; margin-left: 1.2cqw; opacity: 0.6; vertical-align: middle; }
+.ophone-head .stat { font-size: 3cqw; color: #8e8e93; display: flex; align-items: center; gap: 1.2cqw; margin-top: 0.4cqw; }
+.ophone-head .stat::before { content: ""; width: 1.5cqw; height: 1.5cqw; border-radius: 50%; background: #30d158; }
+.ophone-head .sp { flex: 1; }
+.ophone .round { width: 11cqw; height: 11cqw; border-radius: 50%; background: #1c1c1e; display: grid; place-items: center; border: 0; color: #fff; cursor: pointer; padding: 0; transition: background 0.15s, transform 0.15s; }
+.ophone .round svg { width: 4.4cqw; }
+.ophone .round:active, .ophone .round.pressed { background: #3a3a3c; transform: scale(0.94); }
+.ophone .power { color: #ff453a; }
+.ophone-pad {
+  position: relative; margin: 6cqw 4cqw 0; height: 84.5cqw; border-radius: 7cqw; background: #1c1c1e; cursor: grab;
+  display: grid; place-items: center; overflow: hidden; touch-action: none;
+}
+.ophone-pad .hint { display: flex; flex-direction: column; align-items: center; gap: 2.4cqw; color: #8e8e93; font-size: 3.1cqw; text-align: center; transition: opacity 0.3s; }
+.ophone-pad .hint svg { width: 7cqw; }
+.ophone-pad .mode { position: absolute; right: 2.6cqw; top: 2.6cqw; width: 9cqw; height: 9cqw; border-radius: 50%; background: #2c2c2e; display: grid; place-items: center; }
+.ophone-pad .mode svg { width: 4.4cqw; }
+.ophone-pad .dot { position: absolute; width: 14cqw; height: 14cqw; margin: -7cqw 0 0 -7cqw; border-radius: 50%; background: radial-gradient(rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 70%); pointer-events: none; opacity: 0; transition: opacity 0.25s; }
+.ophone-pad .dot.on { opacity: 1; }
+.ophone-row { display: flex; justify-content: center; gap: 6.5cqw; margin-top: 6.3cqw; }
+.ophone-row .round { width: 16cqw; height: 16cqw; }
+.ophone-row .round svg { width: 6cqw; }
+.ophone-bottom { display: flex; align-items: center; justify-content: space-between; margin: 5.4cqw 4cqw 0; }
+.ophone-bottom .round { width: 13cqw; height: 13cqw; }
+.ophone-bottom .round svg { width: 6cqw; }
+.ophone-vol { display: flex; align-items: center; justify-content: space-between; width: 52cqw; height: 13.8cqw; border-radius: 7cqw; background: #1c1c1e; padding: 0 2cqw; }
+.ophone-vol button { background: none; border: 0; color: #fff; width: 12cqw; height: 12cqw; border-radius: 50%; display: grid; place-items: center; cursor: pointer; padding: 0; }
+.ophone-vol button:active { background: #3a3a3c; }
+.ophone-vol svg { width: 4.6cqw; }
+.ophone-vol .spk { width: 4cqw; color: #8e8e93; }
+.ophone-sheet {
+  position: absolute; left: 0; right: 0; bottom: 0; border-radius: 9cqw 9cqw 0 0; background: rgba(44, 44, 46, 0.86);
+  -webkit-backdrop-filter: blur(6cqw) saturate(1.8); backdrop-filter: blur(6cqw) saturate(1.8);
+  padding: 6cqw 6cqw 10cqw; transform: translateY(105%); z-index: 4; visibility: hidden;
+  transition: transform 0.42s cubic-bezier(0.2, 0.9, 0.25, 1), visibility 0s linear 0.42s;
+}
+.ophone-sheet.on { transform: none; visibility: visible; transition-delay: 0s; }
+.ophone-sheet h4 { margin: 0 0 4cqw; font-size: 4.6cqw; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+.ophone-sheet h4 button { background: rgba(120, 120, 128, 0.3); color: #fff; border: 0; border-radius: 6cqw; padding: 1.6cqw 3.6cqw; font: 600 3.5cqw -apple-system, sans-serif; cursor: pointer; }
+.ophone-walls { display: grid; grid-template-columns: 1fr 1fr; gap: 3cqw; }
+.ophone-walls button { border: 0; padding: 0; background: none; color: #fff; text-align: left; font: 500 3cqw -apple-system, sans-serif; cursor: pointer; }
+.ophone-walls i { display: block; aspect-ratio: 16 / 9; border-radius: 2.6cqw; margin-bottom: 1.6cqw; position: relative; }
+.ophone-walls button.on i::after { content: "✓"; position: absolute; right: 1.6cqw; top: 1.6cqw; width: 5.4cqw; height: 5.4cqw; border-radius: 50%; background: #0a84ff; display: grid; place-items: center; font-size: 3.2cqw; font-weight: 700; }
+.ophone-sheet input {
+  width: 100%; height: 11cqw; border-radius: 3cqw; border: 0; background: #000; color: #fff; padding: 0 3.6cqw;
+  font: 400 4.2cqw -apple-system, sans-serif; outline: none; box-shadow: inset 0 0 0 0.3cqw rgba(255, 255, 255, 0.12);
+}
+.ophone-sheet p { margin: 2.6cqw 0 0; font-size: 3cqw; color: #8e8e93; }
+.ophone-toast {
+  position: absolute; left: 50%; bottom: 7cqw; transform: translate(-50%, 4cqw); opacity: 0; transition: opacity 0.25s, transform 0.3s;
+  background: rgba(60, 60, 64, 0.9); padding: 2.6cqw 4.4cqw; border-radius: 6cqw; font-size: 3.2cqw; white-space: nowrap; z-index: 6;
+}
+.ophone-toast.on { opacity: 1; transform: translate(-50%, 0); }
+.ophone-home { position: absolute; left: 50%; bottom: 2.2cqw; width: 36cqw; height: 1.4cqw; border-radius: 1cqw; background: rgba(255, 255, 255, 0.8); transform: translateX(-50%); z-index: 7; }
+
+/* ---- the scene: the TV with the iPhone in front of it --------------------------------------------------- */
+.demo { position: relative; max-width: 1200px; margin: 64px auto 0; padding: 0 22px 2%; }
+.demo .otv { width: 80%; }
+.demo .ophone { position: absolute; right: 22px; bottom: 0; width: 21%; min-width: 210px; }
+.demo-hint { text-align: center; margin: 34px auto 0; font-size: 14px; color: var(--ink-2, #6e6e73); letter-spacing: -0.016em; }
+.demo-hint kbd { font: 600 12px -apple-system, sans-serif; border: 1px solid rgba(0, 0, 0, 0.18); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; margin: 0 1px; }
+@media (prefers-color-scheme: dark) { .demo-hint kbd { border-color: rgba(255, 255, 255, 0.25); } .otv-frame { box-shadow: 0 30px 70px rgba(0, 0, 0, 0.7); } }
+.demo .otv, .demo .ophone { opacity: 0; transform: translateY(30px) scale(0.985); transition: opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1), transform 1.6s cubic-bezier(0.16, 1, 0.3, 1); }
+.demo .ophone { transition-delay: 0.25s; }
+.demo.shown .otv, .demo.shown .ophone { opacity: 1; transform: none; }
+@media (max-width: 734px) {
+  .demo { padding-bottom: 0; }
+  .demo .otv { width: 100%; }
+  .demo .ophone { position: relative; right: auto; width: 64%; min-width: 0; margin: -6% auto 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .demo .otv, .demo .ophone { opacity: 1; transform: none; transition: none; }
+}

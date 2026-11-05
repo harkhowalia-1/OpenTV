@@ -9,7 +9,7 @@ import CoreImage
 //
 // Captures/TV holds 1920×1080 TV screenshots (adb exec-out screencap -p) and Captures/iPhone the Simulator's
 // (xcrun simctl io booted screenshot, status bar set to 9:41). Captures/ stays on this Mac: anything personal in
-// them (account names, the Wi-Fi network, a gamertag) is blurred below before a picture is made.
+// them (account names, the Wi-Fi network, a gamertag) is covered with placeholders below before a picture is made.
 
 let here = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
 let captures = here.appendingPathComponent("Captures")
@@ -18,14 +18,25 @@ let mode = args.count > 1 ? args[1] : "appstore"
 let outDir = args.count > 2 ? args[2] : here.appendingPathComponent("Screenshots").path
 try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
 
-// ---- privacy: blurred regions, in TV pixels from the top left ----------------------------------------------
+// ---- privacy: personal details are covered with placeholders, in TV pixels from the top left ----------------
 
-let profile = CGRect(x: 1735, y: 55, width: 110, height: 110)        // the profile picture in the top-right pill
+/// What's personal on each screen, and what goes over it.
+enum Placeholder {
+    case avatar(center: CGPoint, radius: CGFloat, letter: String)          // the profile picture in the top-right pill
+    case text(CGRect, sample: CGPoint, text: String, size: CGFloat, color: UInt32)   // e.g. the Wi-Fi network's name
+    case gamerChip(CGRect)                                                   // Cloud Gaming's gamertag button
+}
+let avatar = Placeholder.avatar(center: CGPoint(x: 1792, y: 102), radius: 35, letter: "A")
+let placeholders: [String: [Placeholder]] = [
+    "home": [avatar],
+    "wallpaper": [avatar],
+    "control-center": [avatar, .text(CGRect(x: 1680, y: 244, width: 125, height: 38), sample: CGPoint(x: 1800, y: 262),
+                                     text: "Home Wi-Fi", size: 23, color: 0xA9A9AE)],
+    "cloud": [.gamerChip(CGRect(x: 1470, y: 40, width: 380, height: 135))],
+]
+/// Anything else that's personal and has no placeholder is blurred.
 let privateAreas: [String: [CGRect]] = [
-    "home": [profile],
-    "wallpaper": [profile],
-    "control-center": [profile, CGRect(x: 1640, y: 228, width: 210, height: 60)],   // + the Wi-Fi network's name
-    "cloud": [CGRect(x: 1470, y: 40, width: 380, height: 135)],                     // gamertag and gamerpic
+    "cloud": [CGRect(x: 1470, y: 40, width: 380, height: 135)],
 ]
 
 let ciContext = CIContext(options: [.useSoftwareRenderer: false])
@@ -52,8 +63,60 @@ func blurred(_ image: CGImage, _ areas: [CGRect], sigma: Double = 26) -> CGImage
     return ciContext.createCGImage(out, from: ci.extent)!
 }
 
+/// The colour of one pixel (top-left coordinates).
+func pixel(_ image: CGImage, _ p: CGPoint) -> NSColor {
+    var px = [UInt8](repeating: 0, count: 4)
+    let ctx = CGContext(data: &px, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 4, space: CGColorSpaceCreateDeviceRGB(),
+                        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+    ctx.draw(image, in: CGRect(x: -p.x, y: -(CGFloat(image.height) - p.y - 1), width: CGFloat(image.width), height: CGFloat(image.height)))
+    return NSColor(srgbRed: CGFloat(px[0]) / 255, green: CGFloat(px[1]) / 255, blue: CGFloat(px[2]) / 255, alpha: 1)
+}
+
+func withPlaceholders(_ image: CGImage, _ items: [Placeholder]) -> CGImage {
+    guard !items.isEmpty else { return image }
+    let w = image.width, h = image.height
+    let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: w, pixelsHigh: h, bitsPerSample: 8, samplesPerPixel: 4,
+                               hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+    NSGraphicsContext.saveGraphicsState()
+    let g = NSGraphicsContext(bitmapImageRep: rep)!
+    g.cgContext.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
+    g.cgContext.translateBy(x: 0, y: CGFloat(h))
+    g.cgContext.scaleBy(x: 1, y: -1)
+    NSGraphicsContext.current = NSGraphicsContext(cgContext: g.cgContext, flipped: true)
+    func label(_ s: String, _ size: CGFloat, _ weight: NSFont.Weight, _ c: NSColor, at p: CGPoint, center: Bool = false) {
+        let a = NSAttributedString(string: s, attributes: [.font: NSFont.systemFont(ofSize: size, weight: weight), .foregroundColor: c])
+        let b = a.size()
+        a.draw(at: CGPoint(x: center ? p.x - b.width / 2 : p.x, y: p.y - b.height / 2))
+    }
+    for item in items {
+        switch item {
+        case let .avatar(c, r, letter):
+            color(0x4FD1C5).setFill()
+            NSBezierPath(ovalIn: NSRect(x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r)).fill()
+            label(letter, r * 0.95, .medium, .white, at: c, center: true)
+        case let .text(rect, sample, text, size, c):
+            pixel(image, sample).setFill()
+            NSBezierPath(rect: rect).fill()
+            label(text, size, .regular, color(c), at: CGPoint(x: rect.minX + 6, y: rect.midY))
+        case let .gamerChip(rect):
+            // A fresh profile button over the blurred original: a generic picture, "Player One" and a Gamerscore.
+            let chip = NSRect(x: rect.minX + 40, y: rect.minY + 22, width: rect.width - 70, height: 92)
+            NSColor.white.withAlphaComponent(0.22).setFill()
+            rr(chip, chip.height / 2).fill()
+            let pic = NSRect(x: chip.minX + 12, y: chip.minY + 12, width: 68, height: 68)
+            NSGradient(colors: [color(0x34C759), color(0x0B7A33)])!.draw(in: NSBezierPath(ovalIn: pic), angle: -60)
+            label("P1", 26, .semibold, .white, at: CGPoint(x: pic.midX, y: pic.midY), center: true)
+            label("Player One", 30, .medium, .white, at: CGPoint(x: pic.maxX + 18, y: chip.minY + 32))
+            label("1,250 G", 22, .medium, NSColor.white.withAlphaComponent(0.72), at: CGPoint(x: pic.maxX + 18, y: chip.minY + 64))
+        }
+    }
+    NSGraphicsContext.restoreGraphicsState()
+    return rep.cgImage!
+}
+
 func tv(_ name: String) -> NSImage {
-    let img = blurred(cgImage(captures.appendingPathComponent("TV/\(name).png").path), privateAreas[name] ?? [])
+    let raw = cgImage(captures.appendingPathComponent("TV/\(name).png").path)
+    let img = withPlaceholders(blurred(raw, privateAreas[name] ?? []), placeholders[name] ?? [])
     return NSImage(cgImage: img, size: NSSize(width: img.width, height: img.height))
 }
 
@@ -284,6 +347,12 @@ func web() {
             _ = drawPhone(phone("remote"), screenWidth: 560, centerX: W * 0.80, top: 300, scale: 1.4, shadowAlpha: shade)
         }
         save(hero, "\(file).jpg")
+    }
+    // Plain screens (no TV around them) for the website's live TV, when you open an app on it.
+    for name in ["iptv", "browser", "cloud", "wallsettings", "screensaver"] {
+        let screen = tv(name)
+        let rep = canvas(1600, 900, background: .black) { W, H in screen.draw(in: NSRect(x: 0, y: 0, width: W, height: H)) }
+        save(rep, "app-\(name).jpg")
     }
     for name in ["remote", "browser", "typing", "wallpaper", "screensaver"] {
         let rep = canvas(900, 1800, background: .clear) { W, _ in

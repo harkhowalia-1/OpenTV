@@ -13,6 +13,10 @@
 <meta name="theme-color" content="#161617" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="demo.css">
 <style>
 /* ---- tokens --------------------------------------------------------------------------------------------- */
 :root {
@@ -67,6 +71,7 @@ body {
   letter-spacing: -0.022em;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  overflow-x: clip;
 }
 img { display: block; max-width: 100%; height: auto; }
 a { color: var(--link); text-decoration: none; }
@@ -293,7 +298,11 @@ footer .coffee img { height: 36px; }
     </div>
     <p class="small" data-reveal style="--d:.35s">For Android TV and Google TV, Android 8 and later.</p>
   </div>
-  <div class="hero-art"><picture><source srcset="images/v2/hero-dark.jpg" media="(prefers-color-scheme: dark)"><img id="heroArt" src="images/v2/hero.jpg" width="2400" height="1560" alt="OpenTV's home screen on a TV, with Otv Remote on an iPhone in front of it"></picture></div>
+  <div class="demo" aria-label="Try OpenTV: a live demo of the TV and the iPhone remote">
+    <div data-otv data-wall="1"></div>
+    <div data-ophone></div>
+  </div>
+  <p class="demo-hint">Try it. Swipe and tap on the iPhone, or click the TV and use <kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd>, <kbd>return</kbd> and <kbd>esc</kbd>.</p>
 </section>
 
 <!-- Home screen -->
@@ -302,7 +311,7 @@ footer .coffee img { height: 36px; }
     <p class="eyebrow" data-reveal>Home Screen</p>
     <h2 class="headline" data-reveal style="--d:.1s">Your apps, front and centre.<br>Your room, on screen.</h2>
   </div>
-  <div class="stage"><img id="cinemaTV" src="images/v2/tv-home.jpg" width="2000" height="1240" loading="lazy" alt="OtvOS home screen with a slow-motion aerial wallpaper behind a row of app tiles"></div>
+  <div class="stage"><div id="cinemaTV" data-otv data-wall="2" style="max-width:1100px;margin:0 auto"></div></div>
   <div class="content two-col">
     <p class="copy" data-reveal><strong>Slow-motion aerials and desktop pictures</strong> play behind your apps, and soften to a blur as you move into them. Tiles lift under focus and the whole screen takes on the colour of what you pick. Rearrange it all with a long press.</p>
     <p class="copy" data-reveal style="--d:.1s"><strong>Made for small chips.</strong> OtvOS keeps the TV quick on its own: it tidies caches when you're not watching, streams aerials when space is short and closes background apps in Game Mode, so even a Chromecast feels new.</p>
@@ -526,6 +535,7 @@ adb shell cmd package set-home-activity --user 0 com.gathin.tvhome/.MainActivity
   </div>
 </footer>
 
+<script src="demo.js" defer></script>
 <script>
 (() => {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -539,9 +549,6 @@ adb shell cmd package set-home-activity --user 0 com.gathin.tvhome/.MainActivity
     for (const e of entries) if (e.isIntersecting) { e.target.classList.add('shown'); io.unobserve(e.target); }
   }, { rootMargin: '0px 0px -12% 0px' });
   document.querySelectorAll('[data-reveal]').forEach(el => io.observe(el));
-  const hero = document.getElementById('heroArt');
-  const showHero = () => hero.classList.add('shown');
-  hero.complete ? requestAnimationFrame(showHero) : hero.addEventListener('load', showHero);
 
   // Scroll-linked: the TV grows into place, the iPhones drift at their own pace, lines light up in turn.
   const tv = document.getElementById('cinemaTV');
