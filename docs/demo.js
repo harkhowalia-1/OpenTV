@@ -166,7 +166,8 @@ void main(){
     resize() {
       if (!this.gl) return;
       const w = Math.max(64, Math.round(this.canvas.clientWidth * Math.min(devicePixelRatio, 2) * 0.5));
-      this.canvas.width = w; this.canvas.height = Math.round(w * 9 / 16);
+      const ch = this.canvas.clientHeight; this.canvas.width = w;
+      this.canvas.height = ch ? Math.max(36, Math.round(w * ch / Math.max(1, this.canvas.clientWidth))) : Math.round(w * 9 / 16);
       this.draw(performance.now());
     }
     set(mode) {
@@ -541,6 +542,41 @@ void main(){
       setTimeout(() => { dot.classList.remove('on'); dot.style.transition = ''; dot.style.transform = ''; }, 520);
     }
   }
+
+  // ---- live wallpapers, full screen: the scene follows the scroll; the pills jump to one -----------------------
+  document.querySelectorAll('[data-live-scenes]').forEach((sec) => {
+    const wall = new Wall(sec.querySelector('.scenes-wall'), 2);
+    const modes = [2, 1, 0];
+    const titles = [...sec.querySelectorAll('.scene-title')], subs = [...sec.querySelectorAll('.scene-sub')];
+    const pills = [...sec.querySelectorAll('.scenes-pills button')];
+    const glowTints = APPS.map(a => a.tint);
+    let current = 0, glowTimer = null, g = 0;
+    const show = (i) => {
+      if (i === current) return;
+      current = i;
+      wall.set(modes[i]);
+      titles.forEach((t, k) => t.classList.toggle('on', k === i));
+      subs.forEach((t, k) => t.classList.toggle('on', k === i));
+      pills.forEach((b, k) => { b.classList.toggle('on', k === i); b.setAttribute('aria-selected', k === i); });
+      clearInterval(glowTimer);
+      // Colour Glow follows the app you're on: here it walks through OtvOS's apps.
+      if (modes[i] === 0) { wall.setTint(glowTints[g % glowTints.length]); if (!reduce) glowTimer = setInterval(() => wall.setTint(glowTints[++g % glowTints.length]), 2200); }
+    };
+    const progress = () => {
+      const r = sec.getBoundingClientRect();
+      return Math.min(0.999, Math.max(0, -r.top / Math.max(1, r.height - innerHeight)));
+    };
+    let ticking = false;
+    addEventListener('scroll', () => {
+      if (ticking) return; ticking = true;
+      requestAnimationFrame(() => { ticking = false; show(Math.floor(progress() * modes.length)); });
+    }, { passive: true });
+    pills.forEach((b, i) => b.addEventListener('click', () => {
+      const top = sec.getBoundingClientRect().top + scrollY, span = sec.offsetHeight - innerHeight;
+      scrollTo({ top: top + span * (i + 0.5) / modes.length, behavior: reduce ? 'auto' : 'smooth' });
+    }));
+    new IntersectionObserver(([e]) => sec.classList.toggle('inview', e.isIntersecting), { threshold: 0.15 }).observe(sec);
+  });
 
   // ---- mount -------------------------------------------------------------------------------------------------
   document.querySelectorAll('[data-otv]').forEach((host) => {
