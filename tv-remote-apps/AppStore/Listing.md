@@ -38,42 +38,55 @@ Free, all countries and regions.
 ## Version 1.3.2
 
 **Promotional text (170)**
-Swipe, tap and type to control OpenTV from the couch. Your iPhone becomes a trackpad for web pages, and sets up the TV's wallpaper, screen saver and more.
+The remote for OpenTV: swipe, tap and type from the couch, set live wallpapers and screen savers, and sign the TV in to Xbox Cloud Gaming. OpenTV is free.
 
 **Description**
 Your iPhone. Your TV remote.
 
-Otv Remote is the remote control for OpenTV, the free and open-source home screen for TVs running Android TV and Google TV. Pair once and control everything from the couch.
+Otv Remote is the remote control for OpenTV, the free and open-source home screen that turns your TV into a calm, beautiful place for everything you watch and play. Pair once and control it all from the couch.
 
 A REMOTE THAT FEELS RIGHT
 • Swipe to move around, tap to select
-• Back, Home, Control Center, play and pause, mute and skip
+• Back, Home, play and pause, mute and skip
 • Your iPhone's volume buttons change the TV's volume while the app is open
 • Power: sleep and wake the TV
+
+CONTROL CENTER, ONE PRESS AWAY
+• Power, Wi-Fi, Bluetooth, volume, sleep timer and screen saver
+• AirPlay, Apple Home, Game Mode and Close Background Apps
+• Remote controls on your Lock Screen and in Control Center, plus Siri and Shortcuts
 
 A TRACKPAD AND A KEYBOARD
 • Open a web page on the TV and the remote turns into a trackpad by itself
 • Type in search boxes and sign-in fields with the keyboard you already know
 
+LIVE WALLPAPERS AND SCREEN SAVERS
+• Aurora and Underwater: scenes drawn live by the TV, never the same twice
+• Slow-motion aerials, desktop pictures, Bing's picture of the day or your own photos
+• Screen savers that match your wallpaper, or pick their own
+
 SET UP THE TV FROM YOUR PHONE
-• Wallpaper: aerials, desktop pictures, Bing's picture of the day or your own photos, applied at once
-• Screen saver, inputs, Bluetooth accessories and software updates
-• Sign the TV in to Xbox Cloud Gaming with your saved passwords; the session reaches the TV encrypted, end to end
+• Wallpaper and screen saver, applied at once
+• Inputs, Bluetooth accessories and software updates
+
+XBOX CLOUD GAMING
+• Sign the TV in with your saved passwords on the iPhone; the session reaches the TV encrypted, end to end
+• Your gamertag, friends and games on the TV, with the remote as a controller
 
 ALWAYS AT HAND
-• Controls for Control Center and the Lock Screen
-• Siri and Shortcuts actions
 • Send to TV from the Share sheet: videos, songs and web pages open on the TV
+• Pair once with a code; it reconnects by itself, and the whole family can connect
 
 PRIVATE BY DESIGN
 • No account, no tracking, nothing collected. The app talks only to your TV, over your own Wi-Fi.
 
-Requires a TV with OpenTV installed. OpenTV is free at harkhowalia-1.github.io/OpenTV and installs from a Mac, from the TV itself or with adb.
+GET OPENTV, FREE
+Otv Remote needs a TV running OpenTV. It's free and open source: install it from a Mac with OpenTV Installer, straight from the TV, or with a command line. Everything you need is at harkhowalia-1.github.io/OpenTV.
 
 **Keywords (100)**
-tv remote,remote control,trackpad,keyboard,smart tv,television,couch,wallpaper,screensaver,opentv
+tv remote,remote control,trackpad,keyboard,smart tv,live wallpaper,screensaver,opentv,couch,airplay
 
-*(No brand names in keywords: Apple rejects other companies' trademarks there.)*
+*(No other companies' brands in keywords, and no other platforms named in the screenshots or name: Apple rejects both.)*
 
 **Support URL** https://github.com/harkhowalia-1/OpenTV/issues
 **Marketing URL** https://harkhowalia-1.github.io/OpenTV/
@@ -83,11 +96,23 @@ First release on the App Store.
 
 ## Screenshots
 
-- iPhone 6.9" (required): [Screenshots-6.9in/](Screenshots-6.9in), 1320 × 2868, in order 1 to 5.
+Eight, in this order, each with OpenTV's name along the bottom:
+
+1. Remote: "Your iPhone. Your TV remote."
+2. Control Center: "Everything, one press away."
+3. Trackpad: "Point and click on the big screen."
+4. Keyboard: "Type with the keyboard you know."
+5. Live Wallpapers: "Scenes drawn live. Chosen in a tap."
+6. TV Settings: "Set up the TV from your phone."
+7. Xbox Cloud Gaming: "Sign in on your phone. Play on your TV."
+8. Get OpenTV: "Pair once. You're all set." (with the website)
+
+- iPhone 6.9" (required): [Screenshots-6.9in/](Screenshots-6.9in), 1320 × 2868.
 - iPhone 6.3": [Screenshots-6.3in/](Screenshots-6.3in), 1206 × 2622 (optional; App Store Connect scales the 6.9" ones otherwise).
 
 Remake them with `swift make-screenshots.swift appstore Screenshots-6.9in 1320 2868` (and `… Screenshots-6.3in 1206 2622`).
-The raw captures in `Captures/` stay on this Mac (git ignores them); personal details in them are blurred by the script.
+The raw captures in `Captures/` stay on this Mac (git ignores them); personal details in them are replaced with
+placeholders by the script (profile "A", "Home Wi-Fi", a sample network address).
 
 ## App Review information
 

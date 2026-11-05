@@ -109,7 +109,7 @@ final class Live {
     static final class Scene extends TextureView implements TextureView.SurfaceTextureListener {
         private static final long FRAME_MS = 1000 / 24;
         private volatile int mode = 1;
-        private volatile boolean wanted;
+        private volatile boolean wanted, paused;
         private Thread thread;
 
         Scene(Context c) {
@@ -119,6 +119,11 @@ final class Live {
 
         void setMode(int m) {
             mode = m;
+        }
+
+        /** Holds the last frame (under Control Center and other panels) without letting go of the surface. */
+        void setPaused(boolean p) {
+            paused = p;
         }
 
         void start() {
@@ -152,10 +157,17 @@ final class Live {
                     // Start somewhere in the scene's life, not at its very first second.
                     long t0 = SystemClock.elapsedRealtime() - 30_000;
                     while (wanted && !Thread.currentThread().isInterrupted()) {
+                        if (paused) {
+                            Thread.sleep(120);
+                            continue;
+                        }
                         long f = SystemClock.elapsedRealtime();
                         float secs = ((f - t0) % 3_600_000L) / 1000f;   // stays precise on the GPU
                         gl.draw(mode, W, H, secs);
                         gl.swap();
+                        // Repaint the whole scene each frame: without it Home only redraws the parts that change for
+                        // other reasons (the title, the glass), and the rest of the screen stays black.
+                        postInvalidateOnAnimation();
                         long wait = FRAME_MS - (SystemClock.elapsedRealtime() - f);
                         if (wait > 0) Thread.sleep(wait);
                     }

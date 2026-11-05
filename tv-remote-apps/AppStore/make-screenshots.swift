@@ -32,8 +32,11 @@ let settingsTile = Placeholder.tile(CGRect(x: 1572, y: 778, width: 240, height: 
                                     svg: here.appendingPathComponent("../../docs/images/tiles/settings.svg").path)
 let avatar = Placeholder.avatar(center: CGPoint(x: 1792, y: 102), radius: 35, letter: "A")
 let placeholders: [String: [Placeholder]] = [
-    "home": [avatar, settingsTile],
-    "wallpaper": [avatar, settingsTile],
+    "home": [avatar],
+    "wallpaper": [avatar],
+    "xbox": [avatar],
+    "pair": [.text(CGRect(x: 734, y: 722, width: 452, height: 40), sample: CGPoint(x: 722, y: 740),
+                   text: "Or open http://192.168.1.50:8800 in a browser", size: 23, color: 0x8E8E93)],   // the TV's address
     "control-center": [avatar, .text(CGRect(x: 1680, y: 244, width: 125, height: 38), sample: CGPoint(x: 1800, y: 262),
                                      text: "Home Wi-Fi", size: 23, color: 0xA9A9AE)],
     "cloud": [.gamerChip(CGRect(x: 1470, y: 40, width: 380, height: 135))],
@@ -300,16 +303,22 @@ func drawRoom(_ screen: NSImage, tvFrame: NSRect, W: CGFloat, H: CGFloat, streng
 struct Slide { let file, tv, phone, eyebrow, headline, sub: String }
 
 let slides: [Slide] = [
-    Slide(file: "1-remote", tv: "home", phone: "remote", eyebrow: "Otv Remote",
-          headline: "Your iPhone.\nYour TV remote.", sub: "Swipe to move around OpenTV, tap to select.\nRight from the couch."),
-    Slide(file: "2-trackpad", tv: "browser", phone: "browser", eyebrow: "Trackpad",
+    Slide(file: "1-remote", tv: "home", phone: "remote", eyebrow: "Otv Remote for OpenTV",
+          headline: "Your iPhone.\nYour TV remote.", sub: "Swipe, tap and press: every button\nyou need, right in your hand."),
+    Slide(file: "2-control-center", tv: "control-center", phone: "remote", eyebrow: "Control Center",
+          headline: "Everything,\none press away.", sub: "Power, Wi-Fi, volume, AirPlay and more.\nAlso on your Lock Screen and with Siri."),
+    Slide(file: "3-trackpad", tv: "browser", phone: "browser", eyebrow: "Trackpad",
           headline: "Point and click\non the big screen.", sub: "Open a web page on the TV and the remote\nturns into a trackpad by itself."),
-    Slide(file: "3-keyboard", tv: "typing", phone: "typing", eyebrow: "Keyboard",
+    Slide(file: "4-keyboard", tv: "typing", phone: "typing", eyebrow: "Keyboard",
           headline: "Type with the\nkeyboard you know.", sub: "Search, sign in and fill in boxes on the TV\nfrom your iPhone."),
-    Slide(file: "4-wallpaper", tv: "wallpaper", phone: "wallpaper", eyebrow: "Wallpaper",
-          headline: "Change the scenery\nin a tap.", sub: "Slow-motion aerials, desktop pictures\nor your own photos behind your apps."),
-    Slide(file: "5-settings", tv: "screensaver", phone: "screensaver", eyebrow: "TV Settings",
+    Slide(file: "5-live-wallpapers", tv: "wallpaper", phone: "wallpaper", eyebrow: "Live Wallpapers",
+          headline: "Scenes drawn live.\nChosen in a tap.", sub: "Aurora and Underwater, aerials, desktop\npictures or your own photos."),
+    Slide(file: "6-settings", tv: "screensaver", phone: "screensaver", eyebrow: "TV Settings",
           headline: "Set up the TV\nfrom your phone.", sub: "Screen savers, inputs, Bluetooth\nand software updates."),
+    Slide(file: "7-cloud-gaming", tv: "xbox", phone: "settings", eyebrow: "Xbox Cloud Gaming",
+          headline: "Sign in on your phone.\nPlay on your TV.", sub: "Use your saved passwords. The TV signs\nitself in, encrypted end to end."),
+    Slide(file: "8-get-opentv", tv: "pair", phone: "pair", eyebrow: "OpenTV · Free and open source",
+          headline: "Pair once.\nYou're all set.", sub: "Get OpenTV for your TV, free, at\nharkhowalia-1.github.io/OpenTV"),
 ]
 
 func appStore(width: Int, height: Int) {
@@ -329,7 +338,16 @@ func appStore(width: Int, height: Int) {
 
             drawTV(screen, in: tvFrame, scale: s)
             // The iPhone in front, overlapping the TV's lower right: the remote and what it controls, together.
-            _ = drawPhone(phone(slide.phone), screenWidth: 640 * s, centerX: W * 0.64, top: tvFrame.maxY - 230 * s, scale: s)
+            let phoneFrame = drawPhone(phone(slide.phone), screenWidth: 640 * s, centerX: W * 0.64, top: tvFrame.maxY - 230 * s, scale: s)
+            // OpenTV, on every slide: its icon and a line about it, under the phone.
+            if let icon = NSImage(contentsOfFile: here.appendingPathComponent("../../docs/icon.png").path) {
+                let line = text("OpenTV  ·  Free and open source", size: 34 * s, weight: .semibold, color: color(0x86868B))
+                let lw = line.size().width, iw = 64 * s, gap = 16 * s
+                let y = min(H - 150 * s, phoneFrame.maxY + 60 * s)
+                let x0 = (W - (iw + gap + lw)) / 2
+                icon.draw(in: NSRect(x: x0, y: y - iw / 2, width: iw, height: iw), from: .zero, operation: .sourceOver, fraction: 1, respectFlipped: true, hints: nil)
+                line.draw(at: CGPoint(x: x0 + iw + gap, y: y - line.size().height / 2))
+            }
         }
         save(rep, "\(slide.file).jpg")
     }

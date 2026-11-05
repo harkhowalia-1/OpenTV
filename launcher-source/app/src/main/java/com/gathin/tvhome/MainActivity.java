@@ -305,9 +305,17 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         playLive(kind);
     }
 
+    private boolean liveFresh;
+
     /** A live wallpaper: drawn on the TV behind the apps, only while Home is showing (over its still). */
     private void playLive(String kind) {
         int mode = Live.mode(kind);
+        if (liveFresh && liveView != null) {
+            liveView.stop();
+            ((android.view.ViewGroup) liveView.getParent()).removeView(liveView);
+            liveView = null;
+        }
+        liveFresh = false;
         if (mode < 0) {
             if (liveView != null) {
                 liveView.stop();
@@ -324,6 +332,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         liveView.setVisibility(View.VISIBLE);
         liveView.setMode(mode);
+        liveView.setPaused(false);
         liveView.start();
         liveView.animate().alpha(1f).setStartDelay(150).setDuration(800).start();
     }
@@ -449,6 +458,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         resumed = false;
         adapter.endEditing();   // leaving Home ends edit mode, as pressing Home does on iPhone
         statusSlot.setVisibility(View.INVISIBLE);   // a panel on top draws its own pill in the same spot
+        // A live wallpaper holds its last frame under Control Center and other panels (drawn on behind their blur,
+        // it comes out black); it carries on when Home is back.
+        if (liveView != null) {
+            liveView.setPaused(true);
+            liveFresh = true;   // a new one takes over when Home is back (a reused one can come back black)
+        }
         handler.removeCallbacks(minuteTick);
         handler.removeCallbacks(wallpaperTick);
     }
@@ -473,8 +488,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         stopAerial();
         aerialUrl = null;
         if (liveView != null) {
+            // A fresh scene each time Home comes back: one reused after its surface went away draws black.
             liveView.stop();
-            liveView.setAlpha(0f);
+            ((android.view.ViewGroup) liveView.getParent()).removeView(liveView);
+            liveView = null;
         }
         android.widget.ImageView wall = findViewById(R.id.wallpaper);
         android.graphics.drawable.Drawable d = wall.getDrawable();
