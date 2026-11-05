@@ -543,6 +543,65 @@ void main(){
     }
   }
 
+  // ---- Control Center, close up: it assembles as you scroll in, then a highlight walks through its controls ------
+  const CC_ABOUT = {
+    power: ['Power', 'Sleep and wake the TV, or turn it off for the night.', [1.0, 0.36, 0.3]],
+    wifi: ['Wi-Fi', 'Your network at a glance. Turn it off and on in a press.', [0.23, 0.6, 1.0]],
+    bt: ['Bluetooth', 'Headphones, speakers, keyboards and game controllers.', [0.23, 0.6, 1.0]],
+    saver: ['Screen Saver', 'Start it now. Aerials, live scenes, your pictures or a clock.', [0.3, 0.75, 0.6]],
+    sleep: ['Sleep Timer', 'Fifteen minutes, half an hour, an hour: the TV turns itself off.', [1.0, 0.62, 0.2]],
+    vol: ['Volume', 'Slide it with the arrows, or use your iPhone\'s own buttons.', [0.7, 0.4, 1.0]],
+    remote: ['Pair Remote', 'Shows the code that pairs a new iPhone or Mac.', [0.6, 0.62, 0.7]],
+    airplay: ['AirPlay', 'Ready for your iPhone, iPad and Mac.', [0.3, 0.55, 1.0]],
+    home: ['Apple Home', 'The TV in the Home app, with Siri to turn it on and off.', [1.0, 0.6, 0.2]],
+    settings: ['Settings', 'Straight into OtvOS Settings.', [0.6, 0.62, 0.7]],
+    game: ['Game Mode', 'Closes everything else, so your game gets the whole TV.', [0.2, 0.85, 0.42]],
+    close: ['Close Background Apps', 'Frees memory in seconds when the TV needs a breather.', [1.0, 0.3, 0.42]],
+    acc: ['Game Controllers', 'Pair a controller for Cloud Gaming.', [0.2, 0.85, 0.42]],
+    search: ['Search', 'Find apps and the web from anywhere.', [0.5, 0.6, 1.0]],
+  };
+  document.querySelectorAll('[data-cc-show]').forEach((sec) => {
+    const panel = sec.querySelector('.bcc');
+    panel.innerHTML = CC.map(c => `<div class="${c.cls}" data-id="${c.id}">${c.html}</div>`).join('');
+    const tiles = [...panel.children];
+    const glow = new Wall(sec.querySelector('.ccshow-glow'), 0);
+    const cap = sec.querySelector('.ccshow-caption'), capB = cap.querySelector('b'), capS = cap.querySelector('span');
+    const dots = sec.querySelector('.ccshow-dots');
+    dots.innerHTML = tiles.map(() => '<i></i>').join('');
+    let focus = -1, hovering = false;
+    const setFocus = (i) => {
+      if (i === focus) return;
+      focus = i;
+      tiles.forEach((t, k) => t.classList.toggle('focus', k === i));
+      [...dots.children].forEach((d, k) => d.classList.toggle('on', k === i));
+      const a = i >= 0 ? CC_ABOUT[tiles[i].dataset.id] : null;
+      cap.style.opacity = 0;
+      setTimeout(() => { capB.textContent = a ? a[0] : ''; capS.textContent = a ? a[1] : ''; cap.style.opacity = 1; }, 160);
+      glow.setTint(a ? a[2] : [0.45, 0.5, 0.9]);
+      if (a && tiles[i].dataset.id === 'vol') tiles[i].querySelector('.otv-vol i').style.width = '85%';
+    };
+    glow.setTint([0.45, 0.5, 0.9]);
+    // Scroll: the first fifth brings the tiles in, one by one; the rest walks the highlight through them.
+    const update = () => {
+      const r = sec.getBoundingClientRect();
+      const p = Math.min(0.999, Math.max(0, -r.top / Math.max(1, r.height - innerHeight)));
+      sec.classList.toggle('in', r.top < innerHeight * 0.6 && r.bottom > 0);
+      const build = Math.min(1, p / 0.18);
+      tiles.forEach((t, k) => t.classList.toggle('in', reduce || build * tiles.length > k || r.top < -10 && p > 0.18));
+      if (!hovering) setFocus(p < 0.2 ? -1 : Math.min(tiles.length - 1, Math.floor((p - 0.2) / 0.8 * tiles.length)));
+    };
+    let ticking = false;
+    addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(() => { ticking = false; update(); }); } }, { passive: true });
+    addEventListener('resize', update);
+    // Point at a control to read about it.
+    tiles.forEach((t, i) => {
+      t.addEventListener('pointerenter', () => { hovering = true; setFocus(i); });
+      t.addEventListener('click', () => { hovering = true; setFocus(i); });
+    });
+    panel.addEventListener('pointerleave', () => { hovering = false; update(); });
+    update();
+  });
+
   // ---- live wallpapers, full screen: the scene follows the scroll; the pills jump to one -----------------------
   document.querySelectorAll('[data-live-scenes]').forEach((sec) => {
     const wall = new Wall(sec.querySelector('.scenes-wall'), 2);

@@ -259,6 +259,67 @@ footer .coffee img { height: 36px; }
 }
 @media (prefers-reduced-motion: reduce) { .scenes-wall { transform: none; transition: none; } .scene-title, .scene-sub { transition: opacity .2s; transform: none; } }
 
+/* ---- Control Center: tiles fly in from depth, then a highlight walks through them as you scroll ------------- */
+.ccshow { position: relative; height: 520vh; background: #000; padding: 0; color: #f5f5f7; }
+.ccshow-sticky { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; display: grid; align-items: center; }
+.ccshow-glow { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .9; }
+.ccshow-grid { position: relative; width: var(--content); max-width: calc(100% - 44px); margin: 0 auto; display: grid; grid-template-columns: 1fr minmax(300px, 430px); gap: 70px; align-items: center; padding-top: var(--nav-h); }
+.ccshow-text .headline { color: #f5f5f7; }
+.ccshow-lede { font-size: 21px; line-height: 1.38; font-weight: 600; color: #86868b; margin: 22px 0 0; max-width: 460px; }
+.ccshow-caption { margin-top: 38px; min-height: 92px; max-width: 460px; transition: opacity .35s var(--ease); }
+.ccshow-caption b { display: block; font-size: 28px; line-height: 1.14; font-weight: 600; letter-spacing: .007em; }
+.ccshow-caption span { display: block; margin-top: 8px; font-size: 19px; line-height: 1.3; color: #a1a1a6; font-weight: 500; }
+.ccshow-panel { perspective: 900px; container-type: inline-size; }
+.bcc {
+  width: 100%; padding: 2.9cqw; border-radius: 8cqw; display: grid; grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: 20.8cqw; gap: 2.9cqw; background: rgba(36, 38, 44, 0.55); -webkit-backdrop-filter: blur(28px) saturate(1.7); backdrop-filter: blur(28px) saturate(1.7);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.16), 0 40px 90px rgba(0,0,0,.55); transform-origin: 50% 50%;
+  opacity: 0; transform: scale(.92) rotateX(10deg); transition: opacity 1s var(--ease-out), transform 1.4s var(--ease-out);
+}
+.ccshow.in .bcc { opacity: 1; transform: none; }
+.bcc > div {
+  background: rgba(20, 21, 24, 0.72); border-radius: 6.2cqw; display: flex; align-items: center; gap: 3.2cqw; padding: 0 3.6cqw; white-space: nowrap; color: #fff; cursor: default;
+  opacity: 0; transform: translateZ(-160px) scale(.8); filter: blur(10px);
+  transition: opacity .7s var(--ease-out), transform .9s cubic-bezier(.2,.9,.25,1.15), filter .7s var(--ease-out), background .25s, color .25s;
+}
+.bcc > div.in { opacity: 1; transform: none; filter: none; }
+.bcc > div.focus { background: #fff; color: #111; transform: scale(1.05); }
+.bcc > div svg { width: 7cqw; flex: none; }
+.bcc .big { grid-column: span 2; grid-row: span 2; flex-direction: column; justify-content: center; gap: 4cqw; }
+.bcc .big svg { width: 14cqw; }
+.bcc .big span { font-size: 4.6cqw; font-weight: 500; }
+.bcc .wide { grid-column: span 2; padding: 0 3cqw; gap: 2.6cqw; }
+.bcc .full { grid-column: span 4; justify-content: space-between; padding: 0 7cqw; }
+.bcc .sq { justify-content: center; padding: 0; }
+.bcc b { display: block; font-size: 4.3cqw; font-weight: 600; }
+.bcc small { display: block; font-size: 3.8cqw; color: rgba(255,255,255,.6); margin-top: .5cqw; }
+.bcc > div.focus small { color: rgba(0,0,0,.55); }
+.bcc .blue svg { color: #3b9bff; }
+.bcc > div.focus.blue svg { color: #0a62e0; }
+.bcc .otv-vol { flex: 1; height: 2.4cqw; border-radius: 4cqw; background: rgba(255,255,255,.25); margin: 0 4.6cqw; overflow: hidden; }
+.bcc .otv-vol i { display: block; height: 100%; width: 60%; background: #fff; border-radius: inherit; transition: width .5s var(--ease-out); }
+.bcc > div.focus .otv-vol { background: rgba(0,0,0,.15); }
+.bcc > div.focus .otv-vol i { background: #111; }
+.ccshow-dots { position: absolute; left: 50%; bottom: max(4vh, 22px); transform: translateX(-50%); display: flex; gap: 8px; }
+.ccshow-dots i { width: 6px; height: 6px; border-radius: 6px; background: rgba(255,255,255,.28); transition: width .35s var(--ease), background .35s; }
+.ccshow-dots i.on { width: 22px; background: rgba(255,255,255,.9); }
+@media (max-width: 1068px) { .ccshow-grid { gap: 40px; grid-template-columns: 1fr minmax(260px, 360px); } }
+@media (max-width: 734px) {
+  .ccshow { height: 480vh; }
+  .ccshow-grid { grid-template-columns: 1fr; gap: 18px; text-align: center; align-content: center; }
+  .ccshow-text .headline { font-size: 32px; }
+  .ccshow-lede { display: none; }
+  .ccshow-caption { margin: 0 auto; min-height: 84px; order: 3; }
+  .ccshow-caption b { font-size: 22px; }
+  .ccshow-caption span { font-size: 16px; }
+  .ccshow-text { display: contents; }
+  .ccshow-text .eyebrow, .ccshow-text .headline { order: 1; }
+  .ccshow-panel { order: 2; width: min(78vw, 340px); margin: 0 auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bcc, .bcc > div { transition: background .2s, color .2s; transform: none !important; filter: none !important; opacity: 1 !important; }
+}
+
 /* ---- smaller screens (Apple's breakpoints: 1068px and 734px) ------------------------------------------- */
 @media (max-width: 1068px) {
   :root { --content: 692px; }
@@ -332,6 +393,23 @@ footer .coffee img { height: 36px; }
 </section>
 
 
+<!-- Control Center: assembles, then walks through its controls as you scroll -->
+<section class="ccshow" id="control-center" data-cc-show aria-label="Control Center">
+  <div class="ccshow-sticky">
+    <canvas class="ccshow-glow" aria-hidden="true"></canvas>
+    <div class="ccshow-grid">
+      <div class="ccshow-text">
+        <p class="eyebrow">Control Center</p>
+        <h2 class="headline">Everything,<br>one press away.</h2>
+        <p class="ccshow-lede">Hold Home on the remote, or tap a button on your iPhone. Control Center slides in over whatever you're watching.</p>
+        <div class="ccshow-caption" aria-live="polite"><b></b><span></span></div>
+      </div>
+      <div class="ccshow-panel"><div class="bcc"></div></div>
+    </div>
+    <div class="ccshow-dots" aria-hidden="true"></div>
+  </div>
+</section>
+
 <!-- A closer look -->
 <section class="dark reel center" id="reel">
   <div class="content">
@@ -395,32 +473,6 @@ footer .coffee img { height: 36px; }
   </div>
 </section>
 
-<!-- iPhone -->
-<section class="center" id="iphone">
-  <div class="content">
-    <p class="eyebrow brand" data-reveal>Otv Remote</p>
-    <h2 class="headline" data-reveal style="--d:.1s">Your iPhone.<br>The only remote you need.</h2>
-    <p class="intro" data-reveal style="--d:.2s"><strong>Swipe to move, tap to select</strong> and use the iPhone's own volume buttons. Open a web page and it becomes a <strong>trackpad</strong>. Type with the <strong>keyboard you know</strong>. And set up the TV, from wallpaper to Bluetooth, without leaving the couch.</p>
-    <div class="phones">
-      <figure data-parallax="0.06"><img src="images/v2/phone-remote.png" width="900" height="1800" loading="lazy" alt="Otv Remote's touch remote"><figcaption><strong>Remote</strong>Every button, and a touch surface</figcaption></figure>
-      <figure data-parallax="-0.04"><img src="images/v2/phone-browser.png" width="900" height="1800" loading="lazy" alt="Otv Remote as a trackpad"><figcaption><strong>Trackpad</strong>Turns on by itself for web pages</figcaption></figure>
-      <figure data-parallax="0.08"><img src="images/v2/phone-typing.png" width="900" height="1800" loading="lazy" alt="Typing on the TV from the iPhone"><figcaption><strong>Keyboard</strong>Search and sign in from your phone</figcaption></figure>
-    </div>
-    <div class="features">
-      <div class="feature" data-reveal><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="4" width="16" height="32" rx="4"/><path d="M8 14v8M32 12v4M32 19v4"/></svg><h3>Volume buttons</h3><p>The iPhone's own buttons change the TV's volume while the app is open.</p></div>
-      <div class="feature" data-reveal style="--d:.08s"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="13" height="13" rx="4"/><rect x="22" y="5" width="13" height="13" rx="4"/><rect x="5" y="22" width="13" height="13" rx="4"/><circle cx="28.5" cy="28.5" r="6.5"/></svg><h3>Control Center</h3><p>Remote, play and pause, power and volume on the Lock Screen and in Control Center.</p></div>
-      <div class="feature" data-reveal style="--d:.16s"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 5v20M13 12l7-7 7 7"/><path d="M10 20H8v15h24V20h-2"/></svg><h3>Send to TV</h3><p>Share a video, a show, a song or a web page and it opens on the TV.</p></div>
-      <div class="feature" data-reveal><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="20" cy="20" r="5"/><path d="M20 4v5M20 31v5M4 20h5M31 20h5M8.7 8.7l3.5 3.5M27.8 27.8l3.5 3.5M8.7 31.3l3.5-3.5M27.8 12.2l3.5-3.5"/></svg><h3>TV settings</h3><p>Inputs, wallpaper, screen saver, Bluetooth and software updates.</p></div>
-      <div class="feature" data-reveal style="--d:.08s"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="18" width="22" height="17" rx="4"/><path d="M14 18v-5a6 6 0 0 1 12 0v5"/></svg><h3>Sign in with saved passwords</h3><p>Sign the TV in to Xbox on your iPhone; the session reaches the TV encrypted.</p></div>
-      <div class="feature" data-reveal style="--d:.16s"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16a20 20 0 0 1 28 0M11 21a13 13 0 0 1 18 0M16 26a6 6 0 0 1 8 0"/><circle cx="20" cy="31" r="1.5" fill="currentColor"/></svg><h3>Always ready</h3><p>Pair once. It reconnects by itself and wakes the TV. The whole family can connect.</p></div>
-    </div>
-    <div class="ctas" data-reveal>
-      <a class="button" href="https://github.com/harkhowalia-1/OpenTV/releases/latest/download/Otv-Remote.ipa">Download Otv Remote</a>
-      <a class="more" href="#install">How to install it</a>
-    </div>
-  </div>
-</section>
-
 <!-- Live wallpapers: full screen, changing as you scroll -->
 <section class="scenes" id="live" data-live-scenes aria-label="Live wallpapers">
   <div class="scenes-sticky">
@@ -453,6 +505,32 @@ footer .coffee img { height: 36px; }
   <div class="content two-col">
     <p class="copy" data-reveal><strong>Drawn by the TV itself,</strong> live, behind your apps. Nothing to download and never the same twice. Or pick slow-motion aerials, desktop pictures, Bing's picture of the day or your own photos.</p>
     <p class="copy" data-reveal style="--d:.1s"><strong>A screen saver to match.</strong> When the TV sits idle, the scene fills the screen with a quiet clock. And it's made for small chips: OtvOS tidies caches while you're not watching and keeps even a Chromecast quick.</p>
+  </div>
+</section>
+
+<!-- iPhone -->
+<section class="center" id="iphone">
+  <div class="content">
+    <p class="eyebrow brand" data-reveal>Otv Remote</p>
+    <h2 class="headline" data-reveal style="--d:.1s">Your iPhone.<br>The only remote you need.</h2>
+    <p class="intro" data-reveal style="--d:.2s"><strong>Swipe to move, tap to select</strong> and use the iPhone's own volume buttons. Open a web page and it becomes a <strong>trackpad</strong>. Type with the <strong>keyboard you know</strong>. And set up the TV, from wallpaper to Bluetooth, without leaving the couch.</p>
+    <div class="phones">
+      <figure data-parallax="0.06"><img src="images/v2/phone-remote.png" width="900" height="1800" loading="lazy" alt="Otv Remote's touch remote"><figcaption><strong>Remote</strong>Every button, and a touch surface</figcaption></figure>
+      <figure data-parallax="-0.04"><img src="images/v2/phone-browser.png" width="900" height="1800" loading="lazy" alt="Otv Remote as a trackpad"><figcaption><strong>Trackpad</strong>Turns on by itself for web pages</figcaption></figure>
+      <figure data-parallax="0.08"><img src="images/v2/phone-typing.png" width="900" height="1800" loading="lazy" alt="Typing on the TV from the iPhone"><figcaption><strong>Keyboard</strong>Search and sign in from your phone</figcaption></figure>
+    </div>
+    <div class="features">
+      <div class="feature" data-reveal><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="4" width="16" height="32" rx="4"/><path d="M8 14v8M32 12v4M32 19v4"/></svg><h3>Volume buttons</h3><p>The iPhone's own buttons change the TV's volume while the app is open.</p></div>
+      <div class="feature" data-reveal style="--d:.08s"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="13" height="13" rx="4"/><rect x="22" y="5" width="13" height="13" rx="4"/><rect x="5" y="22" width="13" height="13" rx="4"/><circle cx="28.5" cy="28.5" r="6.5"/></svg><h3>Control Center</h3><p>Remote, play and pause, power and volume on the Lock Screen and in Control Center.</p></div>
+      <div class="feature" data-reveal style="--d:.16s"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 5v20M13 12l7-7 7 7"/><path d="M10 20H8v15h24V20h-2"/></svg><h3>Send to TV</h3><p>Share a video, a show, a song or a web page and it opens on the TV.</p></div>
+      <div class="feature" data-reveal><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="20" cy="20" r="5"/><path d="M20 4v5M20 31v5M4 20h5M31 20h5M8.7 8.7l3.5 3.5M27.8 27.8l3.5 3.5M8.7 31.3l3.5-3.5M27.8 12.2l3.5-3.5"/></svg><h3>TV settings</h3><p>Inputs, wallpaper, screen saver, Bluetooth and software updates.</p></div>
+      <div class="feature" data-reveal style="--d:.08s"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="18" width="22" height="17" rx="4"/><path d="M14 18v-5a6 6 0 0 1 12 0v5"/></svg><h3>Sign in with saved passwords</h3><p>Sign the TV in to Xbox on your iPhone; the session reaches the TV encrypted.</p></div>
+      <div class="feature" data-reveal style="--d:.16s"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16a20 20 0 0 1 28 0M11 21a13 13 0 0 1 18 0M16 26a6 6 0 0 1 8 0"/><circle cx="20" cy="31" r="1.5" fill="currentColor"/></svg><h3>Always ready</h3><p>Pair once. It reconnects by itself and wakes the TV. The whole family can connect.</p></div>
+    </div>
+    <div class="ctas" data-reveal>
+      <a class="button" href="https://github.com/harkhowalia-1/OpenTV/releases/latest/download/Otv-Remote.ipa">Download Otv Remote</a>
+      <a class="more" href="#install">How to install it</a>
+    </div>
   </div>
 </section>
 
