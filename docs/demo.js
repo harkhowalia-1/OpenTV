@@ -581,26 +581,22 @@ void main(){
       if (a && tiles[i].dataset.id === 'vol') tiles[i].querySelector('.otv-vol i').style.width = '85%';
     };
     glow.setTint([0.45, 0.5, 0.9]);
-    // Scroll: the panel appears whole as you arrive; the rest of the way walks the highlight through it.
-    const update = () => {
-      const r = sec.getBoundingClientRect();
-      const p = Math.min(0.999, Math.max(0, -r.top / Math.max(1, r.height - innerHeight)));
-      sec.classList.toggle('in', r.top < innerHeight * 0.6 && r.bottom > 0);
-      // The whole panel comes in at once; then the highlight walks through it.
-      const shown = reduce || sec.classList.contains('in');
-      tiles.forEach((t) => t.classList.toggle('in', shown));
-      if (!hovering) setFocus(p < 0.06 ? -1 : Math.min(tiles.length - 1, Math.floor((p - 0.06) / 0.94 * tiles.length)));
-    };
-    let ticking = false;
-    addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(() => { ticking = false; update(); }); } }, { passive: true });
-    addEventListener('resize', update);
+    // In view, the panel appears whole and a highlight drifts through the controls on its own (no need to scroll
+    // through them); pointing at a control shows it instead.
+    let step = -1, timer = null;
+    const next = () => { if (!hovering) { step = (step + 1) % tiles.length; setFocus(step); } };
+    new IntersectionObserver(([e]) => {
+      sec.classList.toggle('in', e.isIntersecting);
+      tiles.forEach((t) => t.classList.toggle('in', e.isIntersecting || reduce));
+      clearInterval(timer);
+      if (e.isIntersecting) { if (step < 0) setTimeout(next, 700); if (!reduce) timer = setInterval(next, 2600); }
+    }, { threshold: 0.35 }).observe(sec);
     // Point at a control to read about it.
     tiles.forEach((t, i) => {
-      t.addEventListener('pointerenter', () => { hovering = true; setFocus(i); });
-      t.addEventListener('click', () => { hovering = true; setFocus(i); });
+      t.addEventListener('pointerenter', () => { hovering = true; step = i; setFocus(i); });
+      t.addEventListener('click', () => { step = i; setFocus(i); });
     });
-    panel.addEventListener('pointerleave', () => { hovering = false; update(); });
-    update();
+    panel.addEventListener('pointerleave', () => { hovering = false; });
   });
 
   // ---- mount -------------------------------------------------------------------------------------------------
