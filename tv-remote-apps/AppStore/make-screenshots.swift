@@ -25,11 +25,15 @@ enum Placeholder {
     case avatar(center: CGPoint, radius: CGFloat, letter: String)          // the profile picture in the top-right pill
     case text(CGRect, sample: CGPoint, text: String, size: CGFloat, color: UInt32)   // e.g. the Wi-Fi network's name
     case gamerChip(CGRect)                                                   // Cloud Gaming's gamertag button
+    case tile(CGRect, svg: String)                                           // a tile redrawn with OtvOS's current art
 }
+/// The Settings tile, sixth in the dock (captures made before its new art).
+let settingsTile = Placeholder.tile(CGRect(x: 1572, y: 778, width: 240, height: 142),
+                                    svg: here.appendingPathComponent("../../docs/images/tiles/settings.svg").path)
 let avatar = Placeholder.avatar(center: CGPoint(x: 1792, y: 102), radius: 35, letter: "A")
 let placeholders: [String: [Placeholder]] = [
-    "home": [avatar],
-    "wallpaper": [avatar],
+    "home": [avatar, settingsTile],
+    "wallpaper": [avatar, settingsTile],
     "control-center": [avatar, .text(CGRect(x: 1680, y: 244, width: 125, height: 38), sample: CGPoint(x: 1800, y: 262),
                                      text: "Home Wi-Fi", size: 23, color: 0xA9A9AE)],
     "cloud": [.gamerChip(CGRect(x: 1470, y: 40, width: 380, height: 135))],
@@ -98,6 +102,13 @@ func withPlaceholders(_ image: CGImage, _ items: [Placeholder]) -> CGImage {
             pixel(image, sample).setFill()
             NSBezierPath(rect: rect).fill()
             label(text, size, .regular, color(c), at: CGPoint(x: rect.minX + 6, y: rect.midY))
+        case let .tile(rect, svg):
+            if let art = NSImage(contentsOfFile: svg) {
+                NSGraphicsContext.saveGraphicsState()
+                rr(NSRect(x: rect.minX, y: rect.minY, width: rect.width, height: rect.height), 20).addClip()
+                art.draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1, respectFlipped: true, hints: nil)
+                NSGraphicsContext.restoreGraphicsState()
+            }
         case let .gamerChip(rect):
             // A fresh profile button over the blurred original: a generic picture, "Player One" and a Gamerscore.
             let chip = NSRect(x: rect.minX + 40, y: rect.minY + 22, width: rect.width - 70, height: 92)
