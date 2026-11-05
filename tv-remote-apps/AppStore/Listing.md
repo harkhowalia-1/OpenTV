@@ -96,7 +96,7 @@ First release on the App Store.
 
 ## Screenshots
 
-Eight, in this order, each with OpenTV's name along the bottom:
+Eight, in this order:
 
 1. Remote: "Your iPhone. Your TV remote."
 2. Control Center: "Everything, one press away."

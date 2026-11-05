@@ -338,16 +338,7 @@ func appStore(width: Int, height: Int) {
 
             drawTV(screen, in: tvFrame, scale: s)
             // The iPhone in front, overlapping the TV's lower right: the remote and what it controls, together.
-            let phoneFrame = drawPhone(phone(slide.phone), screenWidth: 640 * s, centerX: W * 0.64, top: tvFrame.maxY - 230 * s, scale: s)
-            // OpenTV, on every slide: its icon and a line about it, under the phone.
-            if let icon = NSImage(contentsOfFile: here.appendingPathComponent("../../docs/icon.png").path) {
-                let line = text("OpenTV  ·  Free and open source", size: 34 * s, weight: .semibold, color: color(0x86868B))
-                let lw = line.size().width, iw = 64 * s, gap = 16 * s
-                let y = min(H - 150 * s, phoneFrame.maxY + 60 * s)
-                let x0 = (W - (iw + gap + lw)) / 2
-                icon.draw(in: NSRect(x: x0, y: y - iw / 2, width: iw, height: iw), from: .zero, operation: .sourceOver, fraction: 1, respectFlipped: true, hints: nil)
-                line.draw(at: CGPoint(x: x0 + iw + gap, y: y - line.size().height / 2))
-            }
+            _ = drawPhone(phone(slide.phone), screenWidth: 640 * s, centerX: W * 0.64, top: tvFrame.maxY - 230 * s, scale: s)
         }
         save(rep, "\(slide.file).jpg")
     }
