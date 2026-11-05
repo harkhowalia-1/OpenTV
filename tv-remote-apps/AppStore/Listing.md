@@ -102,7 +102,7 @@ Eight, in this order, each with OpenTV's name along the bottom:
 2. Control Center: "Everything, one press away."
 3. Trackpad: "Point and click on the big screen."
 4. Keyboard: "Type with the keyboard you know."
-5. Live Wallpapers: "Scenes drawn live. Chosen in a tap."
+5. Send to TV: "From your phone to the big screen." (Share sheet → the page opens on the TV)
 6. TV Settings: "Set up the TV from your phone."
 7. Xbox Cloud Gaming: "Sign in on your phone. Play on your TV."
 8. Get OpenTV: "Pair once. You're all set." (with the website)
