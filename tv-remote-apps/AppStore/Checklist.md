@@ -1,8 +1,10 @@
 # Publishing Otv Remote 1.3.2
 
+**Submitted for review on November 4, 2026 as 1.3.2 (2).** Build 1 was rejected in processing (ITMS-90129: the bundle name "TVRemote" belongs to another app); the bundles are now named Otv Remote.
+
 Done and ready:
 
-- [x] Signed App Store build, version 1.3.2 (1): `tv-remote-apps/build/appstore/` (the archive and the exported IPA; not in git)
+- [x] App Store build 1.3.2 (2), uploaded from Xcode's Organizer (archive in Xcode › Window › Organizer)
 - [x] Privacy manifests for the app and both extensions, export compliance (`ITSAppUsesNonExemptEncryption = NO`)
 - [x] Listing text, keywords, review notes and privacy answers: [Listing.md](Listing.md)
 - [x] Eight screenshots at 6.9" and 6.3": [Screenshots-6.9in/](Screenshots-6.9in), [Screenshots-6.3in/](Screenshots-6.3in)
