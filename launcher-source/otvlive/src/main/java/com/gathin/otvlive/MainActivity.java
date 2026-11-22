@@ -13,7 +13,6 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.FocusFinder;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -35,12 +34,12 @@ import java.util.Map;
 /**
  * IPTV, laid out like the Apple TV app with Netflix-style browsing: two tabs along the top. Home is rows of
  * cards (your Favourites first, then Recently Watched, channels like the last one, your country, then
- * categories) under a hero that describes the focused channel. Search is one page for finding anything: rows
- * of categories, countries and languages, and as you type, the matching ones and the matching channels.
+ * categories) under a hero that describes the focused channel. Categories is rows of every category, country
+ * and language. Search shows, as you type, the matching ones and the matching channels.
  */
 public class MainActivity extends Activity implements Cards.Host, Catalog.Listener {
 
-    private static final String[] TABS = {"Home", "Search"};
+    private static final String[] TABS = {"Home", "Categories", "Search"};
 
     private Catalog catalog;
     private LinearLayout tabBar;
@@ -52,7 +51,7 @@ public class MainActivity extends Activity implements Cards.Host, Catalog.Listen
     private TextView heroName, heroMeta;
     private RecyclerView homeRows;
     private EditText searchField;
-    /** Search is built once and kept (with what was typed), so moving along the tabs is instant. */
+    /** Categories and Search are built once and kept (with what was typed), so moving along the tabs is instant. */
     private final View[] pages = new View[TABS.length];
     /** For each grid in {@link #stack}, the tile that opened it: Back lands there again. */
     private final ArrayList<View> stackFocus = new ArrayList<>();
@@ -96,7 +95,7 @@ public class MainActivity extends Activity implements Cards.Host, Catalog.Listen
             });
             t.setOnClickListener(v -> {
                 // OK on Search goes straight to typing: the keyboard opens at once.
-                if (index == 1 && searchField != null) {
+                if (index == 2 && searchField != null) {
                     searchField.requestFocus();
                     showKeyboard(searchField);
                 } else {
@@ -147,6 +146,7 @@ public class MainActivity extends Activity implements Cards.Host, Catalog.Listen
             // A background refresh (every few days): keep the page and the focus where they are; the new channels
             // show up as pages are next opened.
             if (tab != 1) pages[1] = null;
+            if (tab != 2) pages[2] = null;
             return;
         }
         shown = true;
@@ -173,7 +173,8 @@ public class MainActivity extends Activity implements Cards.Host, Catalog.Listen
         View page;
         switch (index) {
             case 0: page = home(); break;
-            default: page = pages[1] != null ? pages[1] : (pages[1] = search()); break;
+            case 1: page = pages[1] != null ? pages[1] : (pages[1] = browse()); break;
+            default: page = pages[2] != null ? pages[2] : (pages[2] = search()); break;
         }
         content.removeAllViews();
         page.setVisibility(View.VISIBLE);   // a kept page may have been hidden under a grid
@@ -220,7 +221,8 @@ public class MainActivity extends Activity implements Cards.Host, Catalog.Listen
         if (k == KeyEvent.KEYCODE_DPAD_UP && e.getAction() == KeyEvent.ACTION_DOWN && tab >= 0) {
             View f = getCurrentFocus();
             if (f != null && !tabs.contains(f)) {
-                View next = FocusFinder.getInstance().findNextFocus((ViewGroup) getWindow().getDecorView(), f, View.FOCUS_UP);
+                // Ask the lists themselves (not just what's on screen): a row scrolled off the top is still "above".
+                View next = f.focusSearch(View.FOCUS_UP);
                 if (next != null && tabs.contains(next)) {
                     tabs.get(tab).requestFocus();
                     return true;
@@ -630,20 +632,24 @@ public class MainActivity extends Activity implements Cards.Host, Catalog.Listen
         String name = catalog.categories.get(id);
         if (name == null) return;
         int n = catalog.inCategory(id).size();
-        if (n > 0) items.add(new String[]{CATEGORY_ICONS.getOrDefault(id, "📺"), name, n + " channels", id, "category"});
+        if (n > 0) items.add(new String[]{CATEGORY_ICONS.getOrDefault(id, "📺"), name, channels(n), id, "category"});
+    }
+
+    private static String channels(int n) {
+        return n == 1 ? "1 channel" : n + " channels";
     }
 
     private List<String[]> countryTiles() {
         List<String[]> items = new ArrayList<>();
         for (Catalog.Country c : catalog.countryList()) {
-            items.add(new String[]{c.flag, c.name, c.count + " channels", c.code, "country"});
+            items.add(new String[]{c.flag, c.name, channels(c.count), c.code, "country"});
         }
         return items;
     }
 
     private List<String[]> languageTiles() {
         List<String[]> items = new ArrayList<>();
-        for (String[] l : catalog.languageList()) items.add(new String[]{"", l[1], l[2] + " channels", l[0], "language"});
+        for (String[] l : catalog.languageList()) items.add(new String[]{"", l[1], channels(Integer.parseInt(l[2])), l[0], "language"});
         return items;
     }
 
@@ -699,6 +705,22 @@ public class MainActivity extends Activity implements Cards.Host, Catalog.Listen
         }
     }
 
+    /** Categories: rows of every category, country and language (A to Z). */
+    private View browse() {
+        Sections sections = new Sections();
+        sections.items.add(new Section("Categories", categoryTiles()));
+        sections.items.add(new Section("Countries", countryTiles()));
+        List<String[]> langs = languageTiles();
+        if (!langs.isEmpty()) sections.items.add(new Section("Languages", langs));
+        RecyclerView list = new RecyclerView(this);
+        list.setLayoutManager(new LinearLayoutManager(this));
+        list.setClipToPadding(false);
+        list.setPadding(dp(40), 0, dp(40), dp(40));
+        list.setItemAnimator(null);
+        list.setAdapter(sections);
+        return list;
+    }
+
     private View search() {
         LinearLayout page = new LinearLayout(this);
         page.setOrientation(LinearLayout.VERTICAL);
@@ -745,10 +767,7 @@ public class MainActivity extends Activity implements Cards.Host, Catalog.Listen
             sections.items.clear();
             results.clear();
             if (q.isEmpty()) {
-                sections.items.add(new Section("Categories", categoryTiles()));
-                sections.items.add(new Section("Countries", countryTiles()));
-                List<String[]> langs = languageTiles();
-                if (!langs.isEmpty()) sections.items.add(new Section("Languages", langs));
+                sections.items.add(new Section("Press OK to type a channel, country, category or language", null));
             } else {
                 String l = q.toLowerCase(java.util.Locale.ROOT);
                 List<String[]> m = new ArrayList<>();
@@ -773,7 +792,7 @@ public class MainActivity extends Activity implements Cards.Host, Catalog.Listen
         // Search on the keyboard: put it away and go to the first channel (or the first tile).
         field.setOnEditorActionListener((v, action, ev) -> {
             hideKeyboard(field);
-            focusGrid(list, results.isEmpty() ? 0 : sections.getItemCount());
+            if (!results.isEmpty() || sections.items.size() > 1) focusGrid(list, results.isEmpty() ? 0 : sections.getItemCount());
             return true;
         });
         field.addTextChangedListener(new TextWatcher() {

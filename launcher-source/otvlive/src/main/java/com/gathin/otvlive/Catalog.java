@@ -194,18 +194,16 @@ final class Catalog {
         return out;
     }
 
-    /** Languages with their channel counts ({code, name, count}), the TV's language first, then the biggest. */
+    /** Languages with their channel counts ({code, name, count}), A to Z. */
     List<String[]> languageList() {
         Map<String, Integer> n = new HashMap<>();
         for (Channel c : channels) for (String l : c.languages) n.merge(l, 1, Integer::sum);
-        String home = homeLanguage();
         List<String[]> out = new ArrayList<>();
         for (Map.Entry<String, String> e : languages.entrySet()) {
             Integer k = n.get(e.getKey());
             if (k != null && k > 0) out.add(new String[]{e.getKey(), e.getValue(), String.valueOf(k)});
         }
-        Collections.sort(out, (a, b) -> a[0].equals(home) ? -1 : b[0].equals(home) ? 1
-                : Integer.parseInt(b[2]) - Integer.parseInt(a[2]));
+        Collections.sort(out, (a, b) -> a[1].compareToIgnoreCase(b[1]));
         return out;
     }
 
