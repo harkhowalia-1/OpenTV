@@ -61,7 +61,7 @@
     <td width="50%" valign="top">
       <img src="docs/images/v2/tv-iptv.jpg" alt="IPTV" width="100%">
       <h3>IPTV</h3>
-      Over 12,000 free live channels from almost every country: rows by category, every country, search, favourites (hold OK) and recently watched. Up and down change channel while you watch.
+      Over 12,000 free live channels from almost every country. Home puts your favourites (hold OK) and recently watched first, then picks like the last channel you watched. One Search page browses every category, country and language as you type. Up and down change channel while you watch.
     </td>
   </tr>
   <tr>

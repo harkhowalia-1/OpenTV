@@ -45,6 +45,8 @@ public class PlayerActivity extends Activity {
 
     /** The list the channel was picked from (set by MainActivity just before opening). */
     static List<Catalog.Channel> list = new ArrayList<>();
+    /** The channel showing when the player closed: the app lands back on it. */
+    static Catalog.Channel last;
 
     private static final String UA = "Mozilla/5.0 (Linux; Android 14; Chromecast) AppleWebKit/537.36 (KHTML, like Gecko) "
             + "Chrome/124.0 Safari/537.36";
@@ -179,6 +181,7 @@ public class PlayerActivity extends Activity {
         streamIndex = 0;
         Catalog.Channel c = list.get(index);
         Catalog.get(this).watched(c);
+        last = c;
         name.setText(c.name);
         meta.setText(MainActivity.describe(this, c));
         number.setText(String.valueOf(index + 1));

@@ -53,15 +53,17 @@ final class Catalog {
 
     static final class Channel {
         final String id, name, country, logo;
-        final List<String> categories;
+        final List<String> categories, languages;
         final List<Stream> streams;
 
-        Channel(String id, String name, String country, String logo, List<String> categories, List<Stream> streams) {
+        Channel(String id, String name, String country, String logo, List<String> categories, List<String> languages,
+                List<Stream> streams) {
             this.id = id;
             this.name = name;
             this.country = country;
             this.logo = logo;
             this.categories = categories;
+            this.languages = languages;
             this.streams = streams;
         }
     }
@@ -103,6 +105,9 @@ final class Catalog {
     volatile Map<String, Channel> byId = Collections.emptyMap();
     volatile Map<String, Country> countries = Collections.emptyMap();
     volatile Map<String, String> categories = Collections.emptyMap();
+    /** Language code ("hin") to name ("Hindi"), only the languages some channel is in. */
+    volatile Map<String, String> languages = Collections.emptyMap();
+    private volatile boolean hasLanguages;
 
     private Catalog(Context ctx) {
         this.ctx = ctx;
@@ -139,7 +144,8 @@ final class Catalog {
                 }
             }
             if (ok) post(true);
-            if (!ok || System.currentTimeMillis() - f.lastModified() > REFRESH_MS) {
+            // A catalogue saved by an older version has no languages: fetch a new one in the background.
+            if (!ok || !hasLanguages || System.currentTimeMillis() - f.lastModified() > REFRESH_MS) {
                 try {
                     download();
                     readCache(f);
@@ -180,6 +186,37 @@ final class Catalog {
         return out;
     }
 
+    /** Channels in a language, the TV's country first. */
+    List<Channel> inLanguage(String code) {
+        List<Channel> out = new ArrayList<>();
+        for (Channel c : channels) if (c.languages.contains(code)) out.add(c);
+        sortHomeFirst(out);
+        return out;
+    }
+
+    /** Languages with their channel counts ({code, name, count}), the TV's language first, then the biggest. */
+    List<String[]> languageList() {
+        Map<String, Integer> n = new HashMap<>();
+        for (Channel c : channels) for (String l : c.languages) n.merge(l, 1, Integer::sum);
+        String home = homeLanguage();
+        List<String[]> out = new ArrayList<>();
+        for (Map.Entry<String, String> e : languages.entrySet()) {
+            Integer k = n.get(e.getKey());
+            if (k != null && k > 0) out.add(new String[]{e.getKey(), e.getValue(), String.valueOf(k)});
+        }
+        Collections.sort(out, (a, b) -> a[0].equals(home) ? -1 : b[0].equals(home) ? 1
+                : Integer.parseInt(b[2]) - Integer.parseInt(a[2]));
+        return out;
+    }
+
+    static String homeLanguage() {
+        try {
+            return Locale.getDefault().getISO3Language();
+        } catch (Exception e) {
+            return "eng";
+        }
+    }
+
     /** A country's channels, the likeliest-to-matter first (see {@link #score}). */
     List<Channel> inCountry(String code) {
         List<Channel> out = new ArrayList<>();
@@ -217,19 +254,29 @@ final class Catalog {
         return s;
     }
 
+    /**
+     * Channels named like the search first (names that start with it, then names that contain it), then
+     * channels from a country of that name, the likeliest-to-matter first.
+     */
     List<Channel> search(String q) {
         String s = q.trim().toLowerCase(Locale.ROOT);
-        List<Channel> out = new ArrayList<>();
-        if (s.isEmpty()) return out;
+        List<Channel> starts = new ArrayList<>(), contains = new ArrayList<>(), country = new ArrayList<>();
+        if (s.isEmpty()) return starts;
         for (Channel c : channels) {
-            Country co = countries.get(c.country);
-            if (c.name.toLowerCase(Locale.ROOT).contains(s)
-                    || (co != null && co.name.toLowerCase(Locale.ROOT).startsWith(s))) {
-                out.add(c);
-                if (out.size() >= 300) break;
+            String n = c.name.toLowerCase(Locale.ROOT);
+            if (n.startsWith(s)) starts.add(c);
+            else if (n.contains(s)) contains.add(c);
+            else {
+                Country co = countries.get(c.country);
+                if (co != null && co.name.toLowerCase(Locale.ROOT).startsWith(s)) country.add(c);
             }
         }
-        return out;
+        Collections.sort(starts, (a, b) -> Float.compare(score(b), score(a)));
+        Collections.sort(contains, (a, b) -> Float.compare(score(b), score(a)));
+        Collections.sort(country, (a, b) -> Float.compare(score(b), score(a)));
+        starts.addAll(contains);
+        starts.addAll(country);
+        return starts.size() > 300 ? new ArrayList<>(starts.subList(0, 300)) : starts;
     }
 
     List<Country> countryList() {
@@ -403,6 +450,60 @@ final class Catalog {
             r.endArray();
         }
 
+        // 3b. Languages, from each channel's main feed (or any feed when none is marked main).
+        Map<String, String> chLangs = new HashMap<>();   // channel -> csv
+        Set<String> usedLangs = new HashSet<>();
+        try (JsonReader r = new JsonReader(new InputStreamReader(open("feeds.json"), StandardCharsets.UTF_8))) {
+            r.beginArray();
+            while (r.hasNext()) {
+                String channel = null;
+                boolean main = false;
+                StringBuilder langs = new StringBuilder();
+                r.beginObject();
+                while (r.hasNext()) {
+                    switch (r.nextName()) {
+                        case "channel": channel = str(r); break;
+                        case "is_main": main = r.peek() == JsonToken.BOOLEAN && r.nextBoolean(); break;
+                        case "languages":
+                            if (r.peek() == JsonToken.NULL) { r.nextNull(); break; }
+                            r.beginArray();
+                            while (r.hasNext()) {
+                                if (langs.length() > 0) langs.append(',');
+                                langs.append(r.nextString());
+                            }
+                            r.endArray();
+                            break;
+                        default: r.skipValue();
+                    }
+                }
+                r.endObject();
+                if (channel == null || langs.length() == 0 || !info.containsKey(channel)) continue;
+                if (main || !chLangs.containsKey(channel)) {
+                    chLangs.put(channel, langs.toString());
+                    usedLangs.addAll(java.util.Arrays.asList(langs.toString().split(",")));
+                }
+            }
+            r.endArray();
+        }
+        Map<String, String> langNames = new HashMap<>();
+        try (JsonReader r = new JsonReader(new InputStreamReader(open("languages.json"), StandardCharsets.UTF_8))) {
+            r.beginArray();
+            while (r.hasNext()) {
+                String code = null, name = null;
+                r.beginObject();
+                while (r.hasNext()) {
+                    switch (r.nextName()) {
+                        case "code": code = str(r); break;
+                        case "name": name = str(r); break;
+                        default: r.skipValue();
+                    }
+                }
+                r.endObject();
+                if (code != null && name != null && usedLangs.contains(code)) langNames.put(code, name);
+            }
+            r.endArray();
+        }
+
         // 4. Countries and categories (small).
         Map<String, String[]> countryInfo = new LinkedHashMap<>();
         try (JsonReader r = new JsonReader(new InputStreamReader(open("countries.json"), StandardCharsets.UTF_8))) {
@@ -457,6 +558,11 @@ final class Catalog {
                 put(w, e.getKey());
                 put(w, e.getValue());
             }
+            w.writeInt(langNames.size());
+            for (Map.Entry<String, String> e : langNames.entrySet()) {
+                put(w, e.getKey());
+                put(w, e.getValue());
+            }
             w.writeInt(info.size() + orphans.size());
             for (Map.Entry<String, String[]> e : info.entrySet()) {
                 String[] i = e.getValue();
@@ -465,6 +571,7 @@ final class Catalog {
                 put(w, i[1]);
                 put(w, i[2]);
                 put(w, logos.get(e.getKey()));
+                put(w, chLangs.get(e.getKey()));
                 List<Stream> ss = streams.get(e.getKey());
                 w.writeShort(ss.size());
                 for (Stream st : ss) {
@@ -481,6 +588,7 @@ final class Catalog {
                 put(w, null);
                 put(w, "");
                 put(w, null);
+                put(w, null);
                 w.writeShort(1);
                 put(w, o[1]);
                 put(w, o[2]);
@@ -493,7 +601,8 @@ final class Catalog {
                 + (System.currentTimeMillis() - t0) + " ms");
     }
 
-    private static final int MAGIC = 0x4F4C5631;   // "OLV1"
+    private static final int MAGIC_V1 = 0x4F4C5631;   // "OLV1": no languages
+    private static final int MAGIC = 0x4F4C5632;      // "OLV2"
 
     private static void put(java.io.DataOutputStream w, String v) throws IOException {
         w.writeBoolean(v != null);
@@ -509,21 +618,29 @@ final class Catalog {
         Map<String, Channel> ids = new HashMap<>();
         Map<String, Country> cs = new HashMap<>();
         Map<String, String> cats = new LinkedHashMap<>();
+        Map<String, String> langs = new HashMap<>();
+        boolean v2;
         try (java.io.DataInputStream r = new java.io.DataInputStream(new BufferedInputStream(new FileInputStream(f), 1 << 16))) {
-            if (r.readInt() != MAGIC) throw new IOException("old catalogue format");
+            int magic = r.readInt();
+            v2 = magic == MAGIC;
+            if (!v2 && magic != MAGIC_V1) throw new IOException("old catalogue format");
             for (int i = r.readInt(); i > 0; i--) {
                 String code = take(r), n = take(r), flag = take(r);
                 cs.put(code, new Country(code, n, flag));
             }
             for (int i = r.readInt(); i > 0; i--) cats.put(take(r), take(r));
+            if (v2) for (int i = r.readInt(); i > 0; i--) langs.put(take(r), take(r));
             for (int i = r.readInt(); i > 0; i--) {
                 String id = take(r), n = take(r), country = take(r), catCsv = take(r), logo = take(r);
+                String langCsv = v2 ? take(r) : null;
                 int k = r.readShort();
                 List<Stream> ss = new ArrayList<>(k);
                 for (int j = 0; j < k; j++) ss.add(new Stream(take(r), take(r), take(r), take(r)));
                 List<String> catList = new ArrayList<>(2);
                 if (catCsv != null) for (String c : catCsv.split(",")) if (!c.isEmpty()) catList.add(c);
-                Channel c = new Channel(id, n, country, logo, catList, ss);
+                List<String> langList = new ArrayList<>(1);
+                if (langCsv != null) for (String l : langCsv.split(",")) if (!l.isEmpty()) langList.add(l);
+                Channel c = new Channel(id, n, country, logo, catList, langList, ss);
                 list.add(c);
                 ids.put(id, c);
                 Country co = country == null ? null : cs.get(country);
@@ -533,6 +650,8 @@ final class Catalog {
         Collections.sort(list, (a, b) -> a.name.compareToIgnoreCase(b.name));
         countries = cs;
         categories = cats;
+        languages = langs;
+        hasLanguages = v2;
         byId = ids;
         channels = list;
     }
