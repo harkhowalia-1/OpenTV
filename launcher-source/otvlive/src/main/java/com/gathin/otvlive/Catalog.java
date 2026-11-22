@@ -194,7 +194,20 @@ final class Catalog {
         return out;
     }
 
-    /** Languages with their channel counts ({code, name, count}), A to Z. */
+    /**
+     * The order languages appear in: Punjabi, Hindi and English first, then India's other big languages, then
+     * the world's biggest; every other language after them, A to Z.
+     */
+    private static final List<String> MAJOR_LANGUAGES = java.util.Arrays.asList(
+            "pan", "hin", "eng", "urd", "ben", "tam", "tel", "mar", "guj", "kan", "mal",
+            "spa", "ara", "fra", "por", "rus", "deu", "zho", "jpn", "kor", "ita", "tur");
+
+    private static int rank(String code) {
+        int i = MAJOR_LANGUAGES.indexOf(code);
+        return i < 0 ? MAJOR_LANGUAGES.size() : i;
+    }
+
+    /** Languages with their channel counts ({code, name, count}): the major ones first, then A to Z. */
     List<String[]> languageList() {
         Map<String, Integer> n = new HashMap<>();
         for (Channel c : channels) for (String l : c.languages) n.merge(l, 1, Integer::sum);
@@ -203,7 +216,10 @@ final class Catalog {
             Integer k = n.get(e.getKey());
             if (k != null && k > 0) out.add(new String[]{e.getKey(), e.getValue(), String.valueOf(k)});
         }
-        Collections.sort(out, (a, b) -> a[1].compareToIgnoreCase(b[1]));
+        Collections.sort(out, (a, b) -> {
+            int ra = rank(a[0]), rb = rank(b[0]);
+            return ra != rb ? ra - rb : a[1].compareToIgnoreCase(b[1]);
+        });
         return out;
     }
 
@@ -648,6 +664,7 @@ final class Catalog {
         Collections.sort(list, (a, b) -> a.name.compareToIgnoreCase(b.name));
         countries = cs;
         categories = cats;
+        if (langs.containsKey("pan")) langs.put("pan", "Punjabi");   // iptv-org spells it "Panjabi"
         languages = langs;
         hasLanguages = v2;
         byId = ids;
