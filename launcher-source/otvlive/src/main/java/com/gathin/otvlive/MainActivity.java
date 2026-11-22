@@ -56,7 +56,7 @@ public class MainActivity extends Activity implements Cards.Host, Catalog.Listen
     /** For each grid in {@link #stack}, the tile that opened it: Back lands there again. */
     private final ArrayList<View> stackFocus = new ArrayList<>();
     private List<Row> homeList = new ArrayList<>();
-    private boolean returning, shown, backDown;
+    private boolean returning, shown, backDown, pushing;
     /** Where the last channel was opened from, to come back to it. */
     private String playedRow;
     private int playedIndex;
@@ -91,7 +91,7 @@ public class MainActivity extends Activity implements Cards.Host, Catalog.Listen
             t.setFocusable(true);
             t.setOnFocusChangeListener((v, f) -> {
                 styleTab(t, f, index == tab);
-                if (f && index != tab) select(index);
+                if (f && index != tab && !pushing) select(index);
             });
             t.setOnClickListener(v -> {
                 // OK on Search goes straight to typing: the keyboard opens at once.
@@ -238,12 +238,16 @@ public class MainActivity extends Activity implements Cards.Host, Catalog.Listen
      */
     private void back() {
         if (!stack.isEmpty()) {
-            content.removeView(stack.remove(stack.size() - 1));
-            View under = content.getChildAt(content.getChildCount() - 1);
+            // Show the page underneath and move focus there before removing the top one (removing a page that
+            // has focus hands focus to the Home tab, which would switch tabs).
+            View top = stack.remove(stack.size() - 1);
+            View under = content.getChildAt(content.getChildCount() - 2);
             under.setVisibility(View.VISIBLE);
             View from = stackFocus.remove(stackFocus.size() - 1);
-            if (from != null && from.isAttachedToWindow() && from.requestFocus()) return;
-            under.requestFocus(View.FOCUS_DOWN);
+            pushing = true;
+            if (from == null || !from.isAttachedToWindow() || !from.requestFocus()) under.requestFocus(View.FOCUS_DOWN);
+            content.removeView(top);
+            pushing = false;
             return;
         }
         if (!catalog.ready() || tab <= 0) {
@@ -529,19 +533,59 @@ public class MainActivity extends Activity implements Cards.Host, Catalog.Listen
 
     /** A grid of channels on top of the current tab (Back returns). */
     private void push(String title, List<Catalog.Channel> list) {
-        View page = titled(title, list.size() + " channels", grid(new Cards(list, this, 170), 4));
+        pushPage(titled(title, channels(list.size()), grid(new Cards(list, this, 170), 4)));
+    }
+
+    /**
+     * A country or language: an "All channels" tile, then a tile for each category it has channels in
+     * ("🇮🇳 India · News"). Back returns here from any of them.
+     */
+    private void pushScope(String title, List<Catalog.Channel> list) {
+        List<String[]> tiles = new ArrayList<>();
+        tiles.add(new String[]{"📺", "All channels", channels(list.size()), "", "all"});
+        List<String> ids = new ArrayList<>(java.util.Arrays.asList(Catalog.HOME_ROWS));
+        for (String id : catalog.categories.keySet()) if (!ids.contains(id)) ids.add(id);
+        for (String id : ids) {
+            String name = catalog.categories.get(id);
+            if (name == null) continue;
+            int n = 0;
+            for (Catalog.Channel c : list) if (c.categories.contains(id)) n++;
+            if (n > 0) tiles.add(new String[]{CATEGORY_ICONS.getOrDefault(id, "📺"), name, channels(n), id, "sub"});
+        }
+        Tiles adapter = new Tiles(tiles, 0);
+        adapter.onOpen = it -> {
+            if ("all".equals(it[4])) {
+                push(title, list);
+                return;
+            }
+            List<Catalog.Channel> in = new ArrayList<>();
+            for (Catalog.Channel c : list) if (c.categories.contains(it[3])) in.add(c);
+            push(title + "  ·  " + it[1], in);
+        };
+        pushPage(titled(title, channels(list.size()), grid(adapter, 4)));
+    }
+
+    private void pushPage(View page) {
         page.setBackgroundColor(0xFF0A0A0E);   // nothing of the page underneath shows through
         stackFocus.add(getCurrentFocus());
-        if (content.getChildCount() > 0) content.getChildAt(content.getChildCount() - 1).setVisibility(View.GONE);
+        View under = content.getChildCount() > 0 ? content.getChildAt(content.getChildCount() - 1) : null;
         stack.add(page);
         content.addView(page);
-        page.post(() -> page.requestFocus(View.FOCUS_DOWN));
+        // Focus moves into the new page first, then the page under it is hidden. (Hiding it while it still
+        // had focus sent focus to the Home tab, which switched the tab underneath.)
+        page.post(() -> {
+            pushing = true;
+            page.requestFocus(View.FOCUS_DOWN);
+            if (under != null) under.setVisibility(View.GONE);
+            pushing = false;
+        });
     }
 
     /** Big tiles for categories, countries and languages: {big, label, sub, key, kind}. */
     private final class Tiles extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         final List<String[]> items;
-        final int widthDp;
+        final int widthDp;   // 0: as wide as a grid column
+        java.util.function.Consumer<String[]> onOpen = MainActivity.this::open;
 
         Tiles(List<String[]> items, int widthDp) {
             this.items = items;
@@ -563,7 +607,7 @@ public class MainActivity extends Activity implements Cards.Host, Catalog.Listen
             GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{0xFF2A2A31, 0xFF1C1C21});
             bg.setCornerRadius(dp(14));
             t.setBackground(bg);
-            RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(dp(widthDp), dp(92));
+            RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(widthDp > 0 ? dp(widthDp) : -1, dp(92));
             lp.setMargins(dp(9), dp(9), dp(9), dp(9));
             t.setLayoutParams(lp);
             for (int i = 0; i < 3; i++) {
@@ -596,16 +640,16 @@ public class MainActivity extends Activity implements Cards.Host, Catalog.Listen
             ((TextView) t.getChildAt(0)).setVisibility(it[0] == null || it[0].isEmpty() ? View.GONE : View.VISIBLE);
             ((TextView) t.getChildAt(1)).setText(it[1]);
             ((TextView) t.getChildAt(2)).setText(it[2]);
-            t.setOnClickListener(v -> open(it));
+            t.setOnClickListener(v -> onOpen.accept(it));
         }
     }
 
     /** Opens the channels of a category, country or language tile. */
     private void open(String[] it) {
         switch (it[4]) {
-            case "country": push(it[0] + "  " + it[1], catalog.inCountry(it[3])); break;
+            case "country": pushScope(it[0] + "  " + it[1], catalog.inCountry(it[3])); break;
             case "category": push(it[1], catalog.inCategory(it[3])); break;
-            default: push(it[1], catalog.inLanguage(it[3])); break;
+            default: pushScope(it[1], catalog.inLanguage(it[3])); break;
         }
     }
 
@@ -705,10 +749,10 @@ public class MainActivity extends Activity implements Cards.Host, Catalog.Listen
         }
     }
 
-    /** Categories: rows of every category, country and language (A to Z). */
+    /** Categories: rows of every country and language; each opens to its categories. */
     private View browse() {
+        // No row of categories here: every country and language opens to its own categories.
         Sections sections = new Sections();
-        sections.items.add(new Section("Categories", categoryTiles()));
         sections.items.add(new Section("Countries", countryTiles()));
         List<String[]> langs = languageTiles();
         if (!langs.isEmpty()) sections.items.add(new Section("Languages", langs));

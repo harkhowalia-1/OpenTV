@@ -195,11 +195,11 @@ final class Catalog {
     }
 
     /**
-     * The order languages appear in: Punjabi, Hindi and English first, then India's other big languages, then
+     * The order languages appear in: English, Hindi and Punjabi first, then India's other big languages, then
      * the world's biggest; every other language after them, A to Z.
      */
     private static final List<String> MAJOR_LANGUAGES = java.util.Arrays.asList(
-            "pan", "hin", "eng", "urd", "ben", "tam", "tel", "mar", "guj", "kan", "mal",
+            "eng", "hin", "pan", "urd", "ben", "tam", "tel", "mar", "guj", "kan", "mal",
             "spa", "ara", "fra", "por", "rus", "deu", "zho", "jpn", "kor", "ita", "tur");
 
     private static int rank(String code) {

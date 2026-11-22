@@ -61,7 +61,7 @@
     <td width="50%" valign="top">
       <img src="docs/images/v2/tv-iptv.jpg" alt="IPTV" width="100%">
       <h3>IPTV</h3>
-      Over 12,000 free live channels from almost every country. Home puts your favourites (hold OK) and recently watched first, then picks like the last channel you watched. Categories has every category, country and language (Punjabi, Hindi and English first), and Search finds any of them, or a channel, as you type. Up and down change channel while you watch.
+      Over 12,000 free live channels from almost every country. Home puts your favourites (hold OK) and recently watched first, then picks like the last channel you watched. Categories has every country and language (English, Hindi and Punjabi first), each opening to All channels and its own categories; Search finds any of them, or a channel, as you type. Up and down change channel while you watch.
     </td>
   </tr>
   <tr>
